@@ -390,3 +390,22 @@ input[type="file"]::file-selector-button{
   border:1px solid var(--line);border-radius:10px;
   background:var(--surface);color:var(--ink);cursor:pointer;
 }
+
+/* ── パスワードを見る／隠す ── */
+.pw{position:relative;display:flex;align-items:center}
+.pw input{flex:1;padding-right:52px}
+.pw-eye{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  width:44px;height:44px;border:0;background:transparent;cursor:pointer;
+  color:var(--faint);display:flex;align-items:center;justify-content:center;
+  border-radius:10px;padding:0;
+}
+.pw-eye:hover{color:var(--ink);background:var(--line-soft)}
+.pw-eye.on{color:var(--brand)}
+.pw-eye svg{
+  width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.pw-eye .eye-off{display:none}
+.pw-eye.on .eye-on{display:none}
+.pw-eye.on .eye-off{display:block}

@@ -107,6 +107,7 @@
     $('app').hidden = !AFTER_LOGIN[name];
     $('menu').hidden = true;
     $('boot').hidden = true;
+    eyeReset();
     window.scrollTo(0, 0);
     if(name === 'home')    loadHome();
     if(name === 'status')  loadStatus();
@@ -586,6 +587,32 @@
       .then(function(){ busy($('in-go'), false); });
     };
     rd.readAsDataURL(f);
+  });
+
+  /* ── パスワードを見る／隠す（2026/9/19 追加）────────────
+   *  ご年配の方が多く、長いパスワードを打ち間違えても
+   *  ●●● のままでは気づけません。目のしるしで確かめられるようにします。
+   *  ★見せている状態でそのまま置き去りにならないよう、
+   *    画面を移ると必ず隠しに戻します。 */
+  function eyeReset(){
+    Array.prototype.forEach.call(document.querySelectorAll('.pw-eye'), function(b){
+      var el = $(b.getAttribute('data-eye'));
+      if(el) el.type = 'password';
+      b.classList.remove('on');
+      b.setAttribute('aria-label', 'パスワードを表示');
+    });
+  }
+
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest('.pw-eye');
+    if(!b) return;
+    var el = $(b.getAttribute('data-eye'));
+    if(!el) return;
+    var showing = (el.type === 'text');
+    el.type = showing ? 'password' : 'text';
+    b.classList.toggle('on', !showing);
+    b.setAttribute('aria-label', showing ? 'パスワードを表示' : 'パスワードを隠す');
+    try{ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }catch(e){}
   });
 
   /* ── メニュー ─────────────────────────────── */
