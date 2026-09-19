@@ -9,7 +9,7 @@
      一切書きません。すべて Google 側（スプレッドシート・ドライブ）です。
    ===================================================================== */
 window.APP_CONFIG = {
-  GAS_URL : '＊＊＊ここに Apps Script のウェブアプリURLを入れてください＊＊＊',
+  GAS_URL : 'https://script.google.com/macros/s/AKfycbweIYKdiQsZ4ErWfXKGXeTpWcsFnNTINkBx1SjCPq2j7Cts2SgiHTvS7iTr8faARTXprg/exec',
   COMPANY : 'IREライフ株式会社',
   SUPPORT : 'info@ire-life.com'
 };
