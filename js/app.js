@@ -363,25 +363,77 @@
       });
   }
 
-  /* ── お問い合わせ ─────────────────────────── */
+  /* ══════════════════════════════════════════════
+   *  お問い合わせ（吹き出しのやりとり）
+   *
+   *  【改良前】送るだけ。当社の返事はメールで届き、画面には出ませんでした。
+   *    「送ったけれど、見てもらえたのか分からない」状態でした。
+   *  【改良後】1件ずつの会話になります。当社の返事も、ここに並びます。
+   * ══════════════════════════════════════════════ */
   function loadContact(){
-    auth('threads')
-      .then(function(r){ paintThreads(r.list || []); })
-      .catch(function(){ paintThreads([]); });
+    $('ct-list').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('talks')
+      .then(function(r){ paintTalks(r.list || []); })
+      .catch(function(e){
+        $('ct-list').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
   }
 
-  function paintThreads(list){
-    $('ct-list').innerHTML = list.length
-      ? list.map(function(t){
-          var done = String(t.status || '') === '回答済み';
-          return '<div class="thread">' +
-            '<div class="th-h"><span class="th-t">' + esc(t.kind) + '</span>' +
-            '<span class="th-d">' + esc(t.date) + '</span></div>' +
-            '<span class="th-b">' + esc(t.body) + '</span>' +
-            '<span class="chip' + (done ? '' : ' wait') + '">' +
-            (done ? '回答済み' : '確認中') + '</span></div>';
-        }).join('')
-      : '<div class="empty">まだお問い合わせはありません。</div>';
+  function paintTalks(list){
+    if(!list.length){
+      $('ct-list').innerHTML = '<div class="empty">まだご相談はありません。</div>';
+      return;
+    }
+    $('ct-list').innerHTML = list.map(function(t){
+      var done = String(t.state || '') === '回答済み';
+      var talk = (t.msgs || []).map(function(m){
+        var mine = (m.who === 'オーナー');
+        return '<div class="bub' + (mine ? ' mine' : '') + '">' +
+               '<span class="bub-w">' + esc(mine ? 'お客様' : 'IREライフ') +
+               '　' + esc(m.at) + '</span>' +
+               '<span class="bub-b">' + esc(m.body) + '</span></div>';
+      }).join('');
+
+      return '<div class="work">' +
+        '<div class="wk-h">' +
+          '<span class="wk-p">' + esc(t.date) + '</span>' +
+          '<span class="chip' + (done ? ' done' : ' wait') + '">' +
+            (done ? '回答済み' : '確認中') + '</span>' +
+        '</div>' +
+        '<p class="wk-t">' + esc(t.kind) + '</p>' +
+        '<div class="talk">' + talk + '</div>' +
+        '<details class="ask">' +
+          '<summary>このご相談に続けて書く</summary>' +
+          '<textarea rows="4" data-tk="' + esc(t.id) +
+            '" placeholder="ご自由にお書きください。"></textarea>' +
+          '<button type="button" class="btn ghost" data-tksend="' + esc(t.id) +
+            '">送信する</button>' +
+          '<span class="msg" data-tkmsg="' + esc(t.id) + '"></span>' +
+        '</details>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call($('ct-list').querySelectorAll('[data-tksend]'), function(b){
+      b.addEventListener('click', function(){ sendTalk(b.getAttribute('data-tksend'), b); });
+    });
+  }
+
+  function sendTalk(id, btn){
+    var ta  = $('ct-list').querySelector('[data-tk="' + id + '"]');
+    var msg = $('ct-list').querySelector('[data-tkmsg="' + id + '"]');
+    var body = ta ? (ta.value || '').trim() : '';
+    if(!body){ say(msg, '内容をお書きください。'); return; }
+    if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
+
+    busy(btn, true);
+    auth('talkMsg', { id: id, body: body })
+      .then(function(){
+        if(ta) ta.value = '';
+        toast('送信しました。お返事をお待ちください。');
+        loadContact();
+      })
+      .catch(function(e){ say(msg, e.message); })
+      .then(function(){ busy(btn, false); });
   }
 
   $('f-contact').addEventListener('submit', function(ev){
@@ -393,11 +445,14 @@
     if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
 
     busy($('ct-go'), true);
-    auth('contact', { kind: kind, body: body })
+    auth('ask', { kind: kind, body: body })
       .then(function(){
         $('ct-body').value = '';
-        say(msg, '送信しました。お返事をお待ちください。', true);
+        say(msg, '');
+        /* ★送れたことが分かるよう、書く欄を閉じて一覧に戻します */
+        $('ct-new').open = false;
         loadContact();
+        toast('送信しました。お返事をお待ちください。');
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('ct-go'), false); });
@@ -525,7 +580,7 @@
       return;
     }
     $('in-list').innerHTML = list.map(function(x){
-      var sub = [x.prop, x.maker, x.tel, x.no ? ('証券 ' + x.no) : '',
+      var sub = [x.prop, x.maker, x.tel, x.mail, x.no ? ('証券 ' + x.no) : '',
                  x.until ? ('満期 ' + x.until) : '']
                 .filter(function(v){ return v; }).join('　');
       return '<div class="item ins">' +
@@ -593,6 +648,7 @@
         prop  : ($('in-prop').value  || '').trim(),
         maker : ($('in-maker').value || '').trim(),
         tel   : ($('in-tel').value   || '').trim(),
+        mail  : ($('in-mail').value  || '').trim(),
         no    : ($('in-no').value    || '').trim(),
         until : ($('in-until').value || '').trim()
       })

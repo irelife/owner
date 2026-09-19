@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23FBF8F7%22%2C%22theme_color%22%3A%22%23FBF8F7%22%2C%22start_url%22%3A%22.%22%7D">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 
@@ -223,6 +223,11 @@
                  placeholder="例）0120-000-000／代理店 ○○（担当 △△）">
         </div>
         <div class="field">
+          <label for="in-mail">保険会社のメールアドレス<span class="hint">任意</span></label>
+          <input type="email" id="in-mail" inputmode="email" autocapitalize="off"
+                 spellcheck="false" placeholder="例）info@example.co.jp">
+        </div>
+        <div class="field">
           <label for="in-no">証券番号<span class="hint">任意</span></label>
           <input type="text" id="in-no" inputmode="latin" placeholder="例）1234-5678">
         </div>
@@ -246,28 +251,33 @@
     <section id="s-contact" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">お問い合わせ</h1>
-      <p class="sub">お返事は2営業日以内に、ご登録のメールアドレスへ差し上げます。</p>
+      <p class="sub">当社からのお返事も、この画面に出ます。
+        お返事は2営業日以内に差し上げます。</p>
 
-      <form id="f-contact" novalidate>
-        <div class="field">
-          <label for="ct-kind">ご用件</label>
-          <select id="ct-kind">
-            <option>明細について</option>
-            <option>空室・募集について</option>
-            <option>修繕について</option>
-            <option>登録内容の変更</option>
-            <option>その他</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="ct-body">内容</label>
-          <textarea id="ct-body" rows="6" placeholder="ご自由にお書きください。"></textarea>
-        </div>
-        <p id="ct-msg" class="msg" role="status" aria-live="polite"></p>
-        <button type="submit" id="ct-go" class="btn">送信する</button>
-      </form>
+      <details class="ask" id="ct-new">
+        <summary>新しくご相談する</summary>
+        <form id="f-contact" novalidate>
+          <div class="field">
+            <label for="ct-kind">ご用件</label>
+            <select id="ct-kind">
+              <option>明細について</option>
+              <option>空室・募集について</option>
+              <option>修繕について</option>
+              <option>火災保険について</option>
+              <option>登録内容の変更</option>
+              <option>その他</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ct-body">内容</label>
+            <textarea id="ct-body" rows="6" placeholder="ご自由にお書きください。"></textarea>
+          </div>
+          <p id="ct-msg" class="msg" role="status" aria-live="polite"></p>
+          <button type="submit" id="ct-go" class="btn">送信する</button>
+        </form>
+      </details>
 
-      <p class="sect">これまでのお問い合わせ</p>
+      <p class="sect">これまでのご相談</p>
       <div id="ct-list"></div>
 
       <p class="foot-note">
@@ -281,7 +291,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/config.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>
