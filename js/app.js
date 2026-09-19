@@ -508,7 +508,7 @@
       return;
     }
     $('in-list').innerHTML = list.map(function(x){
-      var sub = [x.prop, x.maker, x.no ? ('証券 ' + x.no) : '',
+      var sub = [x.prop, x.maker, x.tel, x.no ? ('証券 ' + x.no) : '',
                  x.until ? ('満期 ' + x.until) : '']
                 .filter(function(v){ return v; }).join('　');
       return '<div class="item ins">' +
@@ -575,6 +575,7 @@
         mime  : f.type || 'application/pdf',
         prop  : ($('in-prop').value  || '').trim(),
         maker : ($('in-maker').value || '').trim(),
+        tel   : ($('in-tel').value   || '').trim(),
         no    : ($('in-no').value    || '').trim(),
         until : ($('in-until').value || '').trim()
       })
