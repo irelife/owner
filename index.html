@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23FBF8F7%22%2C%22theme_color%22%3A%22%23FBF8F7%22%2C%22start_url%22%3A%22.%22%7D">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -38,8 +38,8 @@
       <div class="field">
         <label for="li-pass">パスワード</label>
         <div class="pw">
-  <input type="password" id="li-pass" name="current-password"
-                   autocomplete="current-password" placeholder="当社からお送りしたもの">
+          <input type="password" id="li-pass" name="current-password"
+                 autocomplete="current-password" placeholder="当社からお送りしたもの">
           <button type="button" class="pw-eye" data-eye="li-pass"
                   aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
         </div>
@@ -79,7 +79,7 @@
       <div class="field" id="np-cur-wrap">
         <label for="np-cur">いまのパスワード</label>
         <div class="pw">
-  <input type="password" id="np-cur" autocomplete="current-password">
+          <input type="password" id="np-cur" autocomplete="current-password">
           <button type="button" class="pw-eye" data-eye="np-cur"
                   aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
         </div>
@@ -87,7 +87,7 @@
       <div class="field">
         <label for="np-a">新しいパスワード<span class="hint">8文字以上</span></label>
         <div class="pw">
-  <input type="password" id="np-a" autocomplete="new-password">
+          <input type="password" id="np-a" autocomplete="new-password">
           <button type="button" class="pw-eye" data-eye="np-a"
                   aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
         </div>
@@ -95,7 +95,7 @@
       <div class="field">
         <label for="np-b">もう一度</label>
         <div class="pw">
-  <input type="password" id="np-b" autocomplete="new-password">
+          <input type="password" id="np-b" autocomplete="new-password">
           <button type="button" class="pw-eye" data-eye="np-b"
                   aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
         </div>
@@ -276,7 +276,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>
