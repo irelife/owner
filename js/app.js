@@ -95,8 +95,9 @@
   }
 
   /* ── 画面の出し入れ ───────────────────────── */
-  var SCREENS = ['login','forgot','newpass','home','status','papers','contact'];
-  var AFTER_LOGIN = { home:1, status:1, papers:1, contact:1 };
+  var SCREENS = ['login','forgot','newpass','home','status','papers',
+                 'works','insurance','contact'];
+  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1, contact:1 };
 
   function show(name){
     SCREENS.forEach(function(n){
@@ -111,6 +112,8 @@
     if(name === 'status')  loadStatus();
     if(name === 'papers')  loadPapers();
     if(name === 'contact') loadContact();
+    if(name === 'works')     loadWorks();
+    if(name === 'insurance') loadIns();
   }
 
   document.addEventListener('click', function(ev){
@@ -380,6 +383,209 @@
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('ct-go'), false); });
+  });
+
+  /* ══════════════════════════════════════════════
+   *  原状回復・修繕
+   *
+   *  いつ・何を・いくら・いつ相殺するかを1件ずつ。
+   *  そのまま、その工事についてご連絡いただけます。
+   * ══════════════════════════════════════════════ */
+  var WK_STATE = {
+    '見積中'  : 'wait',
+    '着手待ち': 'wait',
+    '工事中'  : 'wait',
+    '完了'    : 'done',
+    '精算済'  : 'done'
+  };
+
+  function loadWorks(){
+    if(cache.works){ paintWorks(cache.works); return; }
+    $('wk-body').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('works')
+      .then(function(r){ cache.works = r; paintWorks(r); })
+      .catch(function(e){
+        $('wk-body').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+  }
+
+  function paintWorks(r){
+    var list = Array.isArray(r.list) ? r.list : [];
+    if(!list.length){
+      $('wk-body').innerHTML =
+        '<div class="empty">いまのところ、原状回復・修繕の予定はありません。</div>';
+      return;
+    }
+    $('wk-body').innerHTML = list.map(function(w){
+      var kind = WK_STATE[w.state] || 'wait';
+      var rows = '';
+      if(w.from || w.to){
+        rows += line('いつ', (w.from || '—') + (w.to ? '　〜　' + w.to : '　〜'));
+      }
+      if(w.yen !== null && w.yen !== undefined){
+        rows += line('費用', yen(w.yen) + ' 円');
+      }
+      if(w.offset){ rows += line('相殺の予定', w.offset); }
+      if(w.note){   rows += line('補足', w.note); }
+
+      var talk = (w.msgs || []).map(function(m){
+        var mine = (m.who === 'オーナー');
+        return '<div class="bub' + (mine ? ' mine' : '') + '">' +
+               '<span class="bub-w">' + esc(mine ? 'お客様' : 'IREライフ') +
+               '　' + esc(m.at) + '</span>' +
+               '<span class="bub-b">' + esc(m.body) + '</span></div>';
+      }).join('');
+
+      return '<div class="work">' +
+        '<div class="wk-h">' +
+          '<span class="wk-p">' + esc(w.place || '—') + '</span>' +
+          '<span class="chip ' + kind + '">' + esc(w.state) + '</span>' +
+        '</div>' +
+        '<p class="wk-t">' + esc(w.what || '—') + '</p>' +
+        '<div class="kv">' + rows + '</div>' +
+        (talk ? '<div class="talk">' + talk + '</div>' : '') +
+        '<details class="ask">' +
+          '<summary>この工事について連絡する</summary>' +
+          '<textarea rows="4" data-wk="' + esc(w.id) +
+            '" placeholder="ご質問やご要望を、ご自由にお書きください。"></textarea>' +
+          '<button type="button" class="btn ghost" data-send="' + esc(w.id) + '">送信する</button>' +
+          '<span class="msg" data-msg="' + esc(w.id) + '"></span>' +
+        '</details>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call($('wk-body').querySelectorAll('[data-send]'), function(b){
+      b.addEventListener('click', function(){ sendWork(b.getAttribute('data-send'), b); });
+    });
+  }
+
+  function line(k, v){
+    return '<span class="k">' + esc(k) + '</span><span class="v">' + esc(v) + '</span>';
+  }
+
+  function sendWork(id, btn){
+    var ta  = $('wk-body').querySelector('[data-wk="' + id + '"]');
+    var msg = $('wk-body').querySelector('[data-msg="' + id + '"]');
+    var body = ta ? (ta.value || '').trim() : '';
+    if(!body){ say(msg, '内容をお書きください。'); return; }
+    if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
+
+    busy(btn, true);
+    auth('workMsg', { id: id, body: body })
+      .then(function(){
+        if(ta) ta.value = '';
+        /* ★ここで一覧を描き直すので、この欄の字は消えてしまいます。
+           消えない帯（toast）でお伝えします。
+           書いたものがその場でやりとりに並ぶので、それも目印になります。 */
+        toast('送信しました。お返事をお待ちください。');
+        cache.works = null;
+        loadWorks();
+      })
+      .catch(function(e){ say(msg, e.message); })
+      .then(function(){ busy(btn, false); });
+  }
+
+  /* ══════════════════════════════════════════════
+   *  火災保険の証券
+   *
+   *  ★写しは共有リンクにしません。Apps Script が読んで、
+   *    ご本人にだけお渡しします。
+   * ══════════════════════════════════════════════ */
+  function loadIns(){
+    $('in-list').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('insList')
+      .then(function(r){ paintIns(r.list || []); })
+      .catch(function(e){
+        $('in-list').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+  }
+
+  function paintIns(list){
+    if(!list.length){
+      $('in-list').innerHTML =
+        '<div class="empty">まだお預かりしていません。</div>';
+      return;
+    }
+    $('in-list').innerHTML = list.map(function(x){
+      var sub = [x.prop, x.maker, x.no ? ('証券 ' + x.no) : '',
+                 x.until ? ('満期 ' + x.until) : '']
+                .filter(function(v){ return v; }).join('　');
+      return '<div class="item ins">' +
+        '<button type="button" class="row-btn" data-ins="' + esc(x.id) + '">' +
+          '<span class="t">' + esc(x.label) + '</span>' +
+          (sub ? '<span class="s">' + esc(sub) + '</span>' : '') +
+        '</button>' +
+        '<button type="button" class="x" data-insdel="' + esc(x.id) +
+          '" aria-label="消す">✕</button>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call($('in-list').querySelectorAll('[data-ins]'), function(b){
+      b.addEventListener('click', function(){ openIns(b.getAttribute('data-ins'), b); });
+    });
+    Array.prototype.forEach.call($('in-list').querySelectorAll('[data-insdel]'), function(b){
+      b.addEventListener('click', function(){ dropIns(b.getAttribute('data-insdel')); });
+    });
+  }
+
+  function openIns(id, btn){
+    if(!id) return;
+    var old = btn && btn.textContent;
+    if(btn){ btn.disabled = true; }
+    auth('insFile', { id: id })
+      .then(function(r){
+        var bin = atob(r.b64 || '');
+        var buf = new Uint8Array(bin.length);
+        for(var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([buf], { type: r.mime || 'application/pdf' }));
+        window.open(url, '_blank');
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+      })
+      .catch(function(e){ toast(e.message); })
+      .then(function(){ if(btn){ btn.disabled = false; if(old) btn.textContent = old; } });
+  }
+
+  function dropIns(id){
+    if(!window.confirm('お預かりしている証券の写しを消します。\n\nよろしいですか？')) return;
+    auth('insDrop', { id: id })
+      .then(function(){ toast('消しました'); loadIns(); })
+      .catch(function(e){ toast(e.message); });
+  }
+
+  $('f-ins').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var msg = $('in-msg');
+    var f = $('in-file').files && $('in-file').files[0];
+    if(!f){ say(msg, '証券の写しを選んでください。'); return; }
+    if(f.size > 8 * 1024 * 1024){
+      say(msg, 'ファイルが大きすぎます。8MB までにしてください。'); return;
+    }
+
+    busy($('in-go'), true, '預かっています…');
+    var rd = new FileReader();
+    rd.onerror = function(){
+      say(msg, 'ファイルを読めませんでした。'); busy($('in-go'), false);
+    };
+    rd.onload = function(){
+      var b64 = String(rd.result || '').split(',')[1] || '';
+      auth('insPut', {
+        b64   : b64,
+        name  : f.name || '火災保険の証券',
+        mime  : f.type || 'application/pdf',
+        prop  : ($('in-prop').value  || '').trim(),
+        maker : ($('in-maker').value || '').trim(),
+        no    : ($('in-no').value    || '').trim(),
+        until : ($('in-until').value || '').trim()
+      })
+      .then(function(){
+        $('f-ins').reset();
+        say(msg, 'お預かりしました。ありがとうございます。', true);
+        loadIns();
+      })
+      .catch(function(e){ say(msg, e.message); })
+      .then(function(){ busy($('in-go'), false); });
+    };
+    rd.readAsDataURL(f);
   });
 
   /* ── メニュー ─────────────────────────────── */

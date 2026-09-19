@@ -324,3 +324,69 @@ input:focus,select:focus,textarea:focus,button:focus-visible{
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important;transition:none !important}
 }
+
+/* ============================================================
+ *  原状回復・修繕／火災保険（2026/9/19 に追加）
+ * ============================================================ */
+
+/* ── 工事の1件 ── */
+.work{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px 16px 14px;margin-bottom:12px;box-shadow:var(--shadow);
+}
+.wk-h{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.wk-p{font-size:13px;color:var(--muted);font-weight:700}
+.wk-t{
+  font-family:var(--mincho);font-size:17px;font-weight:700;
+  margin:8px 0 12px;line-height:1.6;
+}
+.chip.done{background:var(--good-tint);color:var(--good)}
+
+/* いつ・費用・相殺の予定 */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline}
+.kv .k{font-size:12.5px;color:var(--faint);white-space:nowrap}
+.kv .v{font-size:15px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+/* やりとり */
+.talk{
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);
+  display:flex;flex-direction:column;gap:10px;
+}
+.bub{
+  display:flex;flex-direction:column;gap:4px;max-width:88%;
+  background:var(--paper);border:1px solid var(--line-soft);
+  border-radius:12px;padding:10px 12px;
+}
+.bub.mine{align-self:flex-end;background:var(--brand-tint);border-color:transparent}
+.bub-w{font-size:11.5px;color:var(--faint)}
+.bub-b{font-size:14.5px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* この工事について連絡する */
+.ask{margin-top:14px}
+.ask summary{
+  font-size:14px;color:var(--brand);cursor:pointer;
+  padding:8px 0;list-style:none;
+}
+.ask summary::-webkit-details-marker{display:none}
+.ask summary::before{content:"＋　"}
+.ask[open] summary::before{content:"−　"}
+.ask textarea{width:100%;margin-bottom:10px}
+.ask .btn{margin-bottom:6px}
+.ask .msg{display:block}
+
+/* ── 火災保険 ── */
+.item.ins{align-items:stretch}
+.item.ins .row-btn{flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
+.item.ins .x{
+  flex:none;width:44px;border:0;background:transparent;color:var(--faint);
+  font-size:16px;cursor:pointer;border-radius:10px;
+}
+.item.ins .x:hover{background:var(--brand-tint);color:var(--brand)}
+input[type="file"]{
+  font:inherit;font-size:14px;padding:10px 0;color:var(--muted);
+}
+input[type="file"]::file-selector-button{
+  font:inherit;font-size:14px;margin-right:12px;padding:10px 16px;
+  border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--ink);cursor:pointer;
+}
