@@ -43,11 +43,22 @@
     clearTimeout(toast._h);
     toast._h = setTimeout(function(){ t.hidden = true; }, 2600);
   }
+  /* ★二重で呼ばれても壊れないようにします。
+   *  前は2回目に「送信中…」を元の字として覚えてしまい、
+   *  戻しても「送信中…」のままになっていました。 */
   function busy(btn, on, label){
     if(!btn) return;
     btn.disabled = !!on;
-    if(on){ btn.dataset.label = btn.textContent; btn.textContent = label || '送信中…'; }
-    else if(btn.dataset.label){ btn.textContent = btn.dataset.label; }
+    if(on){
+      if(btn.dataset.busy !== '1'){
+        btn.dataset.label = btn.textContent;
+        btn.dataset.busy  = '1';
+      }
+      btn.textContent = label || '送信中…';
+    }else{
+      if(btn.dataset.label) btn.textContent = btn.dataset.label;
+      btn.dataset.busy = '';
+    }
   }
   function say(el, text, ok){
     if(!el) return;
@@ -167,7 +178,13 @@
          どのアドレスが登録済みかを外から調べられてしまいます。 */
     call('forgot', { email: mail })
       .then(function(){
-        say(msg, 'ご登録があれば、再設定のご案内をお送りしました。メールをご確認ください。', true);
+        /* ★送れたことがはっきり分かるよう、画面を戻します。
+             同じ画面に小さく字が出るだけだと、送れたのか
+             分からず、何度も押すことになります。 */
+        say(msg, '');
+        $('fg-mail').value = '';
+        show('login');
+        toast('再設定のご案内をお送りしました。メールをご確認ください。');
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('fg-go'), false); });
@@ -581,8 +598,12 @@
       })
       .then(function(){
         $('f-ins').reset();
-        say(msg, 'お預かりしました。ありがとうございます。', true);
+        say(msg, '');
         loadIns();
+        toast('お預かりしました。ありがとうございます。');
+        /* 預かったものの一覧が見えるところまで送ります */
+        try{ $('in-list').scrollIntoView({ behavior:'smooth', block:'center' }); }
+        catch(e){ $('in-list').scrollIntoView(); }
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('in-go'), false); });
