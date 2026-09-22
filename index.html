@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=19">
+<link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
 
@@ -238,10 +238,75 @@
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">税理士へ送信</h1>
       <span class="bar-line"></span>
-      <p class="sub">月別・年別の送金明細をPDFにまとめ、税理士先生へ定型文面付きで
-        メール送信できるようにいたします。</p>
-      <div class="empty">ただいま準備しております。
-        ご利用いただけるようになりましたら、当社よりご案内いたします。</div>
+      <p class="sub">1か月ぶん・1年ぶんの送金明細を、税理士先生へお送りいただけます。
+        表（CSV）と明細書（PDF）をお手元に保存し、ご用意した文面でお送りできます。</p>
+
+      <!-- ① 税理士先生のご連絡先 -->
+      <section class="acc">
+        <p class="acc-h">税理士先生のご連絡先</p>
+        <div class="field">
+          <label for="ac-firm">事務所名<span class="hint">任意</span></label>
+          <input type="text" id="ac-firm" placeholder="例）○○税理士事務所">
+        </div>
+        <div class="field">
+          <label for="ac-name">先生のお名前<span class="hint">任意</span></label>
+          <input type="text" id="ac-name" placeholder="例）山田 太郎">
+        </div>
+        <div class="field">
+          <label for="ac-mail">メールアドレス</label>
+          <input type="email" id="ac-mail" inputmode="email" autocapitalize="off"
+                 spellcheck="false" placeholder="例）tax@example.co.jp">
+        </div>
+        <div class="acc-acts">
+          <button type="button" id="ac-save" class="btn ghost sm">この端末に覚える</button>
+          <span id="ac-saved" class="acc-note"></span>
+        </div>
+        <p class="acc-note">★ この端末の中だけに覚えます。当社へは送りません。</p>
+      </section>
+
+      <!-- ② 何をお送りするか -->
+      <section class="acc">
+        <p class="acc-h">何をお送りするか</p>
+        <div class="acc-tabs" role="group" aria-label="まとめかた">
+          <button type="button" id="ac-m" class="acc-tab on">1か月ぶん</button>
+          <button type="button" id="ac-y" class="acc-tab">1年ぶん</button>
+        </div>
+        <div class="field">
+          <label for="ac-year">対象の年<span class="hint">1月〜12月</span></label>
+          <select id="ac-year" class="sel"></select>
+        </div>
+        <div class="field" id="ac-month-wrap">
+          <label for="ac-month">対象の月</label>
+          <select id="ac-month" class="sel"></select>
+        </div>
+      </section>
+
+      <!-- ③ 中身の確認 -->
+      <section class="acc" id="ac-prev-wrap">
+        <p class="acc-h" id="ac-prev-h">中身の確認</p>
+        <div id="ac-prev"></div>
+        <div class="acc-acts">
+          <button type="button" id="ac-csv" class="btn ghost sm">表（CSV）を保存</button>
+          <button type="button" id="ac-pdf" class="btn ghost sm">明細書（PDF）を保存</button>
+        </div>
+      </section>
+
+      <!-- ④ お送りする -->
+      <section class="acc">
+        <p class="acc-h">お送りする</p>
+        <div class="field">
+          <label for="ac-subj">件名</label>
+          <input type="text" id="ac-subj">
+        </div>
+        <div class="field">
+          <label for="ac-body">本文</label>
+          <textarea id="ac-body" rows="12"></textarea>
+        </div>
+        <p id="ac-msg" class="msg" role="status" aria-live="polite"></p>
+        <button type="button" id="ac-go" class="btn">メールを作る</button>
+        <p class="acc-note">★ お使いのメールソフトが、件名と本文の入った状態で開きます。
+          上で保存したファイルを 添付して、送信してください。</p>
+      </section>
     </section>
 
     <!-- ── 原状回復・修繕 ── -->
@@ -375,7 +440,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
+<script src="js/config.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
 </body>
 </html>

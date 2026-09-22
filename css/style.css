@@ -658,6 +658,36 @@ input[type=file]::file-selector-button{
 .item .s{ display:block; margin-top:2px; font-size:13px; line-height:1.7;
   color:var(--mut-fg); }
 
+/* ── 税理士へ送信（2026-09-22）───────────── */
+.acc{
+  margin-top:24px; padding:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+}
+.acc-h{ margin:0 0 18px; font-size:17px; font-weight:700; }
+.acc-note{ margin:10px 0 0; font-size:12.5px; line-height:1.8; color:var(--mut-fg); }
+.acc-note.ok{ color:var(--pri); }
+.acc-acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+.acc-acts .btn{ margin-top:0; }
+
+/* 1か月ぶん／1年ぶん */
+.acc-tabs{ display:flex; gap:10px; margin-bottom:18px; }
+.acc-tab{
+  flex:1 1 0; min-height:46px; padding:0 12px; border-radius:12px;
+  border:1px solid var(--bd); background:transparent; color:var(--fg);
+  font:inherit; font-size:15px; font-weight:600; cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.acc-tab:hover{ background:var(--acc); }
+.acc-tab.on{
+  background:var(--pri); color:var(--pri-fg); border-color:var(--pri);
+}
+
+#ac-prev .rows{ margin-top:14px; }
+.row.acc-sum{
+  margin-top:0; border-top:1px solid var(--bd); font-weight:700; font-size:17px;
+}
+.row.acc-sum span:first-child{ color:var(--fg); }
+
 /* ── 画面が広いとき ───────────────────────── */
 @media (min-width:640px){
   .tiles{ grid-template-columns:1fr 1fr; }
