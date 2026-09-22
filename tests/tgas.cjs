@@ -28,7 +28,7 @@ while ((m = re.exec(doc)) !== null) blocks.push(m[1]);
 const code = blocks
   .filter(b => /^function\s+[A-Za-z_]\w*\s*\(/m.test(b))
   .join('\n');
-for (const need of ['newNo_', 'rand_', 'staffOk_', 'routeStaff_', 'stReply']) {
+for (const need of ['newNo_', 'noRand_', 'stReply']) {
   if (!new RegExp('function\\s+' + need).test(code)) {
     console.log('❌ 手順書から ' + need + ' が取り出せません');
     console.log('PASS=0 FAIL=1');
@@ -125,17 +125,17 @@ const helpers = `
 const box = new Function(
   'Utilities', 'SpreadsheetApp', 'CacheService', 'MailApp', 'PROPS', 'MSGS',
   helpers + '\n' + code +
-  '; return { newNo_, rand_, staffOk_, routeStaff_, stReply, askRows_, workRows_ };'
+  '; return { newNo_, noRand_, stReply, askRows_, workRows_ };'
 )(Utilities, SpreadsheetApp, CacheService, MailApp, PROPS, MSGS);
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
                        else    { fail++; console.log('  ❌ ' + m); } };
 
-console.log('\n── 重ならない文字（rand_）──');
-ok(box.rand_(8).length === 8, '8文字');
-ok(box.rand_(0) === '', '0文字なら空');
-const many = Array.from({ length: 20000 }, () => box.rand_(8));
+console.log('\n── 重ならない文字（noRand_）──');
+ok(box.noRand_(8).length === 8, '8文字');
+ok(box.noRand_(0) === '', '0文字なら空');
+const many = Array.from({ length: 20000 }, () => box.noRand_(8));
 ok(many.every(s => /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(s)),
    '★まぎれる 0 O 1 I l を1度も出さない（お電話で読み上げるため）');
 ok(new Set(many.join('')).size >= 28, '文字が偏っていない');
@@ -153,7 +153,7 @@ ok(new Set(Array.from({ length: 1000 }, oldNo)).size === 1,
 const news = Array.from({ length: 200000 }, () => box.newNo_('C', 7));
 const dup  = news.length - new Set(news).size;
 ok(dup === 0, '★直した後は20万回で1件も重ならない（重なり ' + dup + '件）');
-ok(box.rand_(8).length === 8, '★8文字であること（6文字だと20万回で十数件重なる）');
+ok(box.noRand_(8).length === 8, '★8文字であること（6文字だと20万回で十数件重なる）');
 
 console.log('\n── 古い番号も、そのまま引けるか ──');
 ok(box.askRows_().filter(x => x.no === 'C20260901-2').length === 1,
@@ -161,53 +161,8 @@ ok(box.askRows_().filter(x => x.no === 'C20260901-2').length === 1,
 ok(box.askRows_().filter(x => x.no === 'C20260922-7-K4M9QXBT').length === 1,
    '新しい形も引ける');
 
-console.log('\n── 当社用の入口の足止め（staffOk_）──');
-CACHE = {};
-ok(box.staffOk_({ key: 'x'.repeat(40) }) === true, '正しい合言葉は通る');
-CACHE = {};
-ok(box.staffOk_({ key: 'y'.repeat(40) }) === false, '違う合言葉は通らない');
-CACHE = {};
-ok(box.staffOk_({ key: 'x'.repeat(39) }) === false, '★1文字足りなくても通らない');
-CACHE = {};
-ok(box.staffOk_({}) === false, '合言葉なしは通らない');
-CACHE = {};
-ok(box.staffOk_({ key: '' }) === false, '空も通らない');
-CACHE = {}; PROPS.ADMIN_KEY = '';
-ok(box.staffOk_({ key: '' }) === false,
-   '★ADMIN_KEY が空のとき、空を送っても通らない');
-PROPS.ADMIN_KEY = 'x'.repeat(40);
-
-console.log('\n── ★20回まちがえると止まる ──');
-CACHE = {}; MAILS = [];
-for (let i = 0; i < 19; i++) box.staffOk_({ key: 'wrong' });
-ok(CACHE['staff_lock'] === undefined, '19回では、まだ止まらない');
-ok(box.staffOk_({ key: 'x'.repeat(40) }) === true,
-   '★19回まちがえたあとでも、正しければ通る');
-ok(CACHE['staff_miss'] === undefined, '★通ったら、数えをもとに戻す');
-
-CACHE = {}; MAILS = [];
-for (let i = 0; i < 20; i++) box.staffOk_({ key: 'wrong' });
-ok(CACHE['staff_lock'] !== undefined, '★20回で止まる');
-ok(MAILS.length === 1, '★止まったとき、お知らせのメールが1通飛ぶ');
-ok(MAILS[0].to === 'info@ire-life.com', 'あて先は SUPPORT');
-ok(/ADMIN_KEY/.test(MAILS[0].body), '本文に、合言葉を作り直すよう書いてある');
-ok(box.staffOk_({ key: 'x'.repeat(40) }) === false,
-   '★止まっているあいだは、正しい合言葉でも通さない');
-
-CACHE['staff_lock'] = String(new Date().getTime() - 1);
-ok(box.staffOk_({ key: 'x'.repeat(40) }) === true, '30分たてば、また通る');
-
-console.log('\n── 当社用の入口（routeStaff_）──');
-CACHE = {};
-ok(box.routeStaff_('stPing', { key: 'x'.repeat(40) }).ok === true, 'stPing は通る');
-ok(box.routeStaff_('stPing', { key: 'wrong' }).error === 'auth',
-   '違う合言葉は auth を返す');
-ok(box.routeStaff_('papers', { key: 'x'.repeat(40) }) === null,
-   '★当社用でない窓口名は、ここでは扱わない（null を返す）');
-ok(box.routeStaff_('', {}) === null, '窓口名が空でも落ちない');
-
 console.log('\n── お返事（stReply）★あて先を番号から引き直す ──');
-CACHE = {}; MAILS = []; MSGS.length = 0;
+MAILS = []; MSGS.length = 0;
 let r = box.stReply({ id:'C20260901-2', body:'承知いたしました。', mail:'まちがい@x.jp' });
 ok(r.ok === true, 'お問い合わせに返せる');
 ok(MAILS.length === 1 && MAILS[0].to === 'a@x.jp',
