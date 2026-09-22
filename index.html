@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 
@@ -136,27 +136,32 @@
           <span class="tile-k">送金明細</span>
           <span class="tile-t">今月のご送金</span>
           <span class="tile-a" id="hm-total">—</span>
-          <span class="tile-d">毎月の送金額と収支の内訳を、一目でご確認いただけます。</span>
+          <span class="tile-d">毎月の送金額と収支の内訳を一目で確認できる明細書です。</span>
         </button>
         <button type="button" class="tile" data-go="status">
           <span class="tile-k">入居状況</span>
           <span class="tile-t">すべての物件の入居状況</span>
-          <span class="tile-d">入居・空室・解約予定を、そのまま把握できる画面です。</span>
+          <span class="tile-d">入居・空室・解約予定をリアルタイムで把握できる管理画面です。</span>
         </button>
         <button type="button" class="tile" data-go="works">
           <span class="tile-k">修繕</span>
           <span class="tile-t">修繕履歴と費用の管理</span>
-          <span class="tile-d">これまでの修繕内容と、ご送金から相殺される費用をまとめてご確認いただけます。</span>
+          <span class="tile-d">これまでの修繕内容と、送金から相殺される費用をまとめて確認できます。</span>
         </button>
         <button type="button" class="tile" data-go="insurance">
           <span class="tile-k">火災保険</span>
           <span class="tile-t">保険証券の提出と満期管理</span>
-          <span class="tile-d">火災保険の証券の写しをお預かりし、満期まで一元管理いたします。</span>
+          <span class="tile-d">火災保険の証券写しをアップロードし、満期まで一元管理できます。</span>
         </button>
         <button type="button" class="tile" data-go="contact">
           <span class="tile-k">お問い合わせ</span>
-          <span class="tile-t">いつでもどうぞ。<br>どんなことでも。</span>
-          <span class="tile-d">運用に関するご質問やご要望を、そのままお送りいただける窓口です。</span>
+          <span class="tile-t">いつでもどうぞ。どんなことでも。</span>
+          <span class="tile-d">運用に関するご質問やご要望をそのままお送りいただける窓口です。</span>
+        </button>
+        <button type="button" class="tile" data-go="accountant">
+          <span class="tile-k">税理士へ送信</span>
+          <span class="tile-t">明細（月別・年度）を税理士へメール</span>
+          <span class="tile-d">月別・年度別の送金明細をPDFにまとめ、税理士先生へ定型文面付きでメール送信できます。</span>
         </button>
       </nav>
 
@@ -166,8 +171,11 @@
         <div class="chart-box" id="hm-chart"></div>
       </section>
 
-      <p class="sect">今月の動き</p>
-      <div class="moves" id="hm-moves"></div>
+      <!-- ★ 見本と同じく、入退去の予定があるときだけ出します -->
+      <section id="hm-moves-wrap" hidden>
+        <p class="sect">今月の動き</p>
+        <div class="moves" id="hm-moves"></div>
+      </section>
 
       <!-- ★ app.js が触る欄。いまのホームには出しませんが、
            取り除くと app.js が止まるため、隠したまま残しています。 -->
@@ -216,6 +224,17 @@
       </div>
 
       <div id="pp-body"></div>
+    </section>
+
+    <!-- ── 税理士へ送信 ── -->
+    <section id="s-accountant" class="scr pad" hidden>
+      <button type="button" class="back" data-go="home">← ホーム</button>
+      <h1 class="h-mincho">税理士へ送信</h1>
+      <span class="bar-line"></span>
+      <p class="sub">月別・年度別の送金明細をPDFにまとめ、税理士先生へ定型文面付きで
+        メール送信できるようにいたします。</p>
+      <div class="empty">ただいま準備しております。
+        ご利用いただけるようになりましたら、当社よりご案内いたします。</div>
     </section>
 
     <!-- ── 原状回復・修繕 ── -->
@@ -320,7 +339,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=13"></script>
-<script src="js/app.js?v=13"></script>
+<script src="js/config.js?v=15"></script>
+<script src="js/app.js?v=15"></script>
 </body>
 </html>
