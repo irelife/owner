@@ -284,6 +284,7 @@
     }
     loadMoves();
     loadChart();
+    loadCt();
   }
 
   function paintHome(r){
@@ -839,7 +840,11 @@
       var hi = Math.round(x.inc / maxBar * 100);
       var ho = Math.round(x.out / maxBar * 100);
       return '<div class="c2">' +
-        '<span class="c2-v">' + (i === last ? esc(man(x.inc)) : '') + '</span>' +
+        /* ★2026/9/23 まで、いちばん右の1本だけに金額を出していました。
+         *   「オレンジの棒の上に数字がない」とのご指摘のとおりで、
+         *   ぜんぶの棒に出します。せまい画面では重なって読めないため、
+         *   3か月ごとと今月だけを出す（CSS の @media で切り替え）。 */
+        '<span class="c2-v">' + esc(man(x.inc)) + '</span>' +
         '<span class="c2-w">' +
           '<span class="c2-b inc" style="height:' + Math.max(x.inc ? 2 : 0, hi) + '%"></span>' +
           '<span class="c2-b out" style="height:' + Math.max(x.out ? 2 : 0, ho) + '%"></span>' +
@@ -888,6 +893,80 @@
 
     $('hm-chart-wrap').hidden = false;
   }
+  /* ══════════════════════════════════════════════
+   *  お問い合わせの、返事の数（ホームのカードに出します）
+   *
+   *  ★「見たかどうか」は、この端末の中だけに覚えます（CT_KEY）。
+   *    当社へは送りません。窓口も足していません。
+   *
+   *  ★日時ではなく、やりとりの「本数」で見ています。
+   *    日時の文字は表の書式で変わることがあり、読めなかったときに
+   *    数を間違えます。本数は整数なので、間違えようがありません。
+   * ══════════════════════════════════════════════ */
+
+  /* ===== 検査できる道具（お問い合わせの数）ここから ===== */
+
+  /* 返事が来ていて、まだ見ていないものの数 */
+  function ctNew(list, seen){
+    var n = 0;
+    (Array.isArray(list) ? list : []).forEach(function(t){
+      var msgs = (t && Array.isArray(t.msgs)) ? t.msgs : [];
+      if(!msgs.length) return;
+      /* いちばん新しい発言が自分なら、返事はまだ来ていません */
+      if(String(msgs[msgs.length - 1].who || '') === 'オーナー') return;
+      var id  = String((t && t.id != null) ? t.id : '');
+      if(!id) return;
+      var was = (seen && seen[id] != null) ? Number(seen[id]) : 0;
+      if(!isFinite(was) || was < 0) was = 0;
+      if(msgs.length > was) n++;
+    });
+    return n;
+  }
+
+  /* いま見た状態（やりとりの本数）を作ります */
+  function ctSeen(list){
+    var m = {};
+    (Array.isArray(list) ? list : []).forEach(function(t){
+      var id = String((t && t.id != null) ? t.id : '');
+      if(!id) return;
+      m[id] = (t && Array.isArray(t.msgs)) ? t.msgs.length : 0;
+    });
+    return m;
+  }
+
+  /* ===== 検査できる道具（お問い合わせの数）ここまで ===== */
+
+  var CT_KEY = 'ire_owner_seen';
+
+  function ctSeenGet(){
+    try{ return JSON.parse(localStorage.getItem(CT_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function ctSeenPut(m){
+    try{ localStorage.setItem(CT_KEY, JSON.stringify(m)); }catch(e){}
+  }
+
+  function ctBadge(n){
+    var el = $('hm-ct-n'), tile = $('hm-ct-tile');
+    if(!el || !tile) return;
+    el.textContent = n > 99 ? '99+' : String(n);
+    el.hidden = !n;
+    tile.classList.toggle('has', !!n);
+    /* 読み上げにも伝えます */
+    el.setAttribute('aria-label', n ? ('当社からの回答が ' + n + ' 件あります') : '');
+  }
+
+  /* ★ホームのついでに読みます。失敗しても画面は出したままにします。 */
+  function loadCt(){
+    auth('talks', null, true)
+      .then(function(r){
+        var list = Array.isArray(r.list) ? r.list : [];
+        cache.talks = list;
+        ctBadge(ctNew(list, ctSeenGet()));
+      })
+      .catch(function(){ ctBadge(0); });
+  }
+
   /* ══════════════════════════════════════════════
    *  税理士へ送信
    *
@@ -1247,7 +1326,13 @@
   function loadContact(){
     $('ct-list').innerHTML = '<div class="empty">読み込んでいます…</div>';
     auth('talks')
-      .then(function(r){ paintTalks(r.list || []); })
+      .then(function(r){
+        var list = Array.isArray(r.list) ? r.list : [];
+        paintTalks(list);
+        /* ★この画面を開いた時点で「見た」ことにします */
+        ctSeenPut(ctSeen(list));
+        ctBadge(0);
+      })
       .catch(function(e){
         $('ct-list').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
       });

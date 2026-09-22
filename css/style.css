@@ -288,9 +288,23 @@ input[type=file]::file-selector-button{
 }
 .ch2{ display:flex; align-items:stretch; gap:4px; height:190px; }
 .c2{ position:relative; flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
+/* 棒の上に出す「その月の収入」。
+   ★2026/9/23 まで 10px・薄い色で、いちばん右の1本だけでした。
+     読めないというご指摘のとおりなので、大きくし、色を棒と同じにし、
+     ぜんぶの棒に出します。 */
 .c2-v{
-  height:16px; font-size:10px; line-height:16px; text-align:center;
-  color:var(--mut-fg); font-variant-numeric:tabular-nums; white-space:nowrap;
+  height:18px; font-size:11px; line-height:18px; text-align:center;
+  color:var(--inc); font-weight:700; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+/* ★せまい画面では、12個ぜんぶ出すと重なって読めません。
+     3か月ごとと、いちばん右（今月）だけを出します。
+     visibility にしているのは、場所を空けたままにして
+     棒の高さをそろえるためです。 */
+@media (max-width:639px){
+  .ch2 .c2-v{ visibility:hidden; }
+  .ch2 .c2:nth-child(3n+1) .c2-v,
+  .ch2 .c2:last-child .c2-v{ visibility:visible; }
 }
 .c2-w{
   position:relative; flex:1 1 auto;
@@ -303,6 +317,11 @@ input[type=file]::file-selector-button{
 .c2-x{
   margin-top:6px; font-size:11px; line-height:1.4; text-align:center;
   color:var(--mut-fg); white-space:nowrap;
+}
+/* 画面が広いときは、金額も月も大きくします */
+@media (min-width:640px){
+  .c2-v{ height:22px; font-size:13px; line-height:22px; }
+  .c2-x{ font-size:12.5px; color:var(--fg); }
 }
 .c2:hover .c2-w{ background:hsl(var(--accent) / .5); }
 
@@ -335,7 +354,7 @@ input[type=file]::file-selector-button{
   stroke-linejoin:round; stroke-linecap:round; }
 .ln-d{ fill:var(--fg); stroke:var(--card-bg); stroke-width:2; }
 .ln-k{ position:absolute; top:0; left:0; font-size:11px; color:var(--mut-fg); }
-.ln-a{ position:absolute; top:0; right:0; font-size:13px; font-weight:700;
+.ln-a{ position:absolute; top:0; right:0; font-size:15px; font-weight:700;
   font-variant-numeric:tabular-nums; }
 
 /* 見わけの札 */
@@ -376,12 +395,30 @@ input[type=file]::file-selector-button{
   display:grid; grid-template-columns:1fr; gap:20px; margin-top:48px;
 }
 .tile{
+  position:relative;
   display:flex; flex-direction:column; text-align:left;
   padding:32px; border:1px solid var(--bd); border-radius:24px;
   background:var(--card-bg); color:var(--fg); cursor:pointer;
-  font:inherit; transition:border-color .15s;
+  font:inherit; transition:border-color .15s, box-shadow .15s;
 }
 .tile:hover{ border-color:hsl(var(--primary) / .6); }
+
+/* ★当社からの回答が来ていて、まだご覧になっていないとき。
+   色だけに頼らないよう、右上に「件数」も出します。 */
+.tile.has{
+  border-color:var(--pri);
+  box-shadow:0 0 0 1px var(--pri) inset;
+}
+.tile-n{
+  position:absolute; top:20px; right:20px;
+  min-width:28px; height:28px; padding:0 9px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--pri); color:var(--pri-fg);
+  font-size:14px; font-weight:700; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+/* 件数がある分、見出しが数字にぶつからないようにします */
+.tile.has .tile-k, .tile.has .tile-t{ padding-right:44px; }
 .tile-k{
   font-size:12px; font-weight:600; letter-spacing:.04em;
   color:var(--pri); text-transform:uppercase;
