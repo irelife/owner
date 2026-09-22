@@ -48,6 +48,13 @@
   --bd-40: hsl(var(--border) / .4);
   --ng:    hsl(var(--destructive));
 
+  /* 図の色。地（--card）に対して明暗差 6.7:1／4.4:1、
+     色の隔たり ΔE 22.4（見分けがつく下限は 15）で確かめたものです。
+     ★もとの見本の値（収入 #6f2c3a）は、カードの地との明暗差が
+       1.3:1 しかなく、棒が地に沈んで見えませんでした。 */
+  --inc: #E2B357;   /* 収入 */
+  --out: #5C9FB5;   /* 支出 */
+
   --ic-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='23 6 13.5 15.5 8.5 10.5 1 18'/%3E%3Cpolyline points='17 6 23 6 23 12'/%3E%3C/svg%3E");
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans',
           'Yu Gothic', 'Noto Sans JP', sans-serif;
@@ -272,26 +279,119 @@ input[type=file]::file-selector-button{
   color:var(--mut-fg); }
 .mv .st-tag{ font-size:13px; padding:5px 12px; }
 
-/* ── 年間の収支 ───────────────────────────── */
+/* ── 年間の収支 ─────────────────────────────
+   上の図（.ch2）＝収入と支出の棒、下の図（.ln-wrap）＝累積収支の折れ線。
+   月の並びは上下でそろえてあります。 */
 .chart-box{
   padding:24px 16px 16px; background:var(--card-bg);
   border:1px solid var(--bd); border-radius:16px;
 }
-.ch{ display:flex; align-items:stretch; gap:4px; height:200px; }
-.ch-c{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
-.ch-v{
-  font-size:10px; line-height:1.4; text-align:center; color:var(--mut-fg);
-  font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden;
+.ch2{ display:flex; align-items:stretch; gap:4px; height:190px; }
+.c2{ position:relative; flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
+.c2-v{
+  height:16px; font-size:10px; line-height:16px; text-align:center;
+  color:var(--mut-fg); font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.ch-w{ position:relative; flex:1 1 auto; }
-.ch-b{
-  position:absolute; left:2px; right:2px; bottom:0; min-height:3px;
-  border-radius:6px 6px 0 0; background:var(--pri);
+.c2-w{
+  position:relative; flex:1 1 auto;
+  display:flex; align-items:flex-end; justify-content:center; gap:2px;
+  border-bottom:1px solid var(--bd-40);
 }
-.ch-x{
+.c2-b{ width:calc(50% - 2px); max-width:14px; min-height:0; border-radius:4px 4px 0 0; }
+.c2-b.inc{ background:var(--inc); }
+.c2-b.out{ background:var(--out); }
+.c2-x{
   margin-top:6px; font-size:11px; line-height:1.4; text-align:center;
   color:var(--mut-fg); white-space:nowrap;
 }
+.c2:hover .c2-w{ background:hsl(var(--accent) / .5); }
+
+/* ホバーで出る吹き出し */
+.c2-tip{
+  display:none; position:absolute; left:50%; bottom:100%; z-index:5;
+  transform:translateX(-50%); margin-bottom:6px;
+  min-width:172px; padding:10px 12px;
+  background:var(--bg); border:1px solid var(--bd); border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4); text-align:left;
+}
+.c2:hover .c2-tip, .c2:focus-within .c2-tip{ display:block; }
+.c2-tip b{ display:block; font-size:12px; margin-bottom:6px; }
+.c2-tip i{
+  display:flex; align-items:center; gap:6px;
+  font-style:normal; font-size:12px; color:var(--mut-fg); line-height:1.9;
+}
+.c2-tip s{
+  margin-left:auto; text-decoration:none; color:var(--fg); font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.c2:first-child .c2-tip{ left:0; transform:none; }
+.c2:last-child  .c2-tip{ left:auto; right:0; transform:none; }
+
+/* 下の図：累積収支 */
+.ln-wrap{ position:relative; height:76px; margin-top:20px;
+  padding-top:18px; border-top:1px solid var(--bd-40); }
+.ln{ display:block; width:100%; height:100%; overflow:visible; }
+.ln-p{ fill:none; stroke:var(--fg); stroke-width:2;
+  stroke-linejoin:round; stroke-linecap:round; }
+.ln-d{ fill:var(--fg); stroke:var(--card-bg); stroke-width:2; }
+.ln-k{ position:absolute; top:0; left:0; font-size:11px; color:var(--mut-fg); }
+.ln-a{ position:absolute; top:0; right:0; font-size:13px; font-weight:700;
+  font-variant-numeric:tabular-nums; }
+
+/* 見わけの札 */
+.ch-lg{
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  flex-wrap:wrap; margin-top:18px;
+}
+.ch-lg span{ display:flex; align-items:center; gap:6px;
+  font-size:12px; color:var(--mut-fg); }
+.sw{ display:inline-block; width:11px; height:11px; border-radius:2px; }
+.sw.inc{ background:var(--inc); }
+.sw.out{ background:var(--out); }
+.sw.run{ background:var(--fg); }
+.sw.run.line{ width:16px; height:2px; border-radius:999px; }
+
+/* 数字で見る（色だけに頼らないための表） */
+.ch-tb{ margin-top:16px; }
+.ch-tb summary{
+  font-size:13px; color:var(--mut-fg); cursor:pointer; padding:6px 0;
+}
+.ch-tb summary:hover{ color:var(--fg); }
+.ch-tb table{ width:100%; border-collapse:collapse; margin-top:8px; }
+.ch-tb th, .ch-tb td{
+  padding:8px 6px; font-size:13px; text-align:right;
+  border-top:1px solid var(--bd-40); font-variant-numeric:tabular-nums;
+}
+.ch-tb thead th{ color:var(--mut-fg); font-weight:600; border-top:0; }
+.ch-tb th[scope=row]{ text-align:left; font-weight:500; color:var(--mut-fg); }
+.ic-up{
+  display:inline-block; width:22px; height:22px; margin-right:8px;
+  vertical-align:-3px; background:var(--pri);
+  -webkit-mask:var(--ic-up) center / contain no-repeat;
+          mask:var(--ic-up) center / contain no-repeat;
+}
+
+/* ── タイル（ホームのカード） ─────────────── */
+.tiles{
+  display:grid; grid-template-columns:1fr; gap:20px; margin-top:48px;
+}
+.tile{
+  display:flex; flex-direction:column; text-align:left;
+  padding:32px; border:1px solid var(--bd); border-radius:24px;
+  background:var(--card-bg); color:var(--fg); cursor:pointer;
+  font:inherit; transition:border-color .15s;
+}
+.tile:hover{ border-color:hsl(var(--primary) / .6); }
+.tile-k{
+  font-size:12px; font-weight:600; letter-spacing:.04em;
+  color:var(--pri); text-transform:uppercase;
+}
+/* 見本（FeatureCard）の text-lg lg:text-xl に合わせています */
+.tile-t{ margin-top:8px; font-size:18px; font-weight:700; letter-spacing:-.02em;
+  line-height:1.45; word-break:keep-all; }
+.tile-a{ margin-top:4px; font-size:36px; font-weight:700; line-height:1.15;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.tile-d{ margin-top:12px; font-size:14px; line-height:1.75; color:var(--mut-fg); }
 
 /* ── 送金明細 ─────────────────────────────
    いちばん新しい1件は .pp.big（全幅）、
@@ -567,7 +667,7 @@ input[type=file]::file-selector-button{
   .tiles{ grid-template-columns:1fr 1fr 1fr; }
   .h-mincho{ font-size:40px; }
   .amount{ font-size:64px; }
-  .tile-t{ font-size:22px; }
+  .tile-t{ font-size:20px; }
   .tile-a{ font-size:48px; }
   .lead{ padding-top:48px; font-size:24px; }
   .pp-grid{ grid-template-columns:1fr 1fr 1fr; }
