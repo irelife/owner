@@ -1,0 +1,12 @@
+{
+  "name": "owner-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "オーナーマイページの検査。本物のブラウザと、にせサーバーで動かします。",
+  "scripts": {
+    "test": "node tlogin.cjs .."
+  },
+  "devDependencies": {
+    "playwright": "1.47.2"
+  }
+}

@@ -14,7 +14,7 @@ css/style.css     見た目
 js/config.js      ★ Apps Script のURLだけ、ここに入れます
 js/app.js         画面の動き
 staff.html        当社用の画面（合言葉で入ります）
-tests/            検査。tins.cjs（火災保険）／ tpp.cjs（送金明細）／ tst.cjs（入居状況）
+tests/            検査。tlogin.cjs（ログイン）／ tins.cjs（火災保険）／ tpp.cjs（送金明細）／ tst.cjs（入居状況）
 docs/             引き継ぎ書・はじめの設定・PIVOT側の追加・使いかた・やること
 gas/              Apps Script の控え（置きかたは gas/README.md）
 ```
@@ -76,4 +76,11 @@ PIVOT → マイページの向きに、そのオーナー様のぶんだけが�
 node tests/tins.cjs    火災保険（69件）
 node tests/tpp.cjs     送金明細（33件）
 node tests/tst.cjs     入居状況（46件）
+```
+
+ログインの検査は、本物のブラウザを使うので先に道具を入れます。
+
+```
+cd tests && npm install && npx playwright install chromium
+node tests/tlogin.cjs   ログイン（12件）
 ```

@@ -93,16 +93,40 @@
     });
   }
 
-  /* 入館証つきで送ります。切れていたらログイン画面へ戻します。 */
-  function auth(action, data){
+  /* 入館証つきで送ります。
+   *
+   *  【改良前】 どの窓口でも、入館証が通らなければ logout(true) を呼んで
+   *            いました。quiet=true なので**何も出ないまま**ログイン画面へ
+   *            戻ります。しかもホームは home・status・papers の3つを
+   *            同時に叩き、status と papers の失敗は呼び出し側が
+   *            握りつぶすので、メッセージすら残りませんでした。
+   *            → ログインした直後に、無言でログイン画面へ戻る。
+   *              1つの窓口の不具合で、ログインごと弾かれていました。
+   *
+   *  【改良後】 ・戻すときは、理由を必ずログイン画面に出します
+   *            ・ついでに読むもの（quiet）は、戻しません
+   *            ・どの窓口で起きたかを console に残します（原因さがし用）
+   */
+  function auth(action, data, quiet){
     return call(action, Object.assign({ token: token }, data || {}))
       .catch(function(e){
         if(e.code === 'auth'){
-          logout(true);
-          throw new Error('ログインの有効期限が切れました。もう一度お入りください。');
+          try{
+            console.warn('[マイページ] 入館証が通りませんでした： ' + action);
+          }catch(x){}
+          if(quiet) throw e;                 /* ついでに読むものは、戻しません */
+          kick('ログインの有効期限が切れました。' +
+               '恐れ入りますが、もう一度お入りください。');
+          throw new Error('ログインの有効期限が切れました。');
         }
         throw e;
       });
+  }
+
+  /* 入館証が通らなかったときだけ。理由を必ず画面に出します。 */
+  function kick(reason){
+    logout(true);
+    say($('li-msg'), reason);
   }
 
   /* ── 画面の出し入れ ───────────────────────── */
@@ -152,6 +176,14 @@
         $('li-pass').value = '';          /* 画面にも残しません */
         token = r.token || '';
         me    = r.owner || null;
+        /* ★入館証が来ていなければ、ここで気づけるようにします。
+         *  改良前は token が空のまま先へ進み、次の窓口で
+         *  「入館証が違う」と言われてログイン画面へ戻っていました。 */
+        if(!token){
+          say(msg, 'ログインはできましたが、入館証を受け取れませんでした。' +
+                   '恐れ入りますが、担当者へご連絡ください。');
+          return;
+        }
         try{ localStorage.setItem(TKEY, token); }catch(e){}
         paintName();
         if(r.mustChange){ openChangePass(true); return; }
@@ -267,7 +299,10 @@
   function loadMoves(){
     if(cache.status){ paintMoves(cache.status); return; }
     $('hm-moves').innerHTML = '<div class="empty">読み込んでいます…</div>';
-    auth('status')
+    /* ★ quiet。ここは「ホームのついで」なので、失敗しても
+     *   ログイン画面へ戻しません（戻すと、入居状況の窓口の不具合だけで
+     *   ログインできなくなります）。 */
+    auth('status', null, true)
       .then(function(r){ cache.status = r; paintMoves(r); })
       .catch(function(){ paintMoves(null); });
   }
@@ -504,9 +539,9 @@
   /* ── 過去の明細 ───────────────────────────── */
   /* ★ ホームの「年間の収支」と、この画面は同じ中身を使います。
    *   読むのは一度だけにして、二度目からは覚えたものを使います。 */
-  function getPapers(){
+  function getPapers(quiet){
     if(cache.papers) return Promise.resolve(cache.papers);
-    return auth('papers').then(function(r){ cache.papers = r; return r; });
+    return auth('papers', null, quiet).then(function(r){ cache.papers = r; return r; });
   }
 
   function loadPapers(){
@@ -727,7 +762,9 @@
    *   図を2つに分ければ、どちらも自分のものさしで正しく読めます。
    *   月の並び（横軸）は上下でそろえてあります。 */
   function loadChart(){
-    getPapers().then(paintChart).catch(function(){ $('hm-chart-wrap').hidden = true; });
+    /* ★ quiet。ここも「ホームのついで」です。 */
+    getPapers(true).then(paintChart)
+      .catch(function(){ $('hm-chart-wrap').hidden = true; });
   }
 
   /* 明細の内わけから、月ごとの 収入・支出・累積収支 を作ります */
