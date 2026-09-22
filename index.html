@@ -13,7 +13,22 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=20">
+<!-- ★配色の先あて。
+     app.js を待つと、ワイン以外をお選びの方に
+     一瞬だけワインが見えてしまうためです。
+     ★色の値は js/app.js の THEMES と対になっています。
+       片方を直したときは、もう片方も直してください。 -->
+<script>
+try{
+  var _t = localStorage.getItem('ire_owner_theme');
+  if(_t === 'midnight' || _t === 'charcoal'){
+    document.documentElement.setAttribute('data-theme', _t);
+    var _m = document.querySelector('meta[name="theme-color"]');
+    if(_m) _m.setAttribute('content', _t === 'midnight' ? '#141D2E' : '#23211F');
+  }
+}catch(e){}
+</script>
+<link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
 
@@ -78,10 +93,10 @@
 <section id="s-newpass" class="scr center" hidden>
   <div class="card narrow">
     <h1 class="h-mincho">パスワードの設定</h1>
-    <p class="sub" id="np-sub">はじめてのご利用です。ご自身のパスワードを決めてください。</p>
+    <p class="sub" id="np-sub">初回ログインです。新しいパスワードをご設定ください。</p>
     <form id="f-newpass" novalidate>
       <div class="field" id="np-cur-wrap">
-        <label for="np-cur">いまのパスワード</label>
+        <label for="np-cur">現在のパスワード</label>
         <div class="pw">
           <input type="password" id="np-cur" autocomplete="current-password">
           <button type="button" class="pw-eye" data-eye="np-cur"
@@ -97,7 +112,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="np-b">もう一度</label>
+        <label for="np-b">新しいパスワード（確認）</label>
         <div class="pw">
           <input type="password" id="np-b" autocomplete="new-password">
           <button type="button" class="pw-eye" data-eye="np-b"
@@ -126,7 +141,7 @@
   </header>
 
   <div id="menu" class="menu" hidden>
-    <button type="button" class="menu-i" data-go="newpass">パスワードを変える</button>
+    <button type="button" class="menu-i" data-go="account">マイアカウント</button>
     <button type="button" class="menu-i" id="mn-out">ログアウト</button>
   </div>
 
@@ -160,13 +175,13 @@
         </button>
         <button type="button" class="tile" data-go="contact">
           <span class="tile-k">お問い合わせ</span>
-          <span class="tile-t">いつでもどうぞ。どんなことでも。</span>
-          <span class="tile-d">運用に関するご質問やご要望をそのままお送りいただける窓口です。</span>
+          <span class="tile-t">ご質問・ご要望をお送りください</span>
+          <span class="tile-d">運用に関するご質問・ご要望をお送りいただけます。</span>
         </button>
         <button type="button" class="tile" data-go="accountant">
           <span class="tile-k">税理士へ送信</span>
-          <span class="tile-t">明細（月別・年別）を税理士へメール</span>
-          <span class="tile-d">月別・年別の送金明細をPDFにまとめ、税理士先生へ定型文面付きでメール送信できるようにいたします。</span>
+          <span class="tile-t">送金明細を税理士事務所へ送付</span>
+          <span class="tile-d">月別・年別の送金明細を、定型の文面とともに税理士事務所へご送付いただけます。</span>
         </button>
       </nav>
 
@@ -211,7 +226,7 @@
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">送金明細</h1>
       <span class="bar-line"></span>
-      <p class="sub">3年分を保存しています。いつでも、何度でもご覧いただけます。</p>
+      <p class="sub">過去3年分の送金明細をご覧いただけます。</p>
 
       <!-- いちばん新しい1件 -->
       <div id="pp-hero"></div>
@@ -232,24 +247,25 @@
     </section>
 
     <!-- ── 税理士へ送信 ──
-         ★いまは入口だけです。中身（PDFをまとめて送る）は
-           Apps Script 側の窓口が要ります。docs/TODO.md をご覧ください。 -->
+         ★添付は自動化していません。CSV・PDF をお手元に保存し、
+           メールソフトで添付していただく形です。自動送信には
+           Apps Script 側の窓口（taxSend）が要ります。docs/TODO.md をご覧ください。 -->
     <section id="s-accountant" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">税理士へ送信</h1>
       <span class="bar-line"></span>
-      <p class="sub">1か月ぶん・1年ぶんの送金明細を、税理士先生へお送りいただけます。
-        表（CSV）と明細書（PDF）をお手元に保存し、ご用意した文面でお送りできます。</p>
+      <p class="sub">月別・年別の送金明細を、税理士事務所へお送りいただけます。
+        明細データ（CSV）と明細書（PDF）をお手元に保存し、定型の文面でご送付いただけます。</p>
 
-      <!-- ① 税理士先生のご連絡先 -->
+      <!-- ① 税理士事務所のご連絡先 -->
       <section class="acc">
-        <p class="acc-h">税理士先生のご連絡先</p>
+        <p class="acc-h">税理士事務所のご連絡先</p>
         <div class="field">
           <label for="ac-firm">事務所名<span class="hint">任意</span></label>
           <input type="text" id="ac-firm" placeholder="例）○○税理士事務所">
         </div>
         <div class="field">
-          <label for="ac-name">先生のお名前<span class="hint">任意</span></label>
+          <label for="ac-name">ご担当者名<span class="hint">任意</span></label>
           <input type="text" id="ac-name" placeholder="例）山田 太郎">
         </div>
         <div class="field">
@@ -258,18 +274,18 @@
                  spellcheck="false" placeholder="例）tax@example.co.jp">
         </div>
         <div class="acc-acts">
-          <button type="button" id="ac-save" class="btn ghost sm">この端末に覚える</button>
+          <button type="button" id="ac-save" class="btn ghost sm">この端末に保存する</button>
           <span id="ac-saved" class="acc-note"></span>
         </div>
-        <p class="acc-note">★ この端末の中だけに覚えます。当社へは送りません。</p>
+        <p class="acc-note">ご入力内容はお使いの端末内にのみ保存されます。当社のサーバーへは送信されません。</p>
       </section>
 
-      <!-- ② 何をお送りするか -->
+      <!-- ② 送付内容の選択 -->
       <section class="acc">
-        <p class="acc-h">何をお送りするか</p>
+        <p class="acc-h">送付内容の選択</p>
         <div class="acc-tabs" role="group" aria-label="まとめかた">
-          <button type="button" id="ac-m" class="acc-tab on">1か月ぶん</button>
-          <button type="button" id="ac-y" class="acc-tab">1年ぶん</button>
+          <button type="button" id="ac-m" class="acc-tab on">月別</button>
+          <button type="button" id="ac-y" class="acc-tab">年別</button>
         </div>
         <div class="field">
           <label for="ac-year">対象の年<span class="hint">1月〜12月</span></label>
@@ -281,19 +297,19 @@
         </div>
       </section>
 
-      <!-- ③ 中身の確認 -->
+      <!-- ③ 送付内容の確認 -->
       <section class="acc" id="ac-prev-wrap">
-        <p class="acc-h" id="ac-prev-h">中身の確認</p>
+        <p class="acc-h" id="ac-prev-h">送付内容の確認</p>
         <div id="ac-prev"></div>
         <div class="acc-acts">
-          <button type="button" id="ac-csv" class="btn ghost sm">表（CSV）を保存</button>
+          <button type="button" id="ac-csv" class="btn ghost sm">明細データ（CSV）を保存</button>
           <button type="button" id="ac-pdf" class="btn ghost sm">明細書（PDF）を保存</button>
         </div>
       </section>
 
       <!-- ④ お送りする -->
       <section class="acc">
-        <p class="acc-h">お送りする</p>
+        <p class="acc-h">送信</p>
         <div class="field">
           <label for="ac-subj">件名</label>
           <input type="text" id="ac-subj">
@@ -303,9 +319,9 @@
           <textarea id="ac-body" rows="12"></textarea>
         </div>
         <p id="ac-msg" class="msg" role="status" aria-live="polite"></p>
-        <button type="button" id="ac-go" class="btn">メールを作る</button>
-        <p class="acc-note">★ お使いのメールソフトが、件名と本文の入った状態で開きます。
-          上で保存したファイルを 添付して、送信してください。</p>
+        <button type="button" id="ac-go" class="btn">メールを作成する</button>
+        <p class="acc-note">お使いのメールソフトが、件名と本文の入った状態で起動します。
+          上で保存したファイルを添付のうえ、ご送信ください。</p>
       </section>
     </section>
 
@@ -314,28 +330,28 @@
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">原状回復・修繕</h1>
       <span class="bar-line"></span>
-      <p class="sub">いつ・どんな内容で・いくらかかり・いつご送金から差し引くかを、
-        1件ずつご覧いただけます。ご不明な点は、その場でご連絡いただけます。</p>
+      <p class="sub">工事の時期・内容・金額・ご送金からの相殺予定を、1件ずつご確認いただけます。
+        ご不明な点は、各工事からそのままお問い合わせいただけます。</p>
       <div id="wk-body"></div>
     </section>
 
     <!-- ── 火災保険 ──
          2026/9/22 作り替え
          改良前： 入力欄が7つ縦に並び、預けたものは1証券＝1行のべた並び。
-         改良後： 1物件＝1つの箱。［＋ 別の物件を追加する］で箱ごと足せます。
+         改良後： 1物件＝1つの箱。［＋ 物件を追加する］で箱ごと足せます。
          ★入力欄（#in-form-host）は #in-boxes の外に置いています。
            中に置くと、一覧を描き直すたびに入力欄ごと消えてしまうためです。 -->
     <section id="s-insurance" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">火災保険</h1>
       <span class="bar-line"></span>
-      <p class="sub">証券の写しをお預かりします。万一のときに、当社ですぐお手続きに入れます。
-        写真でも、PDFでも構いません。</p>
+      <p class="sub">証券の写しをご登録いただけます。万一の際、当社ですぐにお手続きに入れます。
+        画像・PDFのいずれでもご登録いただけます。</p>
 
       <p id="in-due" class="ins-due" role="status" aria-live="polite" hidden></p>
 
-      <!-- ★ 入力欄を先に、お預かりしているものを後に置きます。
-           改良前は［＋ 別の物件を追加する］を押さないと入力欄が出ないため、
+      <!-- ★ 入力欄を先に、ご登録済みの火災保険を後に置きます。
+           改良前は［＋ 物件を追加する］を押さないと入力欄が出ないため、
            1件も預けていない方には、何もない画面に見えていました。 -->
       <div id="in-form-host" class="ins-form">
         <form id="f-ins" novalidate>
@@ -369,7 +385,7 @@
             <input type="text" id="in-no" inputmode="latin" placeholder="例）1234-5678">
           </div>
           <div class="field">
-            <label for="in-until">満期日<span class="hint">任意／年・月・日をお選びいただけます</span></label>
+            <label for="in-until">満期日<span class="hint">任意</span></label>
             <input type="date" id="in-until" min="1990-01-01" max="2100-12-31">
           </div>
           <div class="field">
@@ -379,17 +395,17 @@
 
           <p id="in-msg" class="msg" role="status" aria-live="polite"></p>
           <div class="ins-acts">
-            <button type="submit" id="in-go" class="btn">この内容で預ける</button>
-            <button type="button" id="in-cancel" class="btn ghost">やめる</button>
+            <button type="submit" id="in-go" class="btn">この内容で登録する</button>
+            <button type="button" id="in-cancel" class="btn ghost">キャンセル</button>
           </div>
         </form>
       </div>
 
-      <p class="sect">お預かりしているもの</p>
+      <p class="sect">ご登録済みの火災保険</p>
       <div id="in-boxes"></div>
       <p id="in-cap" class="ins-cap"></p>
 
-      <button type="button" id="in-add" class="btn ghost">＋ 別の物件を追加する</button>
+      <button type="button" id="in-add" class="btn ghost">＋ 物件を追加する</button>
     </section>
 
     <!-- ── お問い合わせ ── -->
@@ -397,14 +413,14 @@
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">お問い合わせ</h1>
       <span class="bar-line"></span>
-      <p class="sub">当社からのお返事も、この画面に出ます。
-        お返事は2営業日以内に差し上げます。</p>
+      <p class="sub">当社からの回答も、この画面に表示されます。
+        回答は2営業日以内に差し上げます。</p>
 
       <!-- ★ open。入力欄を最初から見えるようにしました。
-           改良前は［＋ 新しくご相談する］を押さないと出ないため、
+           改良前は［＋ 新規のお問い合わせ］を押さないと出ないため、
            画面が空っぽに見えていました。 -->
       <details class="ask" id="ct-new" open>
-        <summary>新しくご相談する</summary>
+        <summary>新規のお問い合わせ</summary>
         <form id="f-contact" novalidate>
           <div class="field">
             <label for="ct-kind">ご用件</label>
@@ -419,14 +435,14 @@
           </div>
           <div class="field">
             <label for="ct-body">内容</label>
-            <textarea id="ct-body" rows="6" placeholder="ご自由にお書きください。"></textarea>
+            <textarea id="ct-body" rows="6" placeholder="ご質問・ご要望をご記入ください。"></textarea>
           </div>
           <p id="ct-msg" class="msg" role="status" aria-live="polite"></p>
           <button type="submit" id="ct-go" class="btn">送信する</button>
         </form>
       </details>
 
-      <p class="sect">これまでのご相談</p>
+      <p class="sect">お問い合わせ履歴</p>
       <div id="ct-list"></div>
 
       <p class="foot-note">
@@ -435,12 +451,120 @@
       </p>
     </section>
 
+
+    <!-- ── マイアカウント ──
+         ★ご登録情報は、いまの窓口（me）が返す氏名・宛名と、
+           ログインに使ったメールアドレスだけです。
+           お電話番号・ご住所は表に列がないため、ここでは
+           「変更のお申し出」としてお問い合わせ（ask）へ流します。
+         ★プロフィール写真は置いていません。理由は docs/引き継ぎ書.md 15章。 -->
+    <section id="s-account" class="scr pad" hidden>
+      <button type="button" class="back" data-go="home">← ホーム</button>
+      <h1 class="h-mincho">マイアカウント</h1>
+      <span class="bar-line"></span>
+      <p class="sub">ご登録情報のご確認と、パスワード・配色の変更ができます。</p>
+
+      <!-- ① ご登録情報 -->
+      <section class="mya">
+        <p class="mya-h">ご登録情報</p>
+        <div class="mya-id">
+          <div class="g"><span class="k">お名前</span><span class="v" id="my-name">—</span></div>
+          <div class="g"><span class="k">宛名</span><span class="v" id="my-atena">—</span></div>
+          <div class="g"><span class="k">メールアドレス</span><span class="v" id="my-mail">—</span></div>
+        </div>
+        <p class="mya-note" style="margin:16px 0 0">
+          お名前・宛名の表記に誤りがございましたら、下記「ご登録内容の変更」よりお知らせください。</p>
+      </section>
+
+      <!-- ② パスワードの変更 -->
+      <section class="mya">
+        <p class="mya-h">パスワードの変更</p>
+        <form id="f-mypass" novalidate>
+          <div class="field">
+            <label for="my-cur">現在のパスワード</label>
+            <div class="pw">
+              <input type="password" id="my-cur" autocomplete="current-password">
+              <button type="button" class="pw-eye" data-eye="my-cur"
+                      aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="my-a">新しいパスワード<span class="hint">8文字以上</span></label>
+            <div class="pw">
+              <input type="password" id="my-a" autocomplete="new-password">
+              <button type="button" class="pw-eye" data-eye="my-a"
+                      aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="my-b">新しいパスワード（確認）</label>
+            <div class="pw">
+              <input type="password" id="my-b" autocomplete="new-password">
+              <button type="button" class="pw-eye" data-eye="my-b"
+                      aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
+            </div>
+          </div>
+          <p id="my-pw-msg" class="msg" role="status" aria-live="polite"></p>
+          <button type="submit" id="my-pw-go" class="btn">変更する</button>
+        </form>
+        <p class="mya-note">
+          パスワードをお忘れの場合は、一度ログアウトのうえ
+          ［パスワードをお忘れの方］よりご再設定ください。</p>
+      </section>
+
+      <!-- ③ 配色 -->
+      <section class="mya">
+        <p class="mya-h">配色</p>
+        <p class="mya-note">お選びいただいた配色は、お使いの端末にのみ保存されます。</p>
+        <div class="th-list" id="my-themes" role="group" aria-label="配色をお選びください"></div>
+      </section>
+
+      <!-- ④ ご登録内容の変更 -->
+      <section class="mya">
+        <p class="mya-h">ご登録内容の変更</p>
+        <p class="mya-note">
+          メールアドレス・お電話番号・ご住所の変更をご希望の場合は、こちらよりお知らせください。
+          当社にて内容を確認のうえ、登録を変更し、変更後にご連絡いたします。<br>
+          なお、この画面から登録内容が直接書き換わることはございません。</p>
+        <form id="f-myinfo" novalidate>
+          <div class="field">
+            <label for="my-new-mail">新しいメールアドレス<span class="hint">任意</span></label>
+            <input type="email" id="my-new-mail" inputmode="email"
+                   autocapitalize="off" spellcheck="false" autocomplete="off"
+                   placeholder="例）owner@example.jp">
+          </div>
+          <div class="field">
+            <label for="my-tel">お電話番号<span class="hint">任意</span></label>
+            <input type="tel" id="my-tel" inputmode="tel" autocomplete="off"
+                   placeholder="例）090-1234-5678">
+          </div>
+          <div class="field">
+            <label for="my-zip">郵便番号<span class="hint">任意</span></label>
+            <input type="text" id="my-zip" inputmode="numeric" autocomplete="off"
+                   placeholder="例）730-0011">
+          </div>
+          <div class="field">
+            <label for="my-addr">ご住所<span class="hint">任意</span></label>
+            <input type="text" id="my-addr" autocomplete="off"
+                   placeholder="例）広島市中区基町10-1 ○○ビル301">
+          </div>
+          <div class="field">
+            <label for="my-note">補足<span class="hint">任意</span></label>
+            <textarea id="my-note" rows="3"
+                      placeholder="お名前の表記など、そのほかのご変更はこちらへ。"></textarea>
+          </div>
+          <p id="my-info-msg" class="msg" role="status" aria-live="polite"></p>
+          <button type="submit" id="my-info-go" class="btn">変更をお知らせする</button>
+        </form>
+      </section>
+    </section>
+
   </main>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
+<script src="js/config.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
 </body>
 </html>

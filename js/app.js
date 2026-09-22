@@ -20,6 +20,8 @@
 
   var CFG   = window.APP_CONFIG || {};
   var TKEY  = 'ire_owner_token';
+  var MKEY  = 'ire_owner_mail';      /* ログインに使ったアドレス。この端末の中だけ */
+  var THKEY = 'ire_owner_theme';     /* 配色。この端末の中だけ */
   var token = '';
   var me    = null;     /* { name, atena } */
   var cache = {};       /* 画面ごとの読み込み結果 */
@@ -70,7 +72,7 @@
   function call(action, data){
     var url = CFG.GAS_URL || '';
     if(!url || url.indexOf('script.google.com') < 0){
-      return Promise.reject(new Error('設定がまだです。担当者へご連絡ください。'));
+      return Promise.reject(new Error('設定が完了していません。担当者へご連絡ください。'));
     }
     var body = Object.assign({ action: action }, data || {});
     return fetch(url, {
@@ -81,13 +83,13 @@
     .then(function(r){ return r.json(); })
     .then(function(r){
       if(r && r.ok) return r;
-      var e = new Error((r && r.message) || 'うまくいきませんでした。');
+      var e = new Error((r && r.message) || '処理できませんでした。');
       e.code = (r && r.error) || '';
       throw e;
     })
     .catch(function(e){
       if(e && e.code) throw e;
-      var e2 = new Error('通信できませんでした。電波の良いところで、もう一度お試しください。');
+      var e2 = new Error('通信に失敗しました。通信環境をご確認のうえ、もう一度お試しください。');
       e2.code = 'net';
       throw e2;
     });
@@ -112,11 +114,11 @@
       .catch(function(e){
         if(e.code === 'auth'){
           try{
-            console.warn('[マイページ] 入館証が通りませんでした： ' + action);
+            console.warn('[マイページ] 認証に失敗しました： ' + action);
           }catch(x){}
           if(quiet) throw e;                 /* ついでに読むものは、戻しません */
           kick('ログインの有効期限が切れました。' +
-               '恐れ入りますが、もう一度お入りください。');
+               'お手数ですが、再度ログインしてください。');
           throw new Error('ログインの有効期限が切れました。');
         }
         throw e;
@@ -131,9 +133,9 @@
 
   /* ── 画面の出し入れ ───────────────────────── */
   var SCREENS = ['login','forgot','newpass','home','status','papers',
-                 'works','insurance','contact','accountant'];
+                 'works','insurance','contact','accountant','account'];
   var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1,
-                      contact:1, accountant:1 };
+                      contact:1, accountant:1, account:1 };
 
   function show(name){
     SCREENS.forEach(function(n){
@@ -152,6 +154,7 @@
     if(name === 'accountant') loadAcc();
     if(name === 'works')     loadWorks();
     if(name === 'insurance') loadIns();
+    if(name === 'account')   loadAccount();
   }
 
   document.addEventListener('click', function(ev){
@@ -168,7 +171,7 @@
     var mail = ($('li-mail').value || '').trim();
     var pass = $('li-pass').value || '';
     var msg  = $('li-msg');
-    if(!mail || !pass){ say(msg, 'メールアドレスとパスワードを入れてください。'); return; }
+    if(!mail || !pass){ say(msg, 'メールアドレスとパスワードをご入力ください。'); return; }
 
     busy($('li-go'), true, '確認中…');
     say(msg, '');
@@ -181,11 +184,15 @@
          *  改良前は token が空のまま先へ進み、次の窓口で
          *  「入館証が違う」と言われてログイン画面へ戻っていました。 */
         if(!token){
-          say(msg, 'ログインはできましたが、入館証を受け取れませんでした。' +
-                   '恐れ入りますが、担当者へご連絡ください。');
+          say(msg, 'ログインは完了しましたが、認証情報を取得できませんでした。' +
+                   'お手数ですが、担当者へご連絡ください。');
           return;
         }
         try{ localStorage.setItem(TKEY, token); }catch(e){}
+        /* ★マイアカウントでお見せするため、アドレスも控えます。
+         *   me 窓口はお名前と宛名しか返さないためです。
+         *   ログアウトのときに消します。 */
+        try{ localStorage.setItem(MKEY, mail); }catch(e){}
         paintName();
         if(r.mustChange){ openChangePass(true); return; }
         show('home');
@@ -205,7 +212,7 @@
     ev.preventDefault();
     var mail = ($('fg-mail').value || '').trim();
     var msg  = $('fg-msg');
-    if(!mail){ say(msg, 'メールアドレスを入れてください。'); return; }
+    if(!mail){ say(msg, 'メールアドレスをご入力ください。'); return; }
     busy($('fg-go'), true);
     /* ★ 登録が有る／無いを答え分けません。
          「このメールは登録されていません」と返すと、
@@ -230,32 +237,41 @@
     _mustChange = !!must;
     $('np-cur-wrap').hidden = false;
     $('np-sub').textContent = must
-      ? 'はじめてのご利用です。ご自身のパスワードを決めてください。'
-      : '新しいパスワードを決めてください。';
+      ? '初回ログインです。新しいパスワードをご設定ください。'
+      : '新しいパスワードをご設定ください。';
     $('np-cur').value = ''; $('np-a').value = ''; $('np-b').value = '';
     say($('np-msg'), '');
     show('newpass');
   }
 
-  $('f-newpass').addEventListener('submit', function(ev){
-    ev.preventDefault();
-    var cur = $('np-cur').value || '';
-    var a   = $('np-a').value || '';
-    var b   = $('np-b').value || '';
-    var msg = $('np-msg');
-    if(a.length < 8){ say(msg, '新しいパスワードは8文字以上にしてください。'); return; }
-    if(a !== b){ say(msg, '2つの欄が違います。もう一度お確かめください。'); return; }
-    if(a === cur){ say(msg, 'いまと同じパスワードは使えません。'); return; }
+  /* ★パスワードの変更は、初回の画面とマイアカウントの2か所にあります。
+   *   処理はこの1つだけにしてあります。2つ書くと、片方だけ直して
+   *   食い違うためです。 */
+  function passSubmit(p){
+    var cur = $(p.cur).value || '';
+    var a   = $(p.a).value   || '';
+    var b   = $(p.b).value   || '';
+    var msg = $(p.msg);
+    if(a.length < 8){ say(msg, '新しいパスワードは8文字以上でご設定ください。'); return; }
+    if(a !== b){ say(msg, '新しいパスワードが一致しません。ご確認ください。'); return; }
+    if(a === cur){ say(msg, '現在のパスワードと同じものはご使用になれません。'); return; }
 
-    busy($('np-go'), true, '変更中…');
+    busy($(p.go), true, '変更中…');
     auth('changePass', { cur: cur, next: a })
       .then(function(){
-        $('np-cur').value = ''; $('np-a').value = ''; $('np-b').value = '';
-        toast('パスワードを変えました');
-        show('home');
+        $(p.cur).value = ''; $(p.a).value = ''; $(p.b).value = '';
+        say(msg, '');
+        toast('パスワードを変更しました');
+        if(p.done) p.done();
       })
       .catch(function(e){ say(msg, e.message); })
-      .then(function(){ busy($('np-go'), false); });
+      .then(function(){ busy($(p.go), false); });
+  }
+
+  $('f-newpass').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    passSubmit({ cur:'np-cur', a:'np-a', b:'np-b', msg:'np-msg', go:'np-go',
+                 done:function(){ show('home'); } });
   });
 
   /* ── ホーム ───────────────────────────────── */
@@ -292,7 +308,7 @@
           return '<div class="item"><span class="t">' + esc(p.name) + '</span>' +
                  '<span class="s">' + esc(p.note || '') + '</span></div>';
         }).join('')
-      : '<div class="empty">物件の情報がまだありません。</div>';
+      : '<div class="empty">物件情報がまだ登録されていません。</div>';
   }
 
   /* 今月の動きは、物件名・お部屋まで出したいので入居状況の中身を使います。
@@ -492,13 +508,13 @@
 
     if(sum){
       out += '<p class="st-sum" role="status">' + esc(sum) +
-             ' ございます。</p>';
+             '</p>';
     }
 
     out += boxes.map(function(g){
       return '<section class="st-prop">' +
         '<h2 class="st-pn">' +
-          esc(g.name || '物件名の入っていないもの') +
+          esc(g.name || '物件名未設定') +
         '</h2>' +
         g.rooms.map(function(u){
           var kind = ST_CLASS[u.kind] || 'rec';
@@ -628,7 +644,7 @@
     all = ppSort(all);          /* 新しい月から順に。読めない月があれば、そのまま */
 
     if(!all.length){
-      $('pp-hero').innerHTML = '<div class="empty">明細はまだありません。</div>';
+      $('pp-hero').innerHTML = '<div class="empty">送金明細がまだありません。</div>';
       $('pp-grid').innerHTML = '';
       $('pp-more').hidden = true;
       return;
@@ -719,7 +735,7 @@
     });
   }
 
-  /* ★ CSV は、いま画面が持っている内わけから作ります。
+  /* ★ CSV は、いま画面が持っている内訳から作ります。
    *   サーバーに窓口を増やす必要はありません。
    *   中身の作りは csvOf（上の「検査できる道具」）です。
    *   先頭に BOM を付けるのは、Excel で開いたときに
@@ -737,7 +753,7 @@
       new Blob(['﻿' + csvOf(it)], { type:'text/csv;charset=utf-8' }));
     var a = document.createElement('a');
     a.href = url;
-    a.download = ym + 'ぶん 送金明細.csv';
+    a.download = ym + ' 送金明細.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -768,7 +784,7 @@
       .catch(function(){ $('hm-chart-wrap').hidden = true; });
   }
 
-  /* 明細の内わけから、月ごとの 収入・支出・累積収支 を作ります */
+  /* 明細の内訳から、月ごとの 収入・支出・累積収支 を作ります */
   function chartRows(r){
     var all = [];
     (Array.isArray(r.years) ? r.years : []).forEach(function(y){
@@ -781,7 +797,7 @@
         var v = Number(x.amount) || 0;
         if(v >= 0) inc += v; else out += -v;
       });
-      /* 内わけが無い月は、ご送金額を収入として見ます */
+      /* 内訳が無い月は、ご送金額を収入として見ます */
       if(!inc && !out && it.total != null) inc = it.total;
       run += inc - out;
       return { ym: it.ym, month: it.month, inc: inc, out: out, run: run };
@@ -861,7 +877,7 @@
         '<span><em class="sw out"></em>支出</span>' +
         '<span><em class="sw run line"></em>累積収支</span>' +
       '</div>' +
-      '<details class="ch-tb"><summary>数字で見る</summary>' +
+      '<details class="ch-tb"><summary>数値で表示</summary>' +
         '<table><thead><tr><th>月</th><th>収入</th><th>支出</th><th>累積収支</th></tr></thead>' +
         '<tbody>' + d.map(function(x){
           return '<tr><th scope="row">' + esc(x.ym) + '</th>' +
@@ -925,11 +941,11 @@
   /* 税理士先生へお渡しする表を作ります（先頭のBOMは、保存するところで付けます）。
    *
    *  ★「区分」の列を足しています。送金明細の画面のCSV（4列）とは違います。
-   *    理由： 何か月ぶんも1つの表にすると、内わけの行とご送金額の行が
+   *    理由： 何か月ぶんも1つの表にすると、内訳の行とご送金額の行が
    *          混ざります。区分が無いと、金額の列をそのまま合計したときに
    *          二重に足してしまいます。税理士先生にお渡しする表なので、
    *          そこは曖昧にしません。
-   *          「区分＝内わけ」だけで絞れば、正しく合計できます。 */
+   *          「区分＝内訳」だけで絞れば、正しく合計できます。 */
   function acCsv(list){
     var q = function(v){
       return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
@@ -940,7 +956,7 @@
     (Array.isArray(list) ? list : []).forEach(function(it){
       var ym = it.ym || '', sk = it.sokinDate || '';
       (Array.isArray(it.rows) ? it.rows : []).forEach(function(x){
-        line.push([q(ym), q(sk), q('内わけ'), q(x.label),
+        line.push([q(ym), q(sk), q('内訳'), q(x.label),
                    Number(x.amount || 0)].join(','));
       });
       if(it.total != null){
@@ -977,8 +993,8 @@
       body   : atena + '\n' + sensei + '\n\n' +
                'いつもお世話になっております。\n\n' +
                what + 'の送金明細を、お送りいたします。\n' +
-               (hasPdf ? '表（CSV）と明細書（PDF）を添付しております。\n\n'
-                       : '表（CSV）を添付しております。\n\n') +
+               (hasPdf ? '明細データ（CSV）と明細書（PDF）を添付しております。\n\n'
+                       : '明細データ（CSV）を添付しております。\n\n') +
                'ご確認のほど、よろしくお願い申し上げます。\n\n' +
                line + '\n' +
                co + ' オーナーマイページより\n' +
@@ -1063,8 +1079,8 @@
     $('ac-y').classList.toggle('on', acMode === 'year');
 
     if(!g.list.length){
-      $('ac-prev-h').textContent = '中身の確認';
-      $('ac-prev').innerHTML = '<div class="empty">明細はまだありません。</div>';
+      $('ac-prev-h').textContent = '送付内容の確認';
+      $('ac-prev').innerHTML = '<div class="empty">送金明細がまだありません。</div>';
       $('ac-csv').disabled = true;
       $('ac-pdf').disabled = true;
       $('ac-pdf').hidden   = false;
@@ -1130,7 +1146,7 @@
               name:($('ac-name').value || '').trim(),
               mail:($('ac-mail').value || '').trim() };
     try{ localStorage.setItem(AC_KEY, JSON.stringify(i)); }catch(e){}
-    say($('ac-saved'), 'この端末に覚えました。', true);
+    say($('ac-saved'), 'この端末に保存しました。', true);
     acText();
     setTimeout(function(){ say($('ac-saved'), ''); }, 4000);
   });
@@ -1157,7 +1173,7 @@
   $('ac-go').addEventListener('click', function(){
     var to = ($('ac-mail').value || '').trim();
     if(!to){
-      say($('ac-msg'), '税理士先生のメールアドレスをお入れください。');
+      say($('ac-msg'), '税理士事務所のメールアドレスをご入力ください。');
       return;
     }
     say($('ac-msg'), '');
@@ -1172,15 +1188,15 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    say($('ac-msg'), 'メールソフトを開きました。' +
-        '上で保存したファイルを添付して、お送りください。', true);
+    say($('ac-msg'), 'メールソフトを起動しました。' +
+        '保存したファイルを添付のうえ、ご送信ください。', true);
   });
 
   /* 原本PDFを、開かずに保存します（税理士先生へ添付していただくため）。 */
   function savePdf(id, name, btn){
     if(!id) return;
     var old = btn && btn.textContent;
-    if(btn){ btn.disabled = true; btn.textContent = '用意しています…'; }
+    if(btn){ btn.disabled = true; btn.textContent = '作成しています…'; }
     auth('pdf', { id: id })
       .then(function(r){
         var bin = atob(r.b64 || '');
@@ -1205,7 +1221,7 @@
   function openPdf(id, btn){
     if(!id) return;
     var old = btn && btn.textContent;
-    if(btn){ btn.disabled = true; btn.textContent = '開いています…'; }
+    if(btn){ btn.disabled = true; btn.textContent = '読み込んでいます…'; }
     auth('pdf', { id: id })
       .then(function(r){
         var bin = atob(r.b64 || '');
@@ -1239,7 +1255,7 @@
 
   function paintTalks(list){
     if(!list.length){
-      $('ct-list').innerHTML = '<div class="empty">まだご相談はありません。</div>';
+      $('ct-list').innerHTML = '<div class="empty">お問い合わせの履歴はありません。</div>';
       return;
     }
     $('ct-list').innerHTML = list.map(function(t){
@@ -1261,9 +1277,9 @@
         '<p class="wk-t">' + esc(t.kind) + '</p>' +
         '<div class="talk">' + talk + '</div>' +
         '<details class="ask">' +
-          '<summary>このご相談に続けて書く</summary>' +
+          '<summary>このお問い合わせに返信する</summary>' +
           '<textarea rows="4" data-tk="' + esc(t.id) +
-            '" placeholder="ご自由にお書きください。"></textarea>' +
+            '" placeholder="ご質問・ご要望をご記入ください。"></textarea>' +
           '<button type="button" class="btn ghost" data-tksend="' + esc(t.id) +
             '">送信する</button>' +
           '<span class="msg" data-tkmsg="' + esc(t.id) + '"></span>' +
@@ -1280,14 +1296,14 @@
     var ta  = $('ct-list').querySelector('[data-tk="' + id + '"]');
     var msg = $('ct-list').querySelector('[data-tkmsg="' + id + '"]');
     var body = ta ? (ta.value || '').trim() : '';
-    if(!body){ say(msg, '内容をお書きください。'); return; }
-    if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
+    if(!body){ say(msg, '内容をご入力ください。'); return; }
+    if(body.length > 2000){ say(msg, '文字数が上限を超えています。2,000文字以内でご入力ください。'); return; }
 
     busy(btn, true);
     auth('talkMsg', { id: id, body: body })
       .then(function(){
         if(ta) ta.value = '';
-        toast('送信しました。お返事をお待ちください。');
+        toast('送信しました。担当者より回答いたします。');
         loadContact();
       })
       .catch(function(e){ say(msg, e.message); })
@@ -1299,8 +1315,8 @@
     var kind = $('ct-kind').value;
     var body = ($('ct-body').value || '').trim();
     var msg  = $('ct-msg');
-    if(!body){ say(msg, '内容をお書きください。'); return; }
-    if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
+    if(!body){ say(msg, '内容をご入力ください。'); return; }
+    if(body.length > 2000){ say(msg, '文字数が上限を超えています。2,000文字以内でご入力ください。'); return; }
 
     busy($('ct-go'), true);
     auth('ask', { kind: kind, body: body })
@@ -1310,7 +1326,7 @@
         /* ★送れたことが分かるよう、書く欄を閉じて一覧に戻します */
         $('ct-new').open = false;
         loadContact();
-        toast('送信しました。お返事をお待ちください。');
+        toast('送信しました。担当者より回答いたします。');
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('ct-go'), false); });
@@ -1344,20 +1360,20 @@
     var list = Array.isArray(r.list) ? r.list : [];
     if(!list.length){
       $('wk-body').innerHTML =
-        '<div class="empty">いまのところ、原状回復・修繕の予定はありません。</div>';
+        '<div class="empty">現在、原状回復・修繕の予定はありません。</div>';
       return;
     }
     $('wk-body').innerHTML = list.map(function(w){
       var kind = WK_STATE[w.state] || 'wait';
       var rows = '';
       if(w.from || w.to){
-        rows += line('いつ', (w.from || '—') + (w.to ? '　〜　' + w.to : '　〜'));
+        rows += line('期間', (w.from || '—') + (w.to ? '　〜　' + w.to : '　〜'));
       }
       if(w.yen !== null && w.yen !== undefined){
         rows += line('費用', yen(w.yen) + ' 円');
       }
-      if(w.offset){ rows += line('相殺の予定', w.offset); }
-      if(w.note){   rows += line('補足', w.note); }
+      if(w.offset){ rows += line('相殺予定', w.offset); }
+      if(w.note){   rows += line('備考', w.note); }
 
       var talk = (w.msgs || []).map(function(m){
         var mine = (m.who === 'オーナー');
@@ -1376,9 +1392,9 @@
         '<div class="kv">' + rows + '</div>' +
         (talk ? '<div class="talk">' + talk + '</div>' : '') +
         '<details class="ask">' +
-          '<summary>この工事について連絡する</summary>' +
+          '<summary>この工事についてお問い合わせ</summary>' +
           '<textarea rows="4" data-wk="' + esc(w.id) +
-            '" placeholder="ご質問やご要望を、ご自由にお書きください。"></textarea>' +
+            '" placeholder="ご質問・ご要望をご記入ください。"></textarea>' +
           '<button type="button" class="btn ghost" data-send="' + esc(w.id) + '">送信する</button>' +
           '<span class="msg" data-msg="' + esc(w.id) + '"></span>' +
         '</details>' +
@@ -1398,8 +1414,8 @@
     var ta  = $('wk-body').querySelector('[data-wk="' + id + '"]');
     var msg = $('wk-body').querySelector('[data-msg="' + id + '"]');
     var body = ta ? (ta.value || '').trim() : '';
-    if(!body){ say(msg, '内容をお書きください。'); return; }
-    if(body.length > 2000){ say(msg, '長すぎます。2000文字までにしてください。'); return; }
+    if(!body){ say(msg, '内容をご入力ください。'); return; }
+    if(body.length > 2000){ say(msg, '文字数が上限を超えています。2,000文字以内でご入力ください。'); return; }
 
     busy(btn, true);
     auth('workMsg', { id: id, body: body })
@@ -1408,7 +1424,7 @@
         /* ★ここで一覧を描き直すので、この欄の字は消えてしまいます。
            消えない帯（toast）でお伝えします。
            書いたものがその場でやりとりに並ぶので、それも目印になります。 */
-        toast('送信しました。お返事をお待ちください。');
+        toast('送信しました。担当者より回答いたします。');
         cache.works = null;
         loadWorks();
       })
@@ -1586,8 +1602,8 @@
     insNote(boxes);
 
     if(!boxes.length){
-      host.innerHTML = '<div class="empty">まだお預かりしていません。<br>' +
-        '下の［＋ 別の物件を追加する］から、1件目をお入れください。</div>';
+      host.innerHTML = '<div class="empty">火災保険のご登録がまだありません。<br>' +
+        '下の［＋ 物件を追加する］よりご登録ください。</div>';
       return;
     }
 
@@ -1609,7 +1625,7 @@
   /* 箱の1つぶん */
   function insBox(g){
     var rank = insRank(g.days);
-    var name = g.name || '物件名の入っていないもの';
+    var name = g.name || '物件名未設定';
 
     /* ★箱の見出しに出すのは、万一のときにすぐ要るものだけです。
      *  証券番号は証券ごとに違うので、下の1件ずつの行に出します
@@ -1636,7 +1652,7 @@
           (sub.length ? '<span class="ins-rs">' + esc(sub.join('　')) + '</span>' : '') +
         '</button>' +
         '<button type="button" class="ins-x" data-insdel="' + esc(x.id) +
-          '" data-insname="' + esc(name) + '" aria-label="この写しを消す">✕</button>' +
+          '" data-insname="' + esc(name) + '" aria-label="この証券を削除する">✕</button>' +
       '</div>';
     }).join('');
 
@@ -1654,14 +1670,14 @@
       (g.name
         ? '<button type="button" class="btn ghost sm" data-insadd="' + esc(g.name) +
             '">＋ この物件に証券を追加する</button>'
-        : '<p class="ins-warn">物件名が入っていません。' +
-          'お手数ですが、物件名を入れて預け直していただくと、物件ごとにまとまります。</p>') +
+        : '<p class="ins-warn">物件名が未入力です。' +
+          'お手数ですが、物件名をご入力のうえ再登録いただくと、物件ごとにまとまります。</p>') +
     '</section>';
   }
 
   function insTag(g){
     switch(insRank(g.days)){
-      case 'none': return '<span class="ins-tag none">満期日が未記入</span>';
+      case 'none': return '<span class="ins-tag none">満期日 未登録</span>';
       case 'over': return '<span class="ins-tag over">満期が過ぎています</span>';
       case 'soon': return '<span class="ins-tag soon">' +
         (g.days === 0 ? '本日が満期です' : ('満期まで あと' + g.days + '日')) + '</span>';
@@ -1679,16 +1695,16 @@
     });
 
     var t = [];
-    if(c.over) t.push('満期の過ぎた物件が ' + c.over + '件');
-    if(c.soon) t.push('満期まで90日以内の物件が ' + c.soon + '件');
-    if(c.none) t.push('満期日をいただいていない物件が ' + c.none + '件');
+    if(c.over) t.push('満期が経過した物件 ' + c.over + '件');
+    if(c.soon) t.push('満期まで90日以内の物件 ' + c.soon + '件');
+    if(c.none) t.push('満期日が未登録の物件 ' + c.none + '件');
 
     el.hidden    = !t.length;
     el.className = 'ins-due' + (c.over ? ' over' : (c.soon ? ' soon' : ''));
-    el.textContent = t.length ? (t.join('　／　') + ' ございます。') : '';
+    el.textContent = t.length ? t.join('　／　') : '';
 
     $('in-cap').textContent = insRows.length
-      ? ('お預かりしているもの ' + insRows.length + '件（おひとり ' + INS_MAX + '件までです）')
+      ? ('ご登録 ' + insRows.length + '件（上限 ' + INS_MAX + '件）')
       : '';
     $('in-add').disabled = (insRows.length >= INS_MAX);
   }
@@ -1759,7 +1775,7 @@
     });
 
     sel.innerHTML =
-      '<option value="">選んでください</option>' +
+      '<option value="">選択してください</option>' +
       names.map(function(n){
         return '<option value="' + esc(n) + '">' + esc(n) + '</option>';
       }).join('') +
@@ -1792,10 +1808,10 @@
   function dropIns(id, name){
     if(!id) return;
     if(!window.confirm(
-      (name ? (name + ' の') : 'お預かりしている') + '証券の写しを1件消します。\n\n' +
+      (name ? (name + ' の') : 'ご登録の') + '証券の写しを1件削除します。\n\n' +
       'よろしいですか？')) return;
     auth('insDrop', { id: id })
-      .then(function(){ toast('消しました'); loadIns(); })
+      .then(function(){ toast('削除しました'); loadIns(); })
       .catch(function(e){ toast(e.message); });
   }
 
@@ -1812,24 +1828,24 @@
     /* ★物件は必須にしました（改良前は任意）。
      *  空のまま預けられると、物件ごとにまとまらないためです。 */
     if(!prop){
-      say(msg, '物件をお選びください。一覧に無いときは' +
-               '［一覧にない物件を入力する］からお入れください。');
+      say(msg, '物件をお選びください。一覧にない場合は' +
+               '［一覧にない物件を入力する］よりご入力ください。');
       return;
     }
-    if(!f){ say(msg, '証券の写しを選んでください。'); return; }
+    if(!f){ say(msg, '証券の写しをお選びください。'); return; }
     if(f.size > 8 * 1024 * 1024){
-      say(msg, 'ファイルが大きすぎます。8MB までにしてください。'); return;
+      say(msg, 'ファイルサイズが上限を超えています。8MB以内のファイルをお選びください。'); return;
     }
     if(insRows.length >= INS_MAX){
-      say(msg, 'お預かりは、おひとり ' + INS_MAX + '件までです。' +
-               '古いものを消してから、もう一度お試しください。');
+      say(msg, 'ご登録は ' + INS_MAX + '件までです。' +
+               '不要なものを削除のうえ、もう一度お試しください。');
       return;
     }
 
-    busy($('in-go'), true, '預かっています…');
+    busy($('in-go'), true, '登録しています…');
     var rd = new FileReader();
     rd.onerror = function(){
-      say(msg, 'ファイルを読めませんでした。'); busy($('in-go'), false);
+      say(msg, 'ファイルを読み込めませんでした。'); busy($('in-go'), false);
     };
     rd.onload = function(){
       var b64 = String(rd.result || '').split(',')[1] || '';
@@ -1848,7 +1864,7 @@
       })
       .then(function(){
         loadIns();
-        toast('お預かりしました。ありがとうございます。');
+        toast('登録しました。');
         try{ $('in-boxes').scrollIntoView({ behavior:'smooth', block:'start' }); }
         catch(e){ $('in-boxes').scrollIntoView(); }
       })
@@ -1900,6 +1916,7 @@
     var t = token;
     token = ''; me = null; cache = {};
     try{ localStorage.removeItem(TKEY); }catch(e){}
+    try{ localStorage.removeItem(MKEY); }catch(e){}
     $('li-mail').value = ''; $('li-pass').value = '';
     paintName();
     show('login');
@@ -1915,6 +1932,214 @@
   }
 
   /* ── 起動 ─────────────────────────────────── */
+
+  /* ══════════════════════════════════════════════
+   *  マイアカウント
+   *
+   *  ★Apps Script 側は1つも足していません。
+   *    ご登録情報 …… me 窓口（お名前・宛名）＋ ログインに使ったアドレス
+   *    パスワード …… changePass 窓口（もとからあるもの）
+   *    配色 ………… この端末の中だけ。当社へは送りません
+   *    ご登録内容の変更
+   *              …… ask 窓口（お問い合わせ）へ「登録内容の変更」として送ります
+   *
+   *  ★なぜ、この画面から直接書き換えないのか
+   *    オーナー表にお電話番号・ご住所の列がありません。列を足して
+   *    書き込む窓口を作るには Apps Script の変更が要ります。また、
+   *    ご登録のアドレスはログインの鍵そのものです。画面から書き換えられると、
+   *    打ち間違いでご本人が入れなくなります。そのため、当社が確認して
+   *    書き換える形にしています。
+   *
+   *  ★プロフィール写真は置いていません。
+   *    見本（base44）は誰でも見られる場所へ上げる作りで、URLを知られると
+   *    社外から顔写真が見えてしまいます。オーナー様の写真を、その形で
+   *    扱うわけにはいきません。
+   * ══════════════════════════════════════════════ */
+
+  /* ===== 検査できる道具（マイアカウント）ここから ===== */
+
+  var THEMES = [
+    { id:'wine',     name:'ワイン',       bg:'#3E1E24', pri:'#C79C6B' },
+    { id:'midnight', name:'ミッドナイト', bg:'#141D2E', pri:'#D8AE64' },
+    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' }
+  ];
+
+  /* 一覧にない・空・こわれている → 既定のワインに戻します */
+  function thPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < THEMES.length; i++){ if(THEMES[i].id === v) return v; }
+    return THEMES[0].id;
+  }
+  function thName(id){
+    for(var i = 0; i < THEMES.length; i++){ if(THEMES[i].id === id) return THEMES[i].name; }
+    return '';
+  }
+  function thOf(id){
+    var v = thPick(id);
+    for(var i = 0; i < THEMES.length; i++){ if(THEMES[i].id === v) return THEMES[i]; }
+    return THEMES[0];
+  }
+
+  /* 全角の数字・記号を半角に直し、空白を取ります */
+  function myNum(v){
+    var s = String(v == null ? '' : v);
+    try{ if(s.normalize) s = s.normalize('NFKC'); }catch(e){}
+    return s.replace(/[\s\u3000]+/g, '');
+  }
+
+  /* お電話番号。数字が10桁または11桁のときだけ通します。
+     ★桁数を直したり、足したりはしません。推測でお直しすると、
+       つながらない番号を当社が正しいものとして持ってしまうためです。 */
+  function myTel(v){
+    var s = myNum(v).replace(/[()\u2015\u30fc\u2212\uff0d]/g, '-');
+    if(!/^[0-9+\-]+$/.test(s)) return '';
+    var n = s.replace(/[^0-9]/g, '');
+    if(n.length < 10 || n.length > 11) return '';
+    return s;
+  }
+
+  /* 郵便番号。7桁のときだけ 123-4567 の形にします */
+  function myZip(v){
+    var n = myNum(v).replace(/^\u3012/, '').replace(/[^0-9]/g, '');
+    if(n.length !== 7) return '';
+    return n.slice(0, 3) + '-' + n.slice(3);
+  }
+
+  /* メールアドレス。形だけを見ます（本当に届くかは分かりません） */
+  function myMail(v){
+    var s = myNum(v);
+    if(s.length > 254) return '';
+    return /^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(s) ? s : '';
+  }
+
+  /* 入力の確かめ。通れば null、だめならお知らせの文言を返します */
+  function myCheck(f){
+    f = f || {};
+    if((f.note || '').length > 2000){
+      return '文字数が上限を超えています。2,000文字以内でご入力ください。';
+    }
+    if((f.addr || '').length > 200){
+      return 'ご住所が長すぎます。200文字以内でご入力ください。';
+    }
+    var got = 0;
+    if(f.mail){ if(!myMail(f.mail)) return 'メールアドレスの形をご確認ください。'; got++; }
+    if(f.tel){
+      if(!myTel(f.tel)) return 'お電話番号は市外局番から、10桁または11桁でご入力ください。';
+      got++;
+    }
+    if(f.zip){ if(!myZip(f.zip)) return '郵便番号は7桁でご入力ください。'; got++; }
+    if(f.addr) got++;
+    if(f.note) got++;
+    if(!got) return '変更をご希望の項目をご入力ください。';
+    return null;
+  }
+
+  /* お問い合わせへ送る本文。ご入力のあった項目だけを並べます。 */
+  function myBody(now, f){
+    f = f || {};
+    var L = ['ご登録内容の変更をお願いいたします。', ''];
+    if(f.mail){
+      L.push('メールアドレス： ' + (now || '（不明）') + '　→　' + myMail(f.mail));
+    }
+    if(f.tel){  L.push('お電話番号： ' + myTel(f.tel)); }
+    if(f.zip){  L.push('郵便番号： ' + myZip(f.zip)); }
+    if(f.addr){ L.push('ご住所： ' + String(f.addr).trim()); }
+    if(f.note){ L.push('', '補足：', String(f.note).trim()); }
+    return L.join('\n');
+  }
+
+  /* ===== 検査できる道具（マイアカウント）ここまで ===== */
+
+  function thSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(THKEY) || ''; }catch(e){}
+    return thPick(v);
+  }
+
+  function thApply(id, move){
+    var t = thOf(id);
+    var h = document.documentElement;
+    /* ★色をなめらかに移すのは、切り替えた瞬間だけです。
+     *   ふだんから付けると、画面を描き直すたびに全体がにじみます。 */
+    if(move){
+      h.classList.add('th-move');
+      setTimeout(function(){ h.classList.remove('th-move'); }, 420);
+    }
+    h.setAttribute('data-theme', t.id);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', t.bg);
+    try{ localStorage.setItem(THKEY, t.id); }catch(e){}
+    thPaint();
+  }
+
+  function thPaint(){
+    var host = $('my-themes');
+    if(!host) return;
+    var now = thSaved();
+    host.innerHTML = THEMES.map(function(t){
+      return '<button type="button" class="th-i" data-th="' + t.id + '"' +
+             ' aria-pressed="' + (t.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-sw" style="background:linear-gradient(135deg,' +
+             t.bg + ' 0 55%,' + t.pri + ' 55% 100%)"></span>' +
+             '<span class="th-n">' + esc(t.name) + '</span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
+  }
+
+  function loadAccount(){
+    $('my-name').textContent  = (me && me.name)  ? me.name  : '—';
+    $('my-atena').textContent = (me && me.atena) ? me.atena : '—';
+    var mail = '';
+    try{ mail = localStorage.getItem(MKEY) || ''; }catch(e){}
+    $('my-mail').textContent = mail || '—';
+    say($('my-pw-msg'), '');
+    say($('my-info-msg'), '');
+    thPaint();
+  }
+
+  $('my-themes').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-th]');
+    if(!b) return;
+    var id = thPick(b.getAttribute('data-th'));
+    if(id === thSaved()) return;
+    thApply(id, true);
+    toast('配色を「' + thName(id) + '」に変更しました');
+  });
+
+  $('f-mypass').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    passSubmit({ cur:'my-cur', a:'my-a', b:'my-b',
+                 msg:'my-pw-msg', go:'my-pw-go' });
+  });
+
+  $('f-myinfo').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var f = {
+      mail: ($('my-new-mail').value || '').trim(),
+      tel:  ($('my-tel').value  || '').trim(),
+      zip:  ($('my-zip').value  || '').trim(),
+      addr: ($('my-addr').value || '').trim(),
+      note: ($('my-note').value || '').trim()
+    };
+    var msg = $('my-info-msg');
+    var ng  = myCheck(f);
+    if(ng){ say(msg, ng); return; }
+
+    var now = '';
+    try{ now = localStorage.getItem(MKEY) || ''; }catch(e){}
+
+    busy($('my-info-go'), true, '送信中…');
+    auth('ask', { kind: '登録内容の変更', body: myBody(now, f) })
+      .then(function(){
+        $('f-myinfo').reset();
+        say(msg, '承りました。当社にて内容を確認のうえ、変更後にご連絡いたします。', true);
+      })
+      .catch(function(e){ say(msg, e.message); })
+      .then(function(){ busy($('my-info-go'), false); });
+  });
+
+
+  thApply(thSaved(), false);
   try{ token = localStorage.getItem(TKEY) || ''; }catch(e){ token = ''; }
 
   if(!token){ show('login'); }
