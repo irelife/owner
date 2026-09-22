@@ -149,6 +149,7 @@
     if(name === 'status')  loadStatus();
     if(name === 'papers')  loadPapers();
     if(name === 'contact') loadContact();
+    if(name === 'accountant') loadAcc();
     if(name === 'works')     loadWorks();
     if(name === 'insurance') loadIns();
   }
@@ -871,6 +872,333 @@
 
     $('hm-chart-wrap').hidden = false;
   }
+  /* ══════════════════════════════════════════════
+   *  税理士へ送信
+   *
+   *  ★ 2026/9/22 中身を作りました（それまで入口だけでした）。
+   *
+   *  ★ いま「できること」と「できないこと」を、はっきり分けています。
+   *
+   *    できること（当社側の用意は要りません）
+   *      ・税理士先生の宛先をこの端末に覚える
+   *      ・1か月ぶん／1年ぶんの表（CSV）を保存する
+   *      ・その月の明細書（原本PDF）を保存する
+   *      ・件名と本文の入ったメールを開く
+   *
+   *    できないこと（Apps Script に窓口が1つ必要です）
+   *      ・PDFを自動で添付して送る
+   *      ・12か月を1つのPDFにまとめる
+   *
+   *  ★ PDFを画面側で作ることは、しません。
+   *    日本語の字を持っていないため、月名も項目名も出ません。
+   *    原本PDFは Apps Script が作っているので、そのまま渡します。
+   * ══════════════════════════════════════════════ */
+
+  /* ===== 検査できる道具（tests/tacc.cjs が読みます）ここから =====
+   *  ★この塊は、上の「送金明細」の塊にある ppNo / ppSort を使います。
+   *    tests/tacc.cjs は、2つの塊をつないで読み込みます。 */
+
+  /* 「2026年8月」から「2026」を取り出します。暦年です（決算期ではありません）。 */
+  function acYearOf(ym){
+    var n = ppNo(ym);
+    return (n == null) ? '' : String(Math.floor(n / 100));
+  }
+
+  /* 明細にある年を、新しい順に並べます。読めない月は入れません。 */
+  function acYears(list){
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function(it){
+      var y = acYearOf(it && it.ym);
+      if(y && !seen[y]){ seen[y] = 1; out.push(y); }
+    });
+    return out.sort().reverse();
+  }
+
+  /* その年のものだけを、1月から順に並べます。 */
+  function acOfYear(list, year){
+    var a = (Array.isArray(list) ? list : []).filter(function(it){
+      return acYearOf(it && it.ym) === String(year);
+    });
+    return a.sort(function(x, y){ return (ppNo(x.ym) || 0) - (ppNo(y.ym) || 0); });
+  }
+
+  /* 税理士先生へお渡しする表を作ります（先頭のBOMは、保存するところで付けます）。
+   *
+   *  ★「区分」の列を足しています。送金明細の画面のCSV（4列）とは違います。
+   *    理由： 何か月ぶんも1つの表にすると、内わけの行とご送金額の行が
+   *          混ざります。区分が無いと、金額の列をそのまま合計したときに
+   *          二重に足してしまいます。税理士先生にお渡しする表なので、
+   *          そこは曖昧にしません。
+   *          「区分＝内わけ」だけで絞れば、正しく合計できます。 */
+  function acCsv(list){
+    var q = function(v){
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    };
+    var line = ['対象月,送金日,区分,項目,金額'];
+    var sum = 0, got = false;
+
+    (Array.isArray(list) ? list : []).forEach(function(it){
+      var ym = it.ym || '', sk = it.sokinDate || '';
+      (Array.isArray(it.rows) ? it.rows : []).forEach(function(x){
+        line.push([q(ym), q(sk), q('内わけ'), q(x.label),
+                   Number(x.amount || 0)].join(','));
+      });
+      if(it.total != null){
+        line.push([q(ym), q(sk), q('ご送金額'), q(''), Number(it.total)].join(','));
+        sum += Number(it.total);
+        got = true;
+      }
+    });
+
+    /* 2か月ぶん以上のときだけ、いちばん下に合計を足します。
+       対象月は空にします（月で絞ったときに混ざらないようにするためです）。 */
+    if(got && (Array.isArray(list) ? list.length : 0) > 1){
+      line.push([q(''), q(''), q('合計'), q(''), sum].join(','));
+    }
+    return line.join('\r\n');
+  }
+
+  /* 件名と本文を作ります。
+   *  hasPdf … 明細書（PDF）もお付けいただけるか。
+   *  ★1年ぶんは、12か月を1つのPDFにまとめられないので false になります。
+   *    本文に「PDFを添付しております」と書いてあるのに付けられない、
+   *    という食い違いを起こさないためです。 */
+  function acMail(info, what, company, hasPdf){
+    var firm = (info && info.firm) ? String(info.firm).trim() : '';
+    var name = (info && info.name) ? String(info.name).trim() : '';
+    var co   = company ? String(company) : '当社';
+    var line = '------------------------------';
+
+    var atena = firm ? firm : '税理士事務所';
+    var sensei = name ? (name + ' 先生') : 'ご担当者様';
+
+    return {
+      subject: '【' + co + '】' + what + ' 送金明細のご送付',
+      body   : atena + '\n' + sensei + '\n\n' +
+               'いつもお世話になっております。\n\n' +
+               what + 'の送金明細を、お送りいたします。\n' +
+               (hasPdf ? '表（CSV）と明細書（PDF）を添付しております。\n\n'
+                       : '表（CSV）を添付しております。\n\n') +
+               'ご確認のほど、よろしくお願い申し上げます。\n\n' +
+               line + '\n' +
+               co + ' オーナーマイページより\n' +
+               line
+    };
+  }
+
+  /* メールソフトを開くための文字を作ります。
+   *  ★改行は %0D%0A にします。%0A だけでは、改行されないメールソフトがあります。 */
+  function acMailto(to, subject, body){
+    var e = function(v){
+      return encodeURIComponent(String(v == null ? '' : v)).replace(/%0A/g, '%0D%0A');
+    };
+    return 'mailto:' + e(to).replace(/%40/g, '@') +
+           '?subject=' + e(subject) + '&body=' + e(body);
+  }
+  /* ===== 検査できる道具（税理士へ送信）ここまで ===== */
+
+  var AC_KEY  = 'ire_owner_tax';     /* 税理士先生の宛先。この端末の中だけ */
+  var acMode  = 'month';             /* month か year */
+  var acList  = [];
+
+  function acInfo(){
+    try{ return JSON.parse(localStorage.getItem(AC_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+
+  function loadAcc(){
+    var i = acInfo();
+    $('ac-firm').value = i.firm || '';
+    $('ac-name').value = i.name || '';
+    $('ac-mail').value = i.mail || '';
+
+    $('ac-prev').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    getPapers()
+      .then(function(r){
+        var all = [];
+        (Array.isArray(r.years) ? r.years : []).forEach(function(y){
+          (y.items || []).forEach(function(it){ all.push(it); });
+        });
+        acList = ppSort(all);
+        acFillYears();
+        acPaint();
+      })
+      .catch(function(e){
+        acList = [];
+        $('ac-prev').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+  }
+
+  function acFillYears(){
+    var ys = acYears(acList);
+    $('ac-year').innerHTML = ys.map(function(y){
+      return '<option value="' + esc(y) + '">' + esc(y) + '年分</option>';
+    }).join('');
+    acFillMonths();
+  }
+
+  function acFillMonths(){
+    var y = $('ac-year').value;
+    var a = acOfYear(acList, y);
+    $('ac-month').innerHTML = a.map(function(it, i){
+      return '<option value="' + i + '">' + esc(it.ym) + '</option>';
+    }).join('');
+    /* いちばん新しい月を、はじめから選んでおきます */
+    if(a.length) $('ac-month').value = String(a.length - 1);
+  }
+
+  function acPicked(){
+    var y = $('ac-year').value;
+    var a = acOfYear(acList, y);
+    if(acMode === 'year') return { list:a, what:(y ? (y + '年分（1月〜12月）') : '') };
+    var i = Number($('ac-month').value);
+    var it = a[i];
+    return { list:(it ? [it] : []), what:(it ? it.ym : '') };
+  }
+
+  function acPaint(){
+    var g = acPicked();
+    $('ac-month-wrap').hidden = (acMode === 'year');
+    $('ac-m').classList.toggle('on', acMode === 'month');
+    $('ac-y').classList.toggle('on', acMode === 'year');
+
+    if(!g.list.length){
+      $('ac-prev-h').textContent = '中身の確認';
+      $('ac-prev').innerHTML = '<div class="empty">明細はまだありません。</div>';
+      $('ac-csv').disabled = true;
+      $('ac-pdf').disabled = true;
+      $('ac-pdf').hidden   = false;
+      acText();
+      return;
+    }
+
+    $('ac-prev-h').textContent = g.what + 'の明細';
+    $('ac-csv').disabled = false;
+
+    if(acMode === 'month'){
+      var it = g.list[0];
+      var rows = Array.isArray(it.rows) ? it.rows : [];
+      $('ac-prev').innerHTML =
+        '<p class="pp-s">送金日 ' + esc(it.sokinDate || '—') + '</p>' +
+        (rows.length ? '<div class="rows">' + rows.map(function(x){
+          var minus = Number(x.amount) < 0;
+          return '<div class="row' + (minus ? ' minus' : '') + '">' +
+                 '<span>' + esc(x.label) + '</span>' +
+                 '<span>' + (minus ? '−¥' : '¥') +
+                 esc(yen(Math.abs(x.amount))) + '</span></div>';
+        }).join('') + '</div>' : '') +
+        '<div class="row acc-sum"><span>ご送金額</span><span>' +
+          (it.total == null ? '—' : '¥' + yen(it.total)) + '</span></div>';
+      /* 原本PDFがあるときだけ */
+      $('ac-pdf').hidden   = false;
+      $('ac-pdf').disabled = !it.id;
+    }else{
+      var sum = 0, got = false;
+      $('ac-prev').innerHTML = '<div class="rows">' + g.list.map(function(it){
+        if(it.total != null){ sum += Number(it.total); got = true; }
+        return '<div class="row"><span>' + esc(it.ym) + '</span><span>' +
+               (it.total == null ? '—' : '¥' + yen(it.total)) + '</span></div>';
+      }).join('') + '</div>' +
+        '<div class="row acc-sum"><span>年間合計</span><span>' +
+          (got ? ('¥' + yen(sum)) : '—') + '</span></div>';
+      /* ★12か月を1つのPDFにまとめるには、当社側の用意が必要です */
+      $('ac-pdf').hidden = true;
+    }
+    acText();
+  }
+
+  /* 件名と本文を入れ直します（ご自身で書き替えられます）。 */
+  function acText(){
+    var g = acPicked();
+    /* 明細書（PDF）をお付けいただけるのは、1か月ぶんで原本があるときだけです */
+    var hasPdf = (acMode === 'month' && g.list.length > 0 && !!g.list[0].id);
+    var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf);
+    $('ac-subj').value = m.subject;
+    $('ac-body').value = m.body;
+  }
+
+  $('ac-m').addEventListener('click', function(){ acMode = 'month'; acPaint(); });
+  $('ac-y').addEventListener('click', function(){ acMode = 'year';  acPaint(); });
+  $('ac-year').addEventListener('change', function(){ acFillMonths(); acPaint(); });
+  $('ac-month').addEventListener('change', acPaint);
+  ['ac-firm','ac-name','ac-mail'].forEach(function(id){
+    $(id).addEventListener('input', function(){ /* 覚えるのは押したときだけ */ });
+  });
+
+  $('ac-save').addEventListener('click', function(){
+    var i = { firm:($('ac-firm').value || '').trim(),
+              name:($('ac-name').value || '').trim(),
+              mail:($('ac-mail').value || '').trim() };
+    try{ localStorage.setItem(AC_KEY, JSON.stringify(i)); }catch(e){}
+    say($('ac-saved'), 'この端末に覚えました。', true);
+    acText();
+    setTimeout(function(){ say($('ac-saved'), ''); }, 4000);
+  });
+
+  $('ac-csv').addEventListener('click', function(){
+    var g = acPicked();
+    if(!g.list.length) return;
+    var url = URL.createObjectURL(
+      new Blob(['\ufeff' + acCsv(g.list)], { type:'text/csv;charset=utf-8' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = g.what + ' 送金明細.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  });
+
+  $('ac-pdf').addEventListener('click', function(){
+    var g = acPicked();
+    var it = g.list[0];
+    if(!it || !it.id) return;
+    savePdf(it.id, g.what + ' 送金明細.pdf', $('ac-pdf'));
+  });
+
+  $('ac-go').addEventListener('click', function(){
+    var to = ($('ac-mail').value || '').trim();
+    if(!to){
+      say($('ac-msg'), '税理士先生のメールアドレスをお入れください。');
+      return;
+    }
+    say($('ac-msg'), '');
+    /* ★ここでファイルは添付できません。メールソフトの決まりです。
+     *  保存したファイルを、開いたメールに付けていただきます。
+     *
+     *  ★location.href ではなく <a> を押す形にしています。
+     *    スクリプトから location を書き替えるのを止めるブラウザがあるためです
+     *    （保存するところと同じ作りです）。 */
+    var a = document.createElement('a');
+    a.href = acMailto(to, $('ac-subj').value, $('ac-body').value);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    say($('ac-msg'), 'メールソフトを開きました。' +
+        '上で保存したファイルを添付して、お送りください。', true);
+  });
+
+  /* 原本PDFを、開かずに保存します（税理士先生へ添付していただくため）。 */
+  function savePdf(id, name, btn){
+    if(!id) return;
+    var old = btn && btn.textContent;
+    if(btn){ btn.disabled = true; btn.textContent = '用意しています…'; }
+    auth('pdf', { id: id })
+      .then(function(r){
+        var bin = atob(r.b64 || '');
+        var buf = new Uint8Array(bin.length);
+        for(var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([buf], { type:'application/pdf' }));
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = name || '送金明細.pdf';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+      })
+      .catch(function(e){ toast(e.message); })
+      .then(function(){
+        if(btn){ btn.disabled = false; if(old) btn.textContent = old; }
+      });
+  }
+
   /* ★ PDF は Apps Script から受け取って、その場で開きます。
        共有リンクにはしません。リンクが1本漏れると、
        知っている人なら誰でも見られてしまうためです。 */
