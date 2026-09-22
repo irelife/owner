@@ -107,8 +107,9 @@
 
   /* ── 画面の出し入れ ───────────────────────── */
   var SCREENS = ['login','forgot','newpass','home','status','papers',
-                 'works','insurance','contact'];
-  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1, contact:1 };
+                 'works','insurance','contact','accountant'];
+  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1,
+                      contact:1, accountant:1 };
 
   function show(name){
     SCREENS.forEach(function(n){
@@ -277,8 +278,11 @@
       out += mvRows(r.newc,  '新規契約', 'new');
       out += mvRows(r.yotei, '解約予定', 'out');
     }
-    $('hm-moves').innerHTML = out ||
-      '<div class="empty">今月、入退去の予定はございません。</div>';
+    /* ★ 見本と同じく、入退去の予定があるときだけ見出しごと出します。
+     *   「ございません」とだけ書かれた箱は、置かないことにしました。 */
+    $('hm-moves-wrap').hidden = !out;
+    if(!out) return;
+    $('hm-moves').innerHTML = out;
     Array.prototype.forEach.call($('hm-moves').querySelectorAll('.mv'), function(el){
       el.addEventListener('click', function(){ show('status'); });
     });
@@ -712,9 +716,38 @@
     ppBind($('pp-one'));
   });
 
-  /* ── 年間の収支（ホーム） ─────────────────── */
+  /* ── 年間の収支（ホーム） ───────────────────
+   * 上の図 … 月ごとの 収入（棒）と 支出（棒）
+   * 下の図 … 累積収支（折れ線）
+   *
+   * ★ なぜ2つに分けたか
+   *   見本は1つの図に左右2本のものさしを置いていました。収入は約53万円、
+   *   累積収支は12か月で約580万円。11倍ちがうものが同じ高さに描かれ、
+   *   「今月の収入と、これまでの累計が同じくらい」と読めてしまいます。
+   *   図を2つに分ければ、どちらも自分のものさしで正しく読めます。
+   *   月の並び（横軸）は上下でそろえてあります。 */
   function loadChart(){
     getPapers().then(paintChart).catch(function(){ $('hm-chart-wrap').hidden = true; });
+  }
+
+  /* 明細の内わけから、月ごとの 収入・支出・累積収支 を作ります */
+  function chartRows(r){
+    var all = [];
+    (Array.isArray(r.years) ? r.years : []).forEach(function(y){
+      (y.items || []).forEach(function(it){ all.push(it); });
+    });
+    var run = 0;
+    return all.slice(0, 12).reverse().map(function(it){
+      var inc = 0, out = 0;
+      (it.rows || []).forEach(function(x){
+        var v = Number(x.amount) || 0;
+        if(v >= 0) inc += v; else out += -v;
+      });
+      /* 内わけが無い月は、ご送金額を収入として見ます */
+      if(!inc && !out && it.total != null) inc = it.total;
+      run += inc - out;
+      return { ym: it.ym, month: it.month, inc: inc, out: out, run: run };
+    });
   }
 
   /* 万の単位で短くします（棒が細いためです）。1万円に満たなければそのまま。 */
@@ -725,26 +758,82 @@
     return yen(v);
   }
 
-  function paintChart(r){
-    var list = (r && Array.isArray(r.chart)) ? r.chart : [];
-    var has  = list.filter(function(x){ return x.total != null; });
-    /* 1か月ぶんしか無いと、山にならないので出しません */
-    if(has.length < 2){ $('hm-chart-wrap').hidden = true; return; }
-
-    var max = Math.max.apply(null, has.map(function(x){ return Number(x.total) || 0; }));
-    $('hm-chart').innerHTML = '<div class="ch">' + list.map(function(x){
-      var v = (x.total == null) ? null : Number(x.total);
-      var h = (v == null || max <= 0) ? 0 : Math.max(2, Math.round(v / max * 100));
-      return '<div class="ch-c" title="' + esc(x.ym + '　' +
-               (v == null ? '—' : yen(v) + '円')) + '">' +
-             '<span class="ch-v">' + (v == null ? '' : esc(man(v))) + '</span>' +
-             '<span class="ch-w"><span class="ch-b" style="height:' + h + '%"></span></span>' +
-             '<span class="ch-x">' + esc(x.month == null ? '' : (x.month + '月')) + '</span>' +
-             '</div>';
-    }).join('') + '</div>';
-    $('hm-chart-wrap').hidden = false;
+  /* 横軸の月。いちばん左と1月には、年も添えます。
+     年をまたいだことが分かるようにするためです。 */
+  function monLabel(x, i){
+    if(x.month == null) return '';
+    var y = String(x.ym || '').match(/(\d{4})/);
+    if((i === 0 || x.month === 1) && y) return "'" + y[1].slice(2) + ' ' + x.month;
+    return String(x.month);
   }
 
+  function paintChart(r){
+    var d = chartRows(r);
+    /* 1か月ぶんでは山にならないので出しません */
+    if(d.length < 2){ $('hm-chart-wrap').hidden = true; return; }
+
+    var maxBar = Math.max.apply(null, d.map(function(x){
+      return Math.max(x.inc, x.out); })) || 1;
+    var runs   = d.map(function(x){ return x.run; });
+    var runHi  = Math.max.apply(null, runs);
+    var runLo  = Math.min.apply(null, runs.concat([0]));
+    var span   = (runHi - runLo) || 1;
+    var last   = d.length - 1;
+
+    /* ── 上の図：収入と支出 ───────────────── */
+    var bars = d.map(function(x, i){
+      var hi = Math.round(x.inc / maxBar * 100);
+      var ho = Math.round(x.out / maxBar * 100);
+      return '<div class="c2">' +
+        '<span class="c2-v">' + (i === last ? esc(man(x.inc)) : '') + '</span>' +
+        '<span class="c2-w">' +
+          '<span class="c2-b inc" style="height:' + Math.max(x.inc ? 2 : 0, hi) + '%"></span>' +
+          '<span class="c2-b out" style="height:' + Math.max(x.out ? 2 : 0, ho) + '%"></span>' +
+        '</span>' +
+        '<span class="c2-x">' + esc(monLabel(x, i)) + '</span>' +
+        '<span class="c2-tip" role="tooltip">' +
+          '<b>' + esc(x.ym) + '</b>' +
+          '<i><em class="sw inc"></em>収入<s>¥' + esc(yen(x.inc)) + '</s></i>' +
+          '<i><em class="sw out"></em>支出<s>−¥' + esc(yen(x.out)) + '</s></i>' +
+          '<i><em class="sw run"></em>累積収支<s>¥' + esc(yen(x.run)) + '</s></i>' +
+        '</span>' +
+      '</div>';
+    }).join('');
+
+    /* ── 下の図：累積収支の折れ線 ─────────── */
+    var pts = d.map(function(x, i){
+      var px = ((i + 0.5) / d.length) * 100;
+      var py = 100 - ((x.run - runLo) / span) * 92 - 4;
+      return px.toFixed(2) + ',' + py.toFixed(2);
+    });
+    /* ★ 点（circle）は置きません。図を横いっぱいに伸ばすので、
+     *   まるい点が楕円につぶれてしまうためです。線だけにします。 */
+    var line = '<svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none"' +
+      ' aria-hidden="true"><polyline points="' + pts.join(' ') + '"' +
+      ' vector-effect="non-scaling-stroke" class="ln-p"/></svg>';
+
+    $('hm-chart').innerHTML =
+      '<div class="ch2">' + bars + '</div>' +
+      '<div class="ln-wrap">' + line +
+        '<span class="ln-k">累積収支</span>' +
+        '<span class="ln-a">¥' + esc(yen(d[last].run)) + '</span>' +
+      '</div>' +
+      '<div class="ch-lg">' +
+        '<span><em class="sw inc"></em>収入</span>' +
+        '<span><em class="sw out"></em>支出</span>' +
+        '<span><em class="sw run line"></em>累積収支</span>' +
+      '</div>' +
+      '<details class="ch-tb"><summary>数字で見る</summary>' +
+        '<table><thead><tr><th>月</th><th>収入</th><th>支出</th><th>累積収支</th></tr></thead>' +
+        '<tbody>' + d.map(function(x){
+          return '<tr><th scope="row">' + esc(x.ym) + '</th>' +
+                 '<td>¥' + esc(yen(x.inc)) + '</td>' +
+                 '<td>−¥' + esc(yen(x.out)) + '</td>' +
+                 '<td>¥' + esc(yen(x.run)) + '</td></tr>';
+        }).join('') + '</tbody></table></details>';
+
+    $('hm-chart-wrap').hidden = false;
+  }
   /* ★ PDF は Apps Script から受け取って、その場で開きます。
        共有リンクにはしません。リンクが1本漏れると、
        知っている人なら誰でも見られてしまうためです。 */
