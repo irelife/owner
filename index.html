@@ -4,12 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>オーナーマイページ｜IREライフ株式会社</title>
-<meta name="theme-color" content="#FBF8F7">
+<meta name="theme-color" content="#3D1E24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23FBF8F7%22%2C%22theme_color%22%3A%22%23FBF8F7%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 
@@ -132,6 +131,8 @@
     <section id="s-home" class="scr pad" hidden>
       <p class="kicker" id="hm-month"></p>
       <h1 class="h-mincho">今月のご送金</h1>
+      <span class="bar-line"></span>
+      <p class="sub">資産管理を、ひとつの画面で。</p>
 
       <div class="hero" id="hm-hero">
         <p class="hero-k" id="hm-date"></p>
@@ -149,24 +150,29 @@
 
       <nav class="tiles">
         <button type="button" class="tile" data-go="status">
+          <span class="tile-k">入居状況</span>
           <span class="tile-t">入居状況</span>
-          <span class="tile-d">新規契約・解約予定・募集中</span>
+          <span class="tile-d">新規契約・解約予定・募集中の部屋を、まとめてご覧いただけます。</span>
         </button>
         <button type="button" class="tile" data-go="papers">
+          <span class="tile-k">送金明細</span>
           <span class="tile-t">過去の明細</span>
-          <span class="tile-d">3年分をいつでも</span>
+          <span class="tile-d">3年分を保存しています。いつでも、何度でもご覧いただけます。</span>
         </button>
         <button type="button" class="tile" data-go="works">
+          <span class="tile-k">修繕</span>
           <span class="tile-t">原状回復・修繕</span>
-          <span class="tile-d">内容・費用・相殺の予定</span>
+          <span class="tile-d">内容・費用・いつご送金から差し引くかを、1件ずつご覧いただけます。</span>
         </button>
         <button type="button" class="tile" data-go="insurance">
-          <span class="tile-t">火災保険</span>
-          <span class="tile-d">証券の写しをお預かりします</span>
+          <span class="tile-k">火災保険</span>
+          <span class="tile-t">証券の写しをお預かり</span>
+          <span class="tile-d">万一のときに、当社ですぐお手続きに入れます。</span>
         </button>
         <button type="button" class="tile" data-go="contact">
-          <span class="tile-t">お問い合わせ</span>
-          <span class="tile-d">当社へご連絡</span>
+          <span class="tile-k">お問い合わせ</span>
+          <span class="tile-t">いつでもどうぞ</span>
+          <span class="tile-d">ご質問やご要望を、そのままお送りいただけます。</span>
         </button>
       </nav>
     </section>
@@ -176,6 +182,7 @@
       <button type="button" class="back" data-go="home">← ホーム</button>
       <p class="kicker" id="st-month"></p>
       <h1 class="h-mincho">入居状況</h1>
+      <span class="bar-line"></span>
       <div id="st-body"></div>
       <div id="st-letter" class="letter" hidden>
         <p class="lt-h">当社より</p>
@@ -188,6 +195,7 @@
     <section id="s-papers" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">過去の明細</h1>
+      <span class="bar-line"></span>
       <p class="sub">3年分を保存しています。いつでも、何度でもご覧いただけます。</p>
       <div id="pp-body"></div>
     </section>
@@ -196,6 +204,7 @@
     <section id="s-works" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">原状回復・修繕</h1>
+      <span class="bar-line"></span>
       <p class="sub">いつ・どんな内容で・いくらかかり・いつご送金から差し引くかを、
         1件ずつご覧いただけます。ご不明な点は、その場でご連絡いただけます。</p>
       <div id="wk-body"></div>
@@ -205,6 +214,7 @@
     <section id="s-insurance" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">火災保険</h1>
+      <span class="bar-line"></span>
       <p class="sub">証券の写しをお預かりします。万一のときに、当社ですぐお手続きに入れます。
         写真でも、PDFでも構いません。</p>
 
@@ -251,6 +261,7 @@
     <section id="s-contact" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">お問い合わせ</h1>
+      <span class="bar-line"></span>
       <p class="sub">当社からのお返事も、この画面に出ます。
         お返事は2営業日以内に差し上げます。</p>
 
@@ -291,7 +302,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/config.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>
