@@ -226,18 +226,20 @@
 
   /* ── ホーム ───────────────────────────────── */
   function loadHome(){
-    if(cache.home){ paintHome(cache.home); return; }
-    auth('home')
-      .then(function(r){ cache.home = r; paintHome(r); })
-      .catch(function(e){ toast(e.message); });
+    if(cache.home){ paintHome(cache.home); }
+    else{
+      auth('home')
+        .then(function(r){ cache.home = r; paintHome(r); })
+        .catch(function(e){ toast(e.message); });
+    }
+    loadMoves();
+    loadChart();
   }
 
   function paintHome(r){
     $('hm-month').textContent = r.month ? (r.month + '分') : '';
     $('hm-date').textContent  = r.sokinDate ? (r.sokinDate + ' お振込予定') : 'お振込予定';
-    $('hm-total').innerHTML   = (r.total == null)
-      ? '—'
-      : esc(yen(r.total)) + '<i>円</i>';
+    $('hm-total').textContent = (r.total == null) ? '—' : ('\u00a5' + yen(r.total));
 
     var rows = Array.isArray(r.rows) ? r.rows : [];
     $('hm-rows').innerHTML = rows.map(function(x){
@@ -250,13 +252,6 @@
     $('hm-pdf').hidden = !r.pdfId;
     $('hm-pdf').onclick = function(){ openPdf(r.pdfId, $('hm-pdf')); };
 
-    var mv = r.moves || {};
-    $('hm-moves').innerHTML =
-      move(mv.newc, '新規契約') + move(mv.yotei, '解約予定') + move(mv.boshu, '募集中');
-    Array.prototype.forEach.call($('hm-moves').children, function(el){
-      el.addEventListener('click', function(){ show('status'); });
-    });
-
     var props = Array.isArray(r.props) ? r.props : [];
     $('hm-props').innerHTML = props.length
       ? props.map(function(p){
@@ -266,10 +261,46 @@
       : '<div class="empty">物件の情報がまだありません。</div>';
   }
 
-  function move(n, label){
-    var v = Number(n) || 0;
-    return '<button type="button" class="move' + (v ? '' : ' zero') + '">' +
-           '<b>' + v + '</b><span>' + label + '</span></button>';
+  /* 今月の動きは、物件名・お部屋まで出したいので入居状況の中身を使います。
+   * home が返す moves は件数だけのためです。 */
+  function loadMoves(){
+    if(cache.status){ paintMoves(cache.status); return; }
+    $('hm-moves').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('status')
+      .then(function(r){ cache.status = r; paintMoves(r); })
+      .catch(function(){ paintMoves(null); });
+  }
+
+  function paintMoves(r){
+    var out = '';
+    if(r){
+      out += mvRows(r.newc,  '新規契約', 'new');
+      out += mvRows(r.yotei, '解約予定', 'out');
+    }
+    $('hm-moves').innerHTML = out ||
+      '<div class="empty">今月、入退去の予定はございません。</div>';
+    Array.prototype.forEach.call($('hm-moves').querySelectorAll('.mv'), function(el){
+      el.addEventListener('click', function(){ show('status'); });
+    });
+  }
+
+  function mvRows(list, label, kind){
+    if(!Array.isArray(list)) return '';
+    return list.map(function(x){
+      /* ★ 右の札には「新規契約」「解約予定」と出します。
+       *   サーバーが返す tag は、解約予定のときは日付なので、
+       *   下の行に回します。 */
+      var sub = [];
+      if(x.tag && x.tag !== label && x.tag !== '新規') sub.push(x.tag);
+      if(x.detail) sub.push(x.detail);
+      return '<button type="button" class="mv">' +
+        '<span class="mv-l">' +
+          '<span class="mv-t">' + esc(x.place) + '</span>' +
+          (sub.length ? '<span class="mv-s">' + esc(sub.join('　')) + '</span>' : '') +
+        '</span>' +
+        '<span class="st-tag ' + kind + '">' + esc(label) + '</span>' +
+      '</button>';
+    }).join('');
   }
 
   /* ── 入居状況 ─────────────────────────────── */
@@ -311,11 +342,18 @@
   }
 
   /* ── 過去の明細 ───────────────────────────── */
+  /* ★ ホームの「年間の収支」と、この画面は同じ中身を使います。
+   *   読むのは一度だけにして、二度目からは覚えたものを使います。 */
+  function getPapers(){
+    if(cache.papers) return Promise.resolve(cache.papers);
+    return auth('papers').then(function(r){ cache.papers = r; return r; });
+  }
+
   function loadPapers(){
     if(cache.papers){ paintPapers(cache.papers); return; }
     $('pp-body').innerHTML = '<div class="empty">読み込んでいます…</div>';
-    auth('papers')
-      .then(function(r){ cache.papers = r; paintPapers(r); })
+    getPapers()
+      .then(paintPapers)
       .catch(function(e){
         $('pp-body').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
       });
@@ -329,16 +367,89 @@
     }
     $('pp-body').innerHTML = years.map(function(y){
       return '<p class="year">' + esc(y.year) + '年</p><div class="list">' +
-        y.items.map(function(it){
-          return '<div class="item"><button type="button" class="row-btn" data-pdf="' +
-                 esc(it.id) + '"><span class="t">' + esc(it.label) +
-                 '</span></button><span class="pdf">PDF</span></div>';
-        }).join('') + '</div>';
+             y.items.map(paperOne).join('') + '</div>';
     }).join('');
 
-    Array.prototype.forEach.call($('pp-body').querySelectorAll('[data-pdf]'), function(b){
-      b.addEventListener('click', function(){ openPdf(b.getAttribute('data-pdf'), b); });
+    /* 見出しを押すと、その月の内わけが開きます */
+    Array.prototype.forEach.call($('pp-body').querySelectorAll('.pp-h'), function(h){
+      h.addEventListener('click', function(){
+        var body = h.parentNode.querySelector('.pp-b');
+        if(!body) return;
+        body.hidden = !body.hidden;
+        h.classList.toggle('open', !body.hidden);
+      });
     });
+    Array.prototype.forEach.call($('pp-body').querySelectorAll('[data-pdf]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        openPdf(b.getAttribute('data-pdf'), b);
+      });
+    });
+  }
+
+  /* 明細1件。
+   * ★ 送金額がまだ届かないサーバーでも止まらないよう、
+   *   金額が無いときは、これまでどおりの1行だけにします。 */
+  function paperOne(it){
+    var rows = Array.isArray(it.rows) ? it.rows : [];
+    if(it.total == null && !rows.length){
+      return '<div class="item"><button type="button" class="row-btn" data-pdf="' +
+             esc(it.id) + '"><span class="t">' + esc(it.label) +
+             '</span></button><span class="pdf">PDF</span></div>';
+    }
+    return '<div class="pp">' +
+      '<button type="button" class="pp-h">' +
+        '<span class="pp-l">' +
+          '<span class="pp-t">' + esc(it.label) + '</span>' +
+          (it.sokinDate ? '<span class="pp-s">' + esc(it.sokinDate) + ' お振込</span>' : '') +
+        '</span>' +
+        '<span class="pp-a">' + (it.total == null ? '—' : '\u00a5' + yen(it.total)) + '</span>' +
+        '<span class="pp-c" aria-hidden="true"></span>' +
+      '</button>' +
+      '<div class="pp-b" hidden>' +
+        (rows.length ? '<div class="rows">' + rows.map(function(x){
+          var minus = Number(x.amount) < 0;
+          return '<div class="row' + (minus ? ' minus' : '') + '">' +
+                 '<span>' + esc(x.label) + '</span>' +
+                 '<span>' + (minus ? '\u2212' : '') + esc(yen(Math.abs(x.amount))) + '</span></div>';
+        }).join('') + '</div>' : '') +
+        (it.id ? '<button type="button" class="btn ghost" data-pdf="' + esc(it.id) +
+                 '">明細のPDFを開く</button>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ── 年間の収支（ホーム） ─────────────────── */
+  function loadChart(){
+    getPapers().then(paintChart).catch(function(){ $('hm-chart-wrap').hidden = true; });
+  }
+
+  /* 万の単位で短くします（棒が細いためです）。1万円に満たなければそのまま。 */
+  function man(n){
+    var v = Number(n);
+    if(!isFinite(v)) return '';
+    if(Math.abs(v) >= 10000) return (Math.round(v / 1000) / 10) + '万';
+    return yen(v);
+  }
+
+  function paintChart(r){
+    var list = (r && Array.isArray(r.chart)) ? r.chart : [];
+    var has  = list.filter(function(x){ return x.total != null; });
+    /* 1か月ぶんしか無いと、山にならないので出しません */
+    if(has.length < 2){ $('hm-chart-wrap').hidden = true; return; }
+
+    var max = Math.max.apply(null, has.map(function(x){ return Number(x.total) || 0; }));
+    $('hm-chart').innerHTML = '<div class="ch">' + list.map(function(x){
+      var v = (x.total == null) ? null : Number(x.total);
+      var h = (v == null || max <= 0) ? 0 : Math.max(2, Math.round(v / max * 100));
+      return '<div class="ch-c" title="' + esc(x.ym + '　' +
+               (v == null ? '—' : yen(v) + '円')) + '">' +
+             '<span class="ch-v">' + (v == null ? '' : esc(man(v))) + '</span>' +
+             '<span class="ch-w"><span class="ch-b" style="height:' + h + '%"></span></span>' +
+             '<span class="ch-x">' + esc(x.month == null ? '' : (x.month + '月')) + '</span>' +
+             '</div>';
+    }).join('') + '</div>';
+    $('hm-chart-wrap').hidden = false;
   }
 
   /* ★ PDF は Apps Script から受け取って、その場で開きます。

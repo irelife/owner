@@ -48,6 +48,7 @@
   --bd-40: hsl(var(--border) / .4);
   --ng:    hsl(var(--destructive));
 
+  --ic-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='23 6 13.5 15.5 8.5 10.5 1 18'/%3E%3Cpolyline points='17 6 23 6 23 12'/%3E%3C/svg%3E");
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans',
           'Yu Gothic', 'Noto Sans JP', sans-serif;
 }
@@ -123,6 +124,10 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 .card .sub{ font-size:14px; margin:6px 0 20px; }
 .sect{
   margin:40px 0 16px; font-size:24px; font-weight:700; letter-spacing:-.02em;
+}
+.lead{
+  margin:0; padding-top:24px; font-size:20px; line-height:1.75;
+  color:var(--mut-fg);
 }
 .year{ margin:32px 0 12px; font-size:20px; font-weight:700; }
 .empty{
@@ -247,18 +252,80 @@ input[type=file]::file-selector-button{
 .row span:last-child{ font-variant-numeric:tabular-nums; }
 .row.minus span:last-child{ color:var(--ng); }
 
-/* ── 今月の動き ───────────────────────────── */
-.moves{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-.move{
-  padding:20px 12px; border:1px solid var(--bd); border-radius:16px;
-  background:var(--card-bg); color:var(--fg); cursor:pointer;
-  font:inherit; text-align:center; transition:border-color .15s;
+/* ── 今月の動き（一覧の形） ───────────────── */
+.moves{
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  overflow:hidden;
 }
-.move:hover{ border-color:var(--pri); }
-.move b{ display:block; font-size:30px; font-weight:700; line-height:1.1;
-  font-variant-numeric:tabular-nums; }
-.move span{ display:block; margin-top:4px; font-size:13px; color:var(--mut-fg); }
-.move.zero b{ color:var(--mut-fg); }
+.moves .empty{ padding:28px 20px; }
+.mv{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  width:100%; padding:16px 24px; border:0; border-top:1px solid var(--bd-40);
+  background:transparent; color:var(--fg); font:inherit; text-align:left;
+  cursor:pointer; transition:background-color .15s;
+}
+.mv:first-child{ border-top:0; }
+.mv:hover{ background:var(--acc); }
+.mv-l{ min-width:0; }
+.mv-t{ display:block; font-size:16px; font-weight:700; letter-spacing:-.01em; }
+.mv-s{ display:block; margin-top:2px; font-size:13px; line-height:1.7;
+  color:var(--mut-fg); }
+.mv .st-tag{ font-size:13px; padding:5px 12px; }
+
+/* ── 年間の収支 ───────────────────────────── */
+.chart-box{
+  padding:24px 16px 16px; background:var(--card-bg);
+  border:1px solid var(--bd); border-radius:16px;
+}
+.ch{ display:flex; align-items:stretch; gap:4px; height:200px; }
+.ch-c{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
+.ch-v{
+  font-size:10px; line-height:1.4; text-align:center; color:var(--mut-fg);
+  font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden;
+}
+.ch-w{ position:relative; flex:1 1 auto; }
+.ch-b{
+  position:absolute; left:2px; right:2px; bottom:0; min-height:3px;
+  border-radius:6px 6px 0 0; background:var(--pri);
+}
+.ch-x{
+  margin-top:6px; font-size:11px; line-height:1.4; text-align:center;
+  color:var(--mut-fg); white-space:nowrap;
+}
+
+/* ── 明細1件（押すと内わけが開きます） ───────── */
+.pp{
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  overflow:hidden;
+}
+.pp-h{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:16px 20px; border:0; background:transparent; color:var(--fg);
+  font:inherit; text-align:left; cursor:pointer; transition:background-color .15s;
+}
+.pp-h:hover{ background:var(--acc); }
+.pp-l{ flex:1 1 auto; min-width:0; }
+.pp-t{ display:block; font-size:16px; font-weight:700; }
+.pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
+.pp-a{
+  flex:0 0 auto; font-size:20px; font-weight:700; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.pp-c{
+  flex:0 0 auto; width:10px; height:10px; margin-left:2px;
+  border-right:2px solid var(--mut-fg); border-bottom:2px solid var(--mut-fg);
+  transform:rotate(45deg) translate(-2px,-2px); transition:transform .15s;
+}
+.pp-h.open .pp-c{ transform:rotate(-135deg) translate(-2px,-2px); }
+.pp-b{ padding:0 20px 20px; }
+.pp-b .rows{ margin-top:0; }
+.pp-b .btn{ margin-top:16px; }
+.ic-up{
+  display:inline-block; width:22px; height:22px; margin-right:8px;
+  vertical-align:-3px; background:var(--pri);
+  -webkit-mask:var(--ic-up) center / contain no-repeat;
+          mask:var(--ic-up) center / contain no-repeat;
+}
 
 /* ── 一覧（物件・明細・保険） ─────────────── */
 .list{ display:flex; flex-direction:column; gap:10px; }
@@ -301,6 +368,8 @@ input[type=file]::file-selector-button{
 }
 .tile-t{ margin-top:8px; font-size:20px; font-weight:700; letter-spacing:-.02em;
   line-height:1.4; word-break:keep-all; }
+.tile-a{ margin-top:4px; font-size:36px; font-weight:700; line-height:1.15;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
 .tile-d{ margin-top:12px; font-size:14px; line-height:1.75; color:var(--mut-fg); }
 
 /* ── 入居状況 ─────────────────────────────── */
@@ -403,6 +472,8 @@ input[type=file]::file-selector-button{
   .h-mincho{ font-size:40px; }
   .amount{ font-size:64px; }
   .tile-t{ font-size:22px; }
+  .tile-a{ font-size:48px; }
+  .lead{ padding-top:48px; font-size:24px; }
 }
 
 @media (prefers-reduced-motion:reduce){

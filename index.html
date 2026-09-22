@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -129,52 +129,54 @@
 
     <!-- ── ホーム ── -->
     <section id="s-home" class="scr pad" hidden>
-      <p class="kicker" id="hm-month"></p>
-      <h1 class="h-mincho">今月のご送金</h1>
-      <span class="bar-line"></span>
-      <p class="sub">資産管理を、ひとつの画面で。</p>
+      <p class="lead">資産管理を、ひとつの画面で。</p>
 
-      <div class="hero" id="hm-hero">
-        <p class="hero-k" id="hm-date"></p>
-        <p class="amount" id="hm-total">—</p>
-        <div class="rows" id="hm-rows"></div>
-      </div>
+      <nav class="tiles">
+        <button type="button" class="tile" data-go="papers">
+          <span class="tile-k">送金明細</span>
+          <span class="tile-t">今月のご送金</span>
+          <span class="tile-a" id="hm-total">—</span>
+          <span class="tile-d">毎月の送金額と収支の内訳を、一目でご確認いただけます。</span>
+        </button>
+        <button type="button" class="tile" data-go="status">
+          <span class="tile-k">入居状況</span>
+          <span class="tile-t">すべての物件の入居状況</span>
+          <span class="tile-d">入居・空室・解約予定を、そのまま把握できる画面です。</span>
+        </button>
+        <button type="button" class="tile" data-go="works">
+          <span class="tile-k">修繕</span>
+          <span class="tile-t">修繕履歴と費用の管理</span>
+          <span class="tile-d">これまでの修繕内容と、ご送金から相殺される費用をまとめてご確認いただけます。</span>
+        </button>
+        <button type="button" class="tile" data-go="insurance">
+          <span class="tile-k">火災保険</span>
+          <span class="tile-t">保険証券の提出と満期管理</span>
+          <span class="tile-d">火災保険の証券の写しをお預かりし、満期まで一元管理いたします。</span>
+        </button>
+        <button type="button" class="tile" data-go="contact">
+          <span class="tile-k">お問い合わせ</span>
+          <span class="tile-t">いつでもどうぞ。<br>どんなことでも。</span>
+          <span class="tile-d">運用に関するご質問やご要望を、そのままお送りいただける窓口です。</span>
+        </button>
+      </nav>
 
-      <button type="button" id="hm-pdf" class="btn">明細をPDFで見る</button>
+      <!-- 年間の収支（サーバーから月ごとの金額が返るようになったら出します） -->
+      <section id="hm-chart-wrap" hidden>
+        <p class="sect"><span class="ic-up" aria-hidden="true"></span>年間の収支</p>
+        <div class="chart-box" id="hm-chart"></div>
+      </section>
 
       <p class="sect">今月の動き</p>
       <div class="moves" id="hm-moves"></div>
 
-      <p class="sect">お持ちの物件</p>
-      <div class="list" id="hm-props"></div>
-
-      <nav class="tiles">
-        <button type="button" class="tile" data-go="status">
-          <span class="tile-k">入居状況</span>
-          <span class="tile-t">入居状況</span>
-          <span class="tile-d">新規契約・解約予定・募集中の部屋を、まとめてご覧いただけます。</span>
-        </button>
-        <button type="button" class="tile" data-go="papers">
-          <span class="tile-k">送金明細</span>
-          <span class="tile-t">過去の明細</span>
-          <span class="tile-d">3年分を保存しています。いつでも、何度でもご覧いただけます。</span>
-        </button>
-        <button type="button" class="tile" data-go="works">
-          <span class="tile-k">修繕</span>
-          <span class="tile-t">原状回復・修繕</span>
-          <span class="tile-d">内容・費用・いつご送金から差し引くかを、1件ずつご覧いただけます。</span>
-        </button>
-        <button type="button" class="tile" data-go="insurance">
-          <span class="tile-k">火災保険</span>
-          <span class="tile-t">証券の写しをお預かり</span>
-          <span class="tile-d">万一のときに、当社ですぐお手続きに入れます。</span>
-        </button>
-        <button type="button" class="tile" data-go="contact">
-          <span class="tile-k">お問い合わせ</span>
-          <span class="tile-t">いつでもどうぞ</span>
-          <span class="tile-d">ご質問やご要望を、そのままお送りいただけます。</span>
-        </button>
-      </nav>
+      <!-- ★ app.js が触る欄。いまのホームには出しませんが、
+           取り除くと app.js が止まるため、隠したまま残しています。 -->
+      <div hidden>
+        <span id="hm-month"></span><span id="hm-date"></span>
+        <div id="hm-rows"></div>
+        <button type="button" id="hm-pdf"></button>
+        <div id="hm-props"></div>
+      </div>
     </section>
 
     <!-- ── 入居状況 ── -->
@@ -302,7 +304,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/config.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
 </body>
 </html>
