@@ -272,11 +272,54 @@ input[type=file]::file-selector-button{
   color:var(--mut-fg); }
 .mv .st-tag{ font-size:13px; padding:5px 12px; }
 
-/* ── 年間の収支（月ごとの金額が届いたら出します） ─ */
+/* ── 年間の収支 ───────────────────────────── */
 .chart-box{
-  padding:24px; background:var(--card-bg);
+  padding:24px 16px 16px; background:var(--card-bg);
   border:1px solid var(--bd); border-radius:16px;
 }
+.ch{ display:flex; align-items:stretch; gap:4px; height:200px; }
+.ch-c{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
+.ch-v{
+  font-size:10px; line-height:1.4; text-align:center; color:var(--mut-fg);
+  font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden;
+}
+.ch-w{ position:relative; flex:1 1 auto; }
+.ch-b{
+  position:absolute; left:2px; right:2px; bottom:0; min-height:3px;
+  border-radius:6px 6px 0 0; background:var(--pri);
+}
+.ch-x{
+  margin-top:6px; font-size:11px; line-height:1.4; text-align:center;
+  color:var(--mut-fg); white-space:nowrap;
+}
+
+/* ── 明細1件（押すと内わけが開きます） ───────── */
+.pp{
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  overflow:hidden;
+}
+.pp-h{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:16px 20px; border:0; background:transparent; color:var(--fg);
+  font:inherit; text-align:left; cursor:pointer; transition:background-color .15s;
+}
+.pp-h:hover{ background:var(--acc); }
+.pp-l{ flex:1 1 auto; min-width:0; }
+.pp-t{ display:block; font-size:16px; font-weight:700; }
+.pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
+.pp-a{
+  flex:0 0 auto; font-size:20px; font-weight:700; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.pp-c{
+  flex:0 0 auto; width:10px; height:10px; margin-left:2px;
+  border-right:2px solid var(--mut-fg); border-bottom:2px solid var(--mut-fg);
+  transform:rotate(45deg) translate(-2px,-2px); transition:transform .15s;
+}
+.pp-h.open .pp-c{ transform:rotate(-135deg) translate(-2px,-2px); }
+.pp-b{ padding:0 20px 20px; }
+.pp-b .rows{ margin-top:0; }
+.pp-b .btn{ margin-top:16px; }
 .ic-up{
   display:inline-block; width:22px; height:22px; margin-right:8px;
   vertical-align:-3px; background:var(--pri);
