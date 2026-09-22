@@ -378,6 +378,24 @@ input[type=file]::file-selector-button{
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
 .st-tag.out{ background:var(--pri); color:var(--pri-fg); border-color:var(--pri); }
+/* ★募集中は、オーナー様がいちばん気にされるところです。
+   改良前は 新規契約・募集中 とも既定の見た目で、見分けがつきませんでした。 */
+.st-tag.rec{ background:hsl(var(--primary) / .18); color:var(--pri);
+  border-color:hsl(var(--primary) / .45); }
+
+/* ★物件ごとのまとめ（2026-09-22。いただいた React 版から抜き取った仕様）
+   改良前： 状態ごとに縦に並び、物件を横断して混ざっていました。 */
+.st-sum{
+  margin:0 0 24px; padding:14px 18px; border-radius:16px;
+  font-size:15px; line-height:1.7;
+  background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
+}
+.st-prop{ margin-bottom:32px; }
+.st-prop:last-child{ margin-bottom:0; }
+.st-pn{
+  margin:0 0 12px; font-size:22px; font-weight:700;
+  letter-spacing:-.01em; word-break:keep-all;
+}
 .st-d{ display:block; margin-top:6px; font-size:14px; color:var(--mut-fg); }
 
 .letter{

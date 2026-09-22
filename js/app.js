@@ -314,31 +314,187 @@
       });
   }
 
+  /* ===== 検査できる道具（tests/tst.cjs が読みます）ここから =====
+   *  ★この塊は、下の「火災保険」の塊にある insDue / insDays を
+   *    使います。tests/tst.cjs は、2つの塊をつないで読み込みます。
+   *
+   *  いただいた React（base44）版 Status.jsx から、
+   *  「物件ごとにまとめる」仕様を取り込みました。
+   *  あわせて、2026/9/22 にお決めいただいた
+   *  「解約予定日が過ぎた部屋は募集中に変える」を入れています。 */
+
+  /* 1件を、物件名と部屋に分けます。
+   *   ① サーバーが prop / room を返していれば、それを使います
+   *   ② 返していなければ、place（「カルムコート東棟 201号室」）を分けます
+   *
+   *  ★「…号室」の形があるときだけ分けます。
+   *    空白だけで切ると、「グロリオサ 東棟」の「東棟」が
+   *    部屋になってしまいます。推測で部屋番号を作りません。 */
+  function stSplit(x){
+    var prop = (x && x.prop != null) ? String(x.prop).trim() : '';
+    var room = (x && x.room != null) ? String(x.room).trim() : '';
+    if(prop) return { prop:prop, room:room };
+
+    var place = (x && x.place != null) ? String(x.place).trim() : '';
+    if(!place) return { prop:'', room:'' };
+
+    var m = place.match(
+      /^(.+?)[\s\u3000]*([0-9\uff10-\uff19A-Za-z\uff21-\uff3a\uff41-\uff5a][0-9\uff10-\uff19A-Za-z\uff21-\uff3a\uff41-\uff5a\-\u2015\u30fc]*\u53f7\u5ba4)$/);
+    if(m) return { prop:m[1].replace(/[\s\u3000]+$/, ''), room:m[2] };
+    return { prop:place, room:'' };
+  }
+
+  /* 部屋番号から数を取り出します（「10号室」が「2号室」より
+   *  前に来ないようにするためです）。 */
+  function stRoomNo(room){
+    var v = String(room == null ? '' : room);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/\d+/);
+    return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
+  }
+
+  /* 解約予定の日付は tag に入ってくることが多いですが、
+   *  detail 側にしかないこともあるので、読めたほうを使います。 */
+  function stDueOf(x){
+    if(!x) return '';
+    if(insDue(x.tag))    return String(x.tag);
+    if(insDue(x.detail)) return String(x.detail);
+    return '';
+  }
+
+  /* ★ 2026/9/22 お決めいただいたこと
+   *   解約予定日が過ぎた部屋は、「募集中」として扱います。
+   *   過ぎても「解約予定」のまま出続けると、時間が経つほど
+   *   画面が信用できなくなるためです。
+   *   日付が読めないときは、動かしません（推測しません）。 */
+  function stPast(x, today){
+    var n = insDays(stDueOf(x), today);
+    return (n != null && n < 0);
+  }
+
+  var ST_ORDER = { '募集中':0, '解約予定':1, '新規契約':2 };
+
+  /* 物件ごとにまとめます。
+   *   並び：物件名の無い箱はいちばん下。それ以外は名前順。
+   *           部屋は 募集中 → 解約予定 → 新規契約、同じなら号室順。 */
+  function stGroup(r, today){
+    var map = {}, order = [];
+
+    function add(x, kind, moved, movedDate){
+      var s = stSplit(x);
+      var key = s.prop;
+      if(!map[key]){ map[key] = { name:s.prop, rooms:[] }; order.push(key); }
+      map[key].rooms.push({
+        kind  : kind,
+        room  : s.room,
+        place : (x && x.place)  ? String(x.place)  : '',
+        tag   : (x && x.tag)    ? String(x.tag)    : '',
+        detail: (x && x.detail) ? String(x.detail) : '',
+        moved : !!moved,
+        movedDate : movedDate || ''
+      });
+    }
+
+    (Array.isArray(r && r.newc)  ? r.newc  : []).forEach(function(x){
+      add(x, '新規契約');
+    });
+    (Array.isArray(r && r.yotei) ? r.yotei : []).forEach(function(x){
+      if(stPast(x, today)) add(x, '募集中', true, insYmd(stDueOf(x)));
+      else                 add(x, '解約予定');
+    });
+    (Array.isArray(r && r.boshu) ? r.boshu : []).forEach(function(x){
+      add(x, '募集中');
+    });
+
+    var boxes = order.map(function(k){ return map[k]; });
+    boxes.forEach(function(g){
+      g.rooms.sort(function(a, b){
+        if(ST_ORDER[a.kind] !== ST_ORDER[b.kind]){
+          return ST_ORDER[a.kind] - ST_ORDER[b.kind];
+        }
+        var ra = stRoomNo(a.room), rb = stRoomNo(b.room);
+        if(ra !== rb) return ra - rb;
+        return String(a.room).localeCompare(String(b.room), 'ja');
+      });
+    });
+    boxes.sort(function(a, b){
+      var ae = !a.name, be = !b.name;
+      if(ae !== be) return ae ? 1 : -1;
+      return String(a.name).localeCompare(String(b.name), 'ja');
+    });
+    return boxes;
+  }
+
+  /* いちばん上の、まとめの一行を作ります。 */
+  function stSum(boxes){
+    var c = { '募集中':0, '解約予定':0, '新規契約':0 };
+    (boxes || []).forEach(function(g){
+      (g.rooms || []).forEach(function(u){ if(c[u.kind] != null) c[u.kind]++; });
+    });
+    var t = ['募集中', '解約予定', '新規契約']
+      .filter(function(k){ return c[k] > 0; })
+      .map(function(k){ return k + ' ' + c[k] + '室'; });
+    return t.join('　／　');
+  }
+  /* ===== 検査できる道具（入居状況）ここまで ===== */
+
+  var ST_CLASS = { '新規契約':'new', '解約予定':'out', '募集中':'rec' };
+
+  /* 【改良前】状態ごと（新規契約／解約予定／募集中）に縦に並び、
+   *           物件を横断して混ざっていました。
+   *  【改良後】物件ごとにまとめ、先頭にまとめの一行を出します。 */
   function paintStatus(r){
     $('st-month').textContent = r.month ? (r.month + '分') : '';
-    var out = '';
-    out += block('新規契約', r.newc,  'new');
-    out += block('解約予定', r.yotei, 'out');
-    out += block('募集中',   r.boshu, 'rec');
+
+    var boxes = stGroup(r);
+    var sum   = stSum(boxes);
+    var out   = '';
+
+    if(sum){
+      out += '<p class="st-sum" role="status">' + esc(sum) +
+             ' ございます。</p>';
+    }
+
+    out += boxes.map(function(g){
+      return '<section class="st-prop">' +
+        '<h2 class="st-pn">' +
+          esc(g.name || '物件名の入っていないもの') +
+        '</h2>' +
+        g.rooms.map(function(u){
+          var kind = ST_CLASS[u.kind] || 'rec';
+          var head = u.room || u.place || '—';
+          var sub  = [];
+          /* 解約予定のときの tag は日付なので、下の行に回します。
+             ★ただし detail があるときは出しません。
+               detail にも同じ日付が入っており
+               「2026年10月31日　2026/10/31 解約予定です。」と
+               二重に出ていました。tag が「解約予定」のときは
+               右の札と同じ文字になるのも防げます。 */
+          if(u.kind === '解約予定' && u.tag && !u.detail) sub.push(u.tag);
+          if(u.detail) sub.push(u.detail);
+          /* 過ぎて募集中にしたものは、その理由を出します。
+             黙って差し替えると、何が起きたのか分からなくなるためです。 */
+          if(u.moved){
+            sub.push('解約予定日（' + u.movedDate +
+                     '）を過ぎたため、募集中としております。');
+          }
+          return '<div class="stat ' + kind + '">' +
+            '<div class="st-h">' +
+              '<span class="st-t">' + esc(head) + '</span>' +
+              '<span class="st-tag ' + kind + '">' + esc(u.kind) + '</span>' +
+            '</div>' +
+            (sub.length ? '<span class="st-d">' + esc(sub.join('　')) + '</span>' : '') +
+          '</div>';
+        }).join('') +
+      '</section>';
+    }).join('');
+
     $('st-body').innerHTML = out ||
       '<div class="empty">今月、入退去の予定はございません。</div>';
 
     var has = !!(r.message && String(r.message).trim());
     $('st-letter').hidden = !has;
     if(has) $('st-msg').textContent = r.message;
-  }
-
-  function block(title, list, kind){
-    if(!Array.isArray(list) || !list.length) return '';
-    return '<p class="sect">' + esc(title) + '</p>' + list.map(function(x){
-      return '<div class="stat ' + kind + '">' +
-        '<div class="st-h">' +
-          '<span class="st-t">' + esc(x.place) + '</span>' +
-          (x.tag ? '<span class="st-tag ' + kind + '">' + esc(x.tag) + '</span>' : '') +
-        '</div>' +
-        (x.detail ? '<span class="st-d">' + esc(x.detail) + '</span>' : '') +
-      '</div>';
-    }).join('');
   }
 
   /* ── 過去の明細 ───────────────────────────── */
