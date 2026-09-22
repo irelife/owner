@@ -226,18 +226,19 @@
 
   /* ── ホーム ───────────────────────────────── */
   function loadHome(){
-    if(cache.home){ paintHome(cache.home); return; }
-    auth('home')
-      .then(function(r){ cache.home = r; paintHome(r); })
-      .catch(function(e){ toast(e.message); });
+    if(cache.home){ paintHome(cache.home); }
+    else{
+      auth('home')
+        .then(function(r){ cache.home = r; paintHome(r); })
+        .catch(function(e){ toast(e.message); });
+    }
+    loadMoves();
   }
 
   function paintHome(r){
     $('hm-month').textContent = r.month ? (r.month + '分') : '';
     $('hm-date').textContent  = r.sokinDate ? (r.sokinDate + ' お振込予定') : 'お振込予定';
-    $('hm-total').innerHTML   = (r.total == null)
-      ? '—'
-      : esc(yen(r.total)) + '<i>円</i>';
+    $('hm-total').textContent = (r.total == null) ? '—' : ('\u00a5' + yen(r.total));
 
     var rows = Array.isArray(r.rows) ? r.rows : [];
     $('hm-rows').innerHTML = rows.map(function(x){
@@ -250,13 +251,6 @@
     $('hm-pdf').hidden = !r.pdfId;
     $('hm-pdf').onclick = function(){ openPdf(r.pdfId, $('hm-pdf')); };
 
-    var mv = r.moves || {};
-    $('hm-moves').innerHTML =
-      move(mv.newc, '新規契約') + move(mv.yotei, '解約予定') + move(mv.boshu, '募集中');
-    Array.prototype.forEach.call($('hm-moves').children, function(el){
-      el.addEventListener('click', function(){ show('status'); });
-    });
-
     var props = Array.isArray(r.props) ? r.props : [];
     $('hm-props').innerHTML = props.length
       ? props.map(function(p){
@@ -266,10 +260,40 @@
       : '<div class="empty">物件の情報がまだありません。</div>';
   }
 
-  function move(n, label){
-    var v = Number(n) || 0;
-    return '<button type="button" class="move' + (v ? '' : ' zero') + '">' +
-           '<b>' + v + '</b><span>' + label + '</span></button>';
+  /* 今月の動きは、物件名・お部屋まで出したいので入居状況の中身を使います。
+   * home が返す moves は件数だけのためです。 */
+  function loadMoves(){
+    if(cache.status){ paintMoves(cache.status); return; }
+    $('hm-moves').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('status')
+      .then(function(r){ cache.status = r; paintMoves(r); })
+      .catch(function(){ paintMoves(null); });
+  }
+
+  function paintMoves(r){
+    var out = '';
+    if(r){
+      out += mvRows(r.newc,  '新規契約', 'new');
+      out += mvRows(r.yotei, '解約予定', 'out');
+    }
+    $('hm-moves').innerHTML = out ||
+      '<div class="empty">今月、入退去の予定はございません。</div>';
+    Array.prototype.forEach.call($('hm-moves').querySelectorAll('.mv'), function(el){
+      el.addEventListener('click', function(){ show('status'); });
+    });
+  }
+
+  function mvRows(list, label, kind){
+    if(!Array.isArray(list)) return '';
+    return list.map(function(x){
+      return '<button type="button" class="mv">' +
+        '<span class="mv-l">' +
+          '<span class="mv-t">' + esc(x.place) + '</span>' +
+          (x.detail ? '<span class="mv-s">' + esc(x.detail) + '</span>' : '') +
+        '</span>' +
+        '<span class="st-tag ' + kind + '">' + esc(x.tag || label) + '</span>' +
+      '</button>';
+    }).join('');
   }
 
   /* ── 入居状況 ─────────────────────────────── */
