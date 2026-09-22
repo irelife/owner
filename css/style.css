@@ -310,7 +310,10 @@ input[type=file]::file-selector-button{
 }
 .pp-h[disabled]{ cursor:default; }
 .pp-l{ flex:1 1 auto; min-width:0; }
-.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+/* ★いただいた React 版の break-keep にあたるもの。
+   「2026年10月」が途中で折り返されないようにします。 */
+.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em;
+  word-break:keep-all; }
 .pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
 .pp-c{
   flex:0 0 auto; width:10px; height:10px; margin-top:6px;
@@ -324,6 +327,13 @@ input[type=file]::file-selector-button{
   font-variant-numeric:tabular-nums;
 }
 .pp.big .pp-a{ font-size:48px; }
+
+/* ★3枚ならびのカードは、金額を下ぞろえにします。
+   いただいた React 版の h-44（高さをそろえる）＋ mt-auto（下へ寄せる）と
+   同じ考えです。月の字が2行になったカードだけ金額の高さがずれる、
+   というのを防ぎます。大きな1枚（.pp.big）には掛けません。 */
+.pp-grid .pp{ display:flex; flex-direction:column; }
+.pp-grid .pp-a{ margin-top:auto; }
 .pp-b{ padding:16px 24px 20px; border-top:1px solid var(--bd-40); }
 .pp-b .rows{ margin-top:0; border-top:0; }
 .pp-b .row:first-child{ border-top:0; }

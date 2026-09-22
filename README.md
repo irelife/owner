@@ -14,7 +14,7 @@ css/style.css     見た目
 js/config.js      ★ Apps Script のURLだけ、ここに入れます
 js/app.js         画面の動き
 staff.html        当社用の画面（合言葉で入ります）
-tests/            検査。node tests/tins.cjs
+tests/            検査。node tests/tins.cjs ／ node tests/tpp.cjs
 docs/             引き継ぎ書・はじめの設定・PIVOT側の追加・使いかた・やること
 gas/              Apps Script の控え（置きかたは gas/README.md）
 ```
@@ -73,5 +73,6 @@ PIVOT → マイページの向きに、そのオーナー様のぶんだけが�
 直したら、検査を通してください。
 
 ```
-node tests/tins.cjs
+node tests/tins.cjs    火災保険（69件）
+node tests/tpp.cjs     送金明細（33件）
 ```

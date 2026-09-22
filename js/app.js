@@ -364,11 +364,72 @@
    * それより前は月えらびから出します。
    * 【改良前】年ごとの見出しの下に、全部の月が縦に並ぶだけでした。
    * 【改良後】いちばん見たい「今月」が、開いた形で先頭に出ます。 */
+  /* ===== 検査できる道具（tests/tpp.cjs が読みます）ここから =====
+   *  いただいた React（base44）版の Papers.jsx から、
+   *  仕様として良いところだけを取り込みました。
+   *    ・月で並べ替える（React 版の parseMonth のかわり）
+   *    ・CSV に「対象月」「送金日」を列として持つ
+   *  取り込まなかったものと、その理由は docs/引き継ぎ書.md に書いてあります。 */
+
+  /* 「2026年8月」を 202608 という数に直します。並べ替えに使います。
+   *  ★読めないときは null を返します。0 にしません。
+   *    React 版は 0 を返していたため、読めない月が2つ以上あると
+   *    並びが不定になり、いちばん大きなカードに違う月が出る恐れがありました。 */
+  function ppNo(ym){
+    var v = String(ym == null ? '' : ym);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/) ||
+            v.match(/^(\d{4})\D(\d{1,2})$/);
+    if(!m) return null;
+    var y = +m[1], mo = +m[2];
+    if(y < 1900 || y > 2200 || mo < 1 || mo > 12) return null;
+    return y * 100 + mo;
+  }
+
+  /* 新しい月から順に並べます。
+   *  ★1つでも読めない月があれば、並べ替えません。
+   *    お金の書類なので、読めないものを勝手にどこかへ寄せるより、
+   *    サーバーが返した順のままにするほうが安全です。 */
+  function ppSort(list){
+    var a = (Array.isArray(list) ? list : []).slice();
+    for(var i = 0; i < a.length; i++){
+      if(ppNo(a[i] && a[i].ym) == null) return a;
+    }
+    a.sort(function(x, y){ return ppNo(y.ym) - ppNo(x.ym); });
+    return a;
+  }
+
+  /* CSV の中身を作ります（先頭のBOMは付けません。保存するところで付けます）。
+   *  ★React 版から取り込んだところ：
+   *      1行ごとに「対象月」「送金日」を持たせます。
+   *      何か月ぶんを1つの表に貼っても、どの月の行か分かるためです。
+   *  ★React 版と変えたところ：
+   *      金額は引用符で囲みません。Excel が文字として読むことがあるためです。 */
+  function csvOf(it){
+    if(!it) return '';
+    var q = function(v){
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    };
+    var ym = it.ym || '', sk = it.sokinDate || '';
+    var line = ['対象月,送金日,項目,金額'];
+    (Array.isArray(it.rows) ? it.rows : []).forEach(function(x){
+      line.push([q(ym), q(sk), q(x.label), Number(x.amount || 0)].join(','));
+    });
+    /* 合計の行は、対象月・送金日を空にします。
+       月で絞り込んだときに、合計まで足してしまわないようにするためです。 */
+    if(it.total != null){
+      line.push([q(''), q(''), q('ご送金額'), Number(it.total)].join(','));
+    }
+    return line.join('\r\n');
+  }
+  /* ===== 検査できる道具（送金明細）ここまで ===== */
+
   function paintPapers(r){
     var all = [];
     (Array.isArray(r.years) ? r.years : []).forEach(function(y){
       (y.items || []).forEach(function(it){ all.push(it); });
     });
+    all = ppSort(all);          /* 新しい月から順に。読めない月があれば、そのまま */
 
     if(!all.length){
       $('pp-hero').innerHTML = '<div class="empty">明細はまだありません。</div>';
@@ -464,23 +525,23 @@
 
   /* ★ CSV は、いま画面が持っている内わけから作ります。
    *   サーバーに窓口を増やす必要はありません。
+   *   中身の作りは csvOf（上の「検査できる道具」）です。
    *   先頭に BOM を付けるのは、Excel で開いたときに
-   *   日本語が化けないようにするためです。 */
+   *   日本語が化けないようにするためです。
+   *
+   *   【改良前】「項目,金額」の2列。そのあとに「送金日」の行が
+   *             続き、表の形が崩れていました。ファイル名も「収支明細」で、
+   *             画面の「送金明細」と言葉が違っていました。
+   *   【改良後】「対象月,送金日,項目,金額」の4列。ファイル名も送金明細。 */
   function saveCsv(ym){
     var it = ppKeep.filter(function(x){ return x.ym === ym; })[0];
     if(!it) return;
-    var line = ['項目,金額'];
-    (it.rows || []).forEach(function(x){
-      line.push('"' + String(x.label).replace(/"/g, '""') + '",' + Number(x.amount || 0));
-    });
-    if(it.total != null) line.push('ご送金額,' + it.total);
-    if(it.sokinDate)     line.push('"送金日","' + String(it.sokinDate) + '"');
 
     var url = URL.createObjectURL(
-      new Blob(['﻿' + line.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+      new Blob(['﻿' + csvOf(it)], { type:'text/csv;charset=utf-8' }));
     var a = document.createElement('a');
     a.href = url;
-    a.download = ym + 'ぶん 収支明細.csv';
+    a.download = ym + 'ぶん 送金明細.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -876,7 +937,7 @@
     if(days <= 90)    return 'soon';
     return 'ok';
   }
-  /* ===== 検査できる道具 ここまで ===== */
+  /* ===== 検査できる道具（火災保険）ここまで ===== */
 
   var INS_MAX  = 12;        /* おひとり12件まで（Apps Script 側と同じ数） */
   var insRows  = [];        /* 直近に読んだ証券の一覧 */

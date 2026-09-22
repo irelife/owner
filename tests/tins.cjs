@@ -12,7 +12,7 @@ const DIR  = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const src  = fs.readFileSync(path.join(DIR, 'js/app.js'), 'utf8');
 
 const HEAD = '  /* ===== 検査できる道具（tests/tins.cjs が読みます）ここから =====';
-const TAIL = '  /* ===== 検査できる道具 ここまで ===== */';
+const TAIL = '  /* ===== 検査できる道具（火災保険）ここまで ===== */';
 const a = src.indexOf(HEAD);
 const b = src.indexOf(TAIL);
 if (a < 0 || b < 0 || b < a) {
