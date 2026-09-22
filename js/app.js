@@ -1226,15 +1226,22 @@
 
   function loadIns(){
     $('in-boxes').innerHTML = '<div class="empty">読み込んでいます…</div>';
-    insShut();
+    /* ★入力欄は閉じません（最初から見えている形にしました）。
+     *  改良前はここで隠していたため、［＋ 別の物件を追加する］を
+     *  押すまで何も入力できず、1件も預けていない方には
+     *  何もない画面に見えていました。 */
+    insOpen('');
     /* 物件の候補にホームの物件一覧を使うので、まだ無ければ静かに取ります */
     if(!cache.home){
-      auth('home').then(function(r){ cache.home = r; }).catch(function(){});
+      auth('home', null, true)
+        .then(function(r){ cache.home = r; insCandsIfIdle(); })
+        .catch(function(){});
     }
     auth('insList')
       .then(function(r){
         insRows = Array.isArray(r.list) ? r.list : [];
         paintIns();
+        insCandsIfIdle();          /* 箱のある物件を、候補から外します */
       })
       .catch(function(e){
         insRows = [];
@@ -1267,7 +1274,7 @@
       });
     });
     Array.prototype.forEach.call(host.querySelectorAll('[data-insadd]'), function(b){
-      b.addEventListener('click', function(){ insForm(b.getAttribute('data-insadd')); });
+      b.addEventListener('click', function(){ insOpen(b.getAttribute('data-insadd'), true); });
     });
   }
 
@@ -1363,7 +1370,14 @@
    *    同じIDの欄を2つ以上作ると、どちらに入れたのか分からなくなるためです。
    *    また、一覧を描き直すたびに入力欄が消えてしまうのを防ぐため、
    *    一覧（#in-boxes）の中には置きません。 */
-  function insForm(name){
+  /* 入力欄を、いまの用に合わせて整えます。
+   *   name あり … その物件に足す形（物件名は動かせません）
+   *   name なし … 新しい物件を入れる形（物件をえらぶところから）
+   *
+   *  ★入力欄そのものは、いつも見えています。隠しません。
+   *    改良前は隠していたため、1件も預けていない方には
+   *    何もない画面に見えていました。 */
+  function insOpen(name, scroll){
     var fixed = !!name;
     var host  = $('in-form-host');
 
@@ -1375,24 +1389,30 @@
     $('in-prop-wrap').hidden = fixed;
     $('in-prop-free').hidden = true;
     $('in-prop').value       = fixed ? name : '';
+    /* 新しい物件を入れるときは、やめる先がありません */
+    $('in-cancel').hidden    = !fixed;
 
     if(!fixed) insCands();
 
-    host.hidden = false;
-    try{ host.scrollIntoView({ behavior:'smooth', block:'center' }); }
-    catch(e){ host.scrollIntoView(); }
-
-    var first = fixed ? $('in-maker') : $('in-prop-sel');
-    if(first){ try{ first.focus({ preventScroll:true }); }catch(e){} }
+    if(scroll){
+      try{ host.scrollIntoView({ behavior:'smooth', block:'center' }); }
+      catch(e){ host.scrollIntoView(); }
+      var first = fixed ? $('in-maker') : $('in-prop-sel');
+      if(first){ try{ first.focus({ preventScroll:true }); }catch(e){} }
+    }
   }
 
-  function insShut(){
-    var host = $('in-form-host');
-    if(!host) return;
-    host.hidden = true;
-    $('f-ins').reset();
-    say($('in-msg'), '');
-    $('in-prop-free').hidden = true;
+  /* 物件の候補を作り直します。
+   *  ★まだ何もお選びでないときだけ。選びかけのものを消さないためです。
+   *
+   *  【改良前】 一覧（insList）とホーム（home）が届く前に候補を作っていたため、
+   *            すでに箱のある物件が候補に残り、明細から分かる物件が
+   *            出てこないことがありました。
+   *  【改良後】 届いたときに作り直します。 */
+  function insCandsIfIdle(){
+    if($('in-prop-wrap').hidden) return;     /* その物件に足す形のときは触りません */
+    if($('in-prop-sel').value)   return;     /* すでにお選びなら触りません */
+    insCands();
   }
 
   /* 物件の候補。明細から分かっている物件のうち、まだ箱の無いものを出します。
@@ -1451,8 +1471,9 @@
       .catch(function(e){ toast(e.message); });
   }
 
-  $('in-add').addEventListener('click', function(){ insForm(''); });
-  $('in-cancel').addEventListener('click', function(){ insShut(); });
+  $('in-add').addEventListener('click', function(){ insOpen('', true); });
+  /* ［やめる］は、新しい物件を入れる形に戻します */
+  $('in-cancel').addEventListener('click', function(){ insOpen('', true); });
 
   $('f-ins').addEventListener('submit', function(ev){
     ev.preventDefault();
@@ -1498,7 +1519,6 @@
         until : ($('in-until').value || '').trim()
       })
       .then(function(){
-        insShut();
         loadIns();
         toast('お預かりしました。ありがとうございます。');
         try{ $('in-boxes').scrollIntoView({ behavior:'smooth', block:'start' }); }

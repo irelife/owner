@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=18">
+<link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
 
@@ -269,12 +269,10 @@
 
       <p id="in-due" class="ins-due" role="status" aria-live="polite" hidden></p>
 
-      <div id="in-boxes"></div>
-      <p id="in-cap" class="ins-cap"></p>
-
-      <button type="button" id="in-add" class="btn ghost">＋ 別の物件を追加する</button>
-
-      <div id="in-form-host" class="ins-form" hidden>
+      <!-- ★ 入力欄を先に、お預かりしているものを後に置きます。
+           改良前は［＋ 別の物件を追加する］を押さないと入力欄が出ないため、
+           1件も預けていない方には、何もない画面に見えていました。 -->
+      <div id="in-form-host" class="ins-form">
         <form id="f-ins" novalidate>
           <p id="in-for" class="ins-for" hidden></p>
 
@@ -321,6 +319,12 @@
           </div>
         </form>
       </div>
+
+      <p class="sect">お預かりしているもの</p>
+      <div id="in-boxes"></div>
+      <p id="in-cap" class="ins-cap"></p>
+
+      <button type="button" id="in-add" class="btn ghost">＋ 別の物件を追加する</button>
     </section>
 
     <!-- ── お問い合わせ ── -->
@@ -331,7 +335,10 @@
       <p class="sub">当社からのお返事も、この画面に出ます。
         お返事は2営業日以内に差し上げます。</p>
 
-      <details class="ask" id="ct-new">
+      <!-- ★ open。入力欄を最初から見えるようにしました。
+           改良前は［＋ 新しくご相談する］を押さないと出ないため、
+           画面が空っぽに見えていました。 -->
+      <details class="ask" id="ct-new" open>
         <summary>新しくご相談する</summary>
         <form id="f-contact" novalidate>
           <div class="field">
@@ -368,7 +375,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=18"></script>
-<script src="js/app.js?v=18"></script>
+<script src="js/config.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
 </body>
 </html>
