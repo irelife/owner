@@ -13,7 +13,7 @@ index.html        画面（ログイン・ホーム・入居状況・明細・�
 css/style.css     見た目
 js/config.js      ★ Apps Script のURLだけ、ここに入れます
 js/app.js         画面の動き
-docs/             はじめの設定・PIVOT側の追加
+docs/             引き継ぎ書・はじめの設定・PIVOT側の追加
 ```
 
 ## この入れものに入っていないもの
