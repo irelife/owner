@@ -3,10 +3,11 @@
  * ★この検査は docs/番号のぶつかりの直しかた.md から
  *   ```javascript の塊を切り出して、そのまま動かします。
  *   手順書に書いたコードと、検査したコードが食い違わないようにするためです。
- *   手順書を直したら、この検査が落ちます。
+ *   手順書のコードを直すと、この検査が落ちます。
  *
- * ★Apps Script の Utilities と SpreadsheetApp は、ここで作った
- *   代わりのもので動かします。表の列は docs/引き継ぎ書.md 4章どおりです。
+ * ★Apps Script の Utilities／SpreadsheetApp／CacheService／MailApp は、
+ *   ここで作った代わりのもので動かします。
+ *   表の列は ext.gs の実物どおりです。
  *
  * 使いかた：  node tests/tgas.cjs
  */
@@ -16,116 +17,231 @@ const DIR  = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const doc  = fs.readFileSync(
   path.join(DIR, 'docs/番号のぶつかりの直しかた.md'), 'utf8');
 
-/* 手順書から JavaScript の塊を全部取り出します */
 const blocks = [];
 const re = /```javascript\n([\s\S]*?)```/g;
 let m;
 while ((m = re.exec(doc)) !== null) blocks.push(m[1]);
 
-/* 「直す前／直した後」の見本（function が入っていない塊）は外します */
-const code = blocks.filter(b => /function\s+\w+_\s*\(/.test(b)).join('\n');
-if (!/function newNo_/.test(code) || !/function rand_/.test(code) ||
-    !/function ownNo_/.test(code)) {
-  console.log('❌ 手順書から newNo_／rand_／ownNo_ が取り出せません');
-  console.log('PASS=0 FAIL=1');
-  process.exit(1);
+/* 「直す前／直した後」の見本は外し、関数のある塊だけを集めます。
+   ★関数名がアルファベットで始まるものだけ。「合言葉の候補を出す」は
+     Apps Script で手で実行するものなので、検査には入れません。 */
+const code = blocks
+  .filter(b => /^function\s+[A-Za-z_]\w*\s*\(/m.test(b))
+  .join('\n');
+for (const need of ['newNo_', 'rand_', 'staffOk_', 'routeStaff_', 'stReply']) {
+  if (!new RegExp('function\\s+' + need).test(code)) {
+    console.log('❌ 手順書から ' + need + ' が取り出せません');
+    console.log('PASS=0 FAIL=1');
+    process.exit(1);
+  }
 }
 
-/* ── Apps Script の代わり ───────────────────── */
+/* ══════ Apps Script の代わり ══════ */
 const SHEETS = {
   '問い合わせ': [
     ['日時','メール','用件','内容','状況','番号'],
     ['2026/9/1','a@x.jp','明細について','ご確認ください','回答済み','C20260901-2'],
-    ['2026/9/22','b@x.jp','修繕について','お願いします','確認中','C20260922-7-K4M9QXBT'],
-    ['2026/9/22','B@X.JP','その他','大文字で入った例','確認中','C20260922-9-AAAA1111']
+    ['2026/9/22','b@x.jp','修繕について','お願いします','確認中','C20260922-7-K4M9QXBT']
   ],
   '工事': [
-    ['番号','メール','物件','部屋'],
-    ['W20260905-3-TTTT2222','a@x.jp','カルムコート東棟','201']
+    ['番号','メール','物件','部屋','内容','着手日','完了日','金額',
+     '相殺予定','状況','備考','登録日時'],
+    ['W20260905-3-TTTT2222','a@x.jp','カルムコート東棟','201','原状回復',
+     '','','86400','','完了','','2026/9/5']
   ]
 };
 const Utilities = { formatDate: (d) => {
   const p = n => String(n).padStart(2, '0');
   return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
 } };
-const SpreadsheetApp = { getActive: () => ({ getSheetByName: (n) => {
-  const g = SHEETS[n];
-  if (!g) return null;
-  return {
-    getLastRow: () => g.length,
-    getLastColumn: () => g[0].length,
-    getRange: (r, c, nr, nc) => ({ getValues: () =>
-      g.slice(r - 1, r - 1 + nr).map(row => row.slice(c - 1, c - 1 + nc)) })
-  };
-} }) };
+const mkSheet = (g) => ({
+  getLastRow: () => g.length,
+  getLastColumn: () => g[0].length,
+  getRange: (r, c, nr, nc) => ({
+    getValues: () => (nr === undefined ? [[g[r-1][c-1]]]
+                     : g.slice(r-1, r-1+nr).map(row => row.slice(c-1, c-1+nc))),
+    getValue: () => g[r-1][c-1],
+    setValue: (v) => { g[r-1][c-1] = v; }
+  })
+});
+const SpreadsheetApp = { getActiveSpreadsheet: () => ({
+  getSheetByName: (n) => SHEETS[n] ? mkSheet(SHEETS[n]) : null }) };
 
-const box = new Function('Utilities', 'SpreadsheetApp',
-  code + '; return { newNo_, rand_, ownNo_ };')(Utilities, SpreadsheetApp);
-const { newNo_, rand_, ownNo_ } = box;
+let CACHE = {};
+const CacheService = { getScriptCache: () => ({
+  get: (k) => (k in CACHE ? CACHE[k] : null),
+  put: (k, v) => { CACHE[k] = String(v); },
+  remove: (k) => { delete CACHE[k]; } }) };
+
+let MAILS = [];
+const MailApp = { sendEmail: (o) => { MAILS.push(o); } };
+let MSGS = [];
+let PROPS = { ADMIN_KEY: 'x'.repeat(40), SUPPORT: 'info@ire-life.com',
+              SITE_URL: 'https://irelife.github.io/owner/' };
+
+/* ext.gs の側にあって、手順書には入っていないもの */
+const helpers = `
+  function prop_(k){ return PROPS[k] || ''; }
+  function ng_(msg){ return { ok:false, error:'ng', message:msg }; }
+  function log_(){}
+  function norm_(v){ return String(v == null ? '' : v).trim().toLowerCase(); }
+  function addMsg_(id, who, body){ MSGS.push({ id:id, who:who, body:body }); }
+  function askSheet_(){
+    return SpreadsheetApp.getActiveSpreadsheet().getSheetByName('問い合わせ');
+  }
+  function askRows_(){
+    var sh = askSheet_(), last = sh.getLastRow();
+    if(last < 2) return [];
+    var v = sh.getRange(2, 1, last - 1, 6).getValues(), out = [];
+    for(var i = 0; i < v.length; i++){
+      var row = i + 2, no = String(v[i][5] || '').trim();
+      if(!no){ no = newNo_('C', row); sh.getRange(row, 6).setValue(no); }
+      out.push({ _row:row, at:v[i][0], mail:v[i][1], kind:String(v[i][2] || ''),
+                 body:String(v[i][3] || ''), state:String(v[i][4] || '確認中'), no:no });
+    }
+    return out;
+  }
+  function workRows_(){
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('工事');
+    var last = sh.getLastRow();
+    if(last < 2) return [];
+    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    var v = sh.getRange(2, 1, last - 1, head.length).getValues();
+    return v.map(function(r, i){
+      var x = { _row: i + 2 };
+      head.forEach(function(k, j){ x[k] = r[j]; });
+      if(!String(x['番号'] || '').trim()){
+        var id = newNo_('W', x._row);
+        sh.getRange(x._row, 1).setValue(id);
+        x['番号'] = id;
+      }
+      return x;
+    });
+  }
+  function stList(){ return { ok:true, list:[] }; }
+  function stArea(){ return { ok:true }; }
+`;
+
+const box = new Function(
+  'Utilities', 'SpreadsheetApp', 'CacheService', 'MailApp', 'PROPS', 'MSGS',
+  helpers + '\n' + code +
+  '; return { newNo_, rand_, staffOk_, routeStaff_, stReply, askRows_, workRows_ };'
+)(Utilities, SpreadsheetApp, CacheService, MailApp, PROPS, MSGS);
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
                        else    { fail++; console.log('  ❌ ' + m); } };
 
 console.log('\n── 重ならない文字（rand_）──');
-ok(rand_(8).length === 8, '8文字');
-ok(rand_(0) === '', '0文字なら空');
-const many = Array.from({ length: 20000 }, () => rand_(8));
+ok(box.rand_(8).length === 8, '8文字');
+ok(box.rand_(0) === '', '0文字なら空');
+const many = Array.from({ length: 20000 }, () => box.rand_(8));
 ok(many.every(s => /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(s)),
    '★まぎれる 0 O 1 I l を1度も出さない（お電話で読み上げるため）');
 ok(new Set(many.join('')).size >= 28, '文字が偏っていない');
 
 console.log('\n── 番号を作る（newNo_）──');
-const sh = { getLastRow: () => 6 };
-const a = newNo_('C', sh);
+const a = box.newNo_('C', 7);
 ok(/^C\d{8}-7-[A-Z2-9]{8}$/.test(a), '形が「C＋日付－行－8文字」（' + a + '）');
-ok(/^W\d{8}-7-[A-Z2-9]{8}$/.test(newNo_('W', sh)), '工事は W で始まる');
-ok(/^C\d{8}-0-/.test(newNo_('C', null)), 'シートが来なくても落ちない');
+ok(/^W\d{8}-3-[A-Z2-9]{8}$/.test(box.newNo_('W', 3)), '工事は W で始まる');
+ok(/^C\d{8}-0-/.test(box.newNo_('C')), '行が来なくても落ちない');
 
-console.log('\n── ★ふたりが同じ秒に送ってもぶつからないか ──');
+console.log('\n── ★ふたりが同時に送ってもぶつからないか ──');
 const oldNo = () => 'C' + Utilities.formatDate(new Date()) + '-' + 7;
 ok(new Set(Array.from({ length: 1000 }, oldNo)).size === 1,
    '★直す前は1000回すべて同じ番号（これが不具合でした）');
-const news = Array.from({ length: 200000 }, () => newNo_('C', sh));
+const news = Array.from({ length: 200000 }, () => box.newNo_('C', 7));
 const dup  = news.length - new Set(news).size;
 ok(dup === 0, '★直した後は20万回で1件も重ならない（重なり ' + dup + '件）');
-ok(rand_(8).length === 8,
-   '★8文字であること（6文字だと20万回で十数件重なります）');
+ok(box.rand_(8).length === 8, '★8文字であること（6文字だと20万回で十数件重なる）');
 
 console.log('\n── 古い番号も、そのまま引けるか ──');
-const look = (rows, no) =>
-  rows.filter(r => String(r.no).trim() === String(no).trim());
-const rows = [{ no:'C20260901-2' }, { no:'C20260922-7-K4M9QXBT' }];
-ok(look(rows, 'C20260901-2').length === 1,
-   '★すでに入っている番号も引ける（表の作り直しは要らない）');
-ok(look(rows, 'C20260922-7-K4M9QXBT').length === 1, '新しい形も引ける');
+ok(box.askRows_().filter(x => x.no === 'C20260901-2').length === 1,
+   '★すでに入っている古い形の番号も引ける（表の作り直しは要らない）');
+ok(box.askRows_().filter(x => x.no === 'C20260922-7-K4M9QXBT').length === 1,
+   '新しい形も引ける');
 
-console.log('\n── ご本人のものか確かめる（ownNo_）──');
-ok(ownNo_('a@x.jp', 'C20260901-2') === true, '自分のお問い合わせ（古い形）');
-ok(ownNo_('b@x.jp', 'C20260922-7-K4M9QXBT') === true, '自分のお問い合わせ（新しい形）');
-ok(ownNo_('a@x.jp', 'W20260905-3-TTTT2222') === true, '自分の工事');
-ok(ownNo_('B@x.JP', 'C20260922-9-AAAA1111') === true, '★大文字・小文字の違いは通す');
-ok(ownNo_(' a@x.jp ', 'C20260901-2') === true, '前後の空白は通す');
+console.log('\n── 当社用の入口の足止め（staffOk_）──');
+CACHE = {};
+ok(box.staffOk_({ key: 'x'.repeat(40) }) === true, '正しい合言葉は通る');
+CACHE = {};
+ok(box.staffOk_({ key: 'y'.repeat(40) }) === false, '違う合言葉は通らない');
+CACHE = {};
+ok(box.staffOk_({ key: 'x'.repeat(39) }) === false, '★1文字足りなくても通らない');
+CACHE = {};
+ok(box.staffOk_({}) === false, '合言葉なしは通らない');
+CACHE = {};
+ok(box.staffOk_({ key: '' }) === false, '空も通らない');
+CACHE = {}; PROPS.ADMIN_KEY = '';
+ok(box.staffOk_({ key: '' }) === false,
+   '★ADMIN_KEY が空のとき、空を送っても通らない');
+PROPS.ADMIN_KEY = 'x'.repeat(40);
 
-console.log('\n── ★他の方のものは止める ──');
-ok(ownNo_('a@x.jp', 'C20260922-7-K4M9QXBT') === false, '★他の方のお問い合わせ');
-ok(ownNo_('b@x.jp', 'W20260905-3-TTTT2222') === false, '★他の方の工事');
-ok(ownNo_('c@x.jp', 'C20260901-2') === false, '★表にいない方');
-ok(ownNo_('a@x.jp', 'C20260901') === false, '★番号の一部だけでは通さない');
+console.log('\n── ★20回まちがえると止まる ──');
+CACHE = {}; MAILS = [];
+for (let i = 0; i < 19; i++) box.staffOk_({ key: 'wrong' });
+ok(CACHE['staff_lock'] === undefined, '19回では、まだ止まらない');
+ok(box.staffOk_({ key: 'x'.repeat(40) }) === true,
+   '★19回まちがえたあとでも、正しければ通る');
+ok(CACHE['staff_miss'] === undefined, '★通ったら、数えをもとに戻す');
 
-console.log('\n── こわれたものが来ても落ちない ──');
-ok(ownNo_('', 'C20260901-2') === false, 'メールが空');
-ok(ownNo_('a@x.jp', '') === false, '番号が空');
-ok(ownNo_(null, null) === false, '両方なし');
-ok(ownNo_('a@x.jp', 'C20260901-2 ') === true, '番号の後ろの空白は許す');
+CACHE = {}; MAILS = [];
+for (let i = 0; i < 20; i++) box.staffOk_({ key: 'wrong' });
+ok(CACHE['staff_lock'] !== undefined, '★20回で止まる');
+ok(MAILS.length === 1, '★止まったとき、お知らせのメールが1通飛ぶ');
+ok(MAILS[0].to === 'info@ire-life.com', 'あて先は SUPPORT');
+ok(/ADMIN_KEY/.test(MAILS[0].body), '本文に、合言葉を作り直すよう書いてある');
+ok(box.staffOk_({ key: 'x'.repeat(40) }) === false,
+   '★止まっているあいだは、正しい合言葉でも通さない');
 
-console.log('\n── ★なぜ①と②の両方が必要か ──');
+CACHE['staff_lock'] = String(new Date().getTime() - 1);
+ok(box.staffOk_({ key: 'x'.repeat(40) }) === true, '30分たてば、また通る');
+
+console.log('\n── 当社用の入口（routeStaff_）──');
+CACHE = {};
+ok(box.routeStaff_('stPing', { key: 'x'.repeat(40) }).ok === true, 'stPing は通る');
+ok(box.routeStaff_('stPing', { key: 'wrong' }).error === 'auth',
+   '違う合言葉は auth を返す');
+ok(box.routeStaff_('papers', { key: 'x'.repeat(40) }) === null,
+   '★当社用でない窓口名は、ここでは扱わない（null を返す）');
+ok(box.routeStaff_('', {}) === null, '窓口名が空でも落ちない');
+
+console.log('\n── お返事（stReply）★あて先を番号から引き直す ──');
+CACHE = {}; MAILS = []; MSGS.length = 0;
+let r = box.stReply({ id:'C20260901-2', body:'承知いたしました。', mail:'まちがい@x.jp' });
+ok(r.ok === true, 'お問い合わせに返せる');
+ok(MAILS.length === 1 && MAILS[0].to === 'a@x.jp',
+   '★画面から来た「まちがい@x.jp」ではなく、台帳の a@x.jp に送る');
+ok(SHEETS['問い合わせ'][1][4] === '回答済み', '状況が「回答済み」になる');
+ok(MSGS.length === 1 && MSGS[0].who === '当社', 'やりとりに1件増える');
+
+MAILS = []; MSGS.length = 0;
+r = box.stReply({ id:'W20260905-3-TTTT2222', body:'着工いたします。' });
+ok(r.ok === true, '工事にも返せる');
+ok(MAILS.length === 1 && MAILS[0].to === 'a@x.jp', '★工事も台帳のアドレスに送る');
+
+MAILS = []; MSGS.length = 0;
+r = box.stReply({ id:'C99999999-1-ZZZZZZZZ', body:'打ち間違えました', mail:'a@x.jp' });
+ok(r.ok === false, '★台帳に無い番号は断る');
+ok(MSGS.length === 0,
+   '★断ったとき、やりとりに書き込まない（誰のものでもない発言を残さない）');
+ok(MAILS.length === 0, '★断ったとき、メールも送らない');
+
+r = box.stReply({ id:'', body:'本文' });
+ok(r.ok === false, '番号が空なら断る');
+r = box.stReply({ id:'C20260901-2', body:'   ' });
+ok(r.ok === false, '本文が空白だけなら断る');
+
+console.log('\n── ★番号がぶつかっていたら、どうなるか ──');
 SHEETS['問い合わせ'].push(
   ['2026/9/22','c@x.jp','明細について','ぶつかった例','確認中','C20260901-2']);
-ok(ownNo_('a@x.jp', 'C20260901-2') === true, 'Aさんは自分のぶんとして通る');
-ok(ownNo_('c@x.jp', 'C20260901-2') === true, 'Cさんも自分のぶんとして通る');
-console.log('  ※ ②だけでは、ぶつかった番号を両方が「自分のもの」として通します。');
-console.log('     だから①（番号を重ならなくする）も必要です。');
+MAILS = []; MSGS.length = 0;
+box.stReply({ id:'C20260901-2', body:'お返事です' });
+ok(SHEETS['問い合わせ'][1][4] === '回答済み' &&
+   SHEETS['問い合わせ'][3][4] === '回答済み',
+   '★ぶつかった行を両方「回答済み」にする（片方が確認中で残らない）');
+console.log('  ※ ただし、どちらのオーナー様に送るかは決められません。');
+console.log('     だから番号を重ならなくすること（2章）が本体です。');
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);
 process.exit(fail ? 1 : 0);
