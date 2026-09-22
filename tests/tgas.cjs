@@ -28,7 +28,7 @@ while ((m = re.exec(doc)) !== null) blocks.push(m[1]);
 const code = blocks
   .filter(b => /^function\s+[A-Za-z_]\w*\s*\(/m.test(b))
   .join('\n');
-for (const need of ['newNo_', 'noRand_', 'stReply']) {
+for (const need of ['newNo_', 'noRand_', 'mailOfNo_', 'stReply']) {
   if (!new RegExp('function\\s+' + need).test(code)) {
     console.log('❌ 手順書から ' + need + ' が取り出せません');
     console.log('PASS=0 FAIL=1');
@@ -125,12 +125,13 @@ const helpers = `
 const box = new Function(
   'Utilities', 'SpreadsheetApp', 'CacheService', 'MailApp', 'PROPS', 'MSGS',
   helpers + '\n' + code +
-  '; return { newNo_, noRand_, stReply, askRows_, workRows_ };'
+  '; return { newNo_, noRand_, mailOfNo_, stReply, askRows_, workRows_ };'
 )(Utilities, SpreadsheetApp, CacheService, MailApp, PROPS, MSGS);
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
                        else    { fail++; console.log('  ❌ ' + m); } };
+const eq = (got, want, m) => ok(got === want, m + '（' + JSON.stringify(got) + '）');
 
 console.log('\n── 重ならない文字（noRand_）──');
 ok(box.noRand_(8).length === 8, '8文字');
@@ -160,6 +161,72 @@ ok(box.askRows_().filter(x => x.no === 'C20260901-2').length === 1,
    '★すでに入っている古い形の番号も引ける（表の作り直しは要らない）');
 ok(box.askRows_().filter(x => x.no === 'C20260922-7-K4M9QXBT').length === 1,
    '新しい形も引ける');
+
+console.log('\n── 番号からアドレスを引く（mailOfNo_）──');
+eq(box.mailOfNo_('C20260901-2'), 'a@x.jp', 'お問い合わせ（古い形の番号）');
+eq(box.mailOfNo_('C20260922-7-K4M9QXBT'), 'b@x.jp', 'お問い合わせ（新しい形）');
+eq(box.mailOfNo_('W20260905-3-TTTT2222'), 'a@x.jp', '工事');
+eq(box.mailOfNo_('C20260901-2 '), 'a@x.jp', '前後の空白は許す');
+eq(box.mailOfNo_('C99999999-1-ZZZZZZZZ'), '',
+   '★台帳に無い番号は空（当てずっぽうで送らない）');
+eq(box.mailOfNo_('C20260901'), '', '★番号の一部だけでは引かない');
+eq(box.mailOfNo_(''), '', '空は空');
+eq(box.mailOfNo_(null), '', '何も来なくても落ちない');
+
+console.log('\n── ★置き換えの3行が、控えの stReply と一致するか ──');
+{
+  /* 直す前の stReply（いただいた ext.gs の実物） */
+  const before = [
+    "function stReply(req){",
+    "  var id   = String(req.id || '');",
+    "  var body = String(req.body || '').slice(0, 4000);",
+    "  if(!id || !body.trim()) return ng_('番号と本文が要ります。');",
+    "",
+    "  addMsg_(id, '当社', body);",
+    "",
+    "  /* お問い合わせなら、状況を「回答済み」にします */",
+    "  if(id.charAt(0) === 'C'){",
+    "    var a = askRows_().filter(function(x){ return x.no === id; })[0];",
+    "    if(a) askSheet_().getRange(a._row, 5).setValue('回答済み');",
+    "  }",
+    "",
+    "  /* オーナー様にも、お知らせのメールを送ります */",
+    "  if(req.mail){",
+    "    try{",
+    "      MailApp.sendEmail({",
+    "        to      : String(req.mail),"
+  ].join('\n');
+
+  /* 手順書が指示している3つの置き換え */
+  const PATCH = [
+    ["  addMsg_(id, '当社', body);",
+     "  var to = mailOfNo_(id);\n" +
+     "  if(!to) return ng_('その番号のオーナー様が、台帳に見つかりませんでした。');\n" +
+     "  addMsg_(id, '当社', body);"],
+    ["  if(req.mail){", "  if(to){"],
+    ["        to      : String(req.mail),", "        to      : to,"]
+  ];
+
+  let got = before, hits = 0;
+  for (const [from, to] of PATCH) {
+    const n = got.split(from).length - 1;
+    if (n === 1) hits++;
+    got = got.replace(from, to);
+  }
+  ok(hits === 3, '★3つの置き換えは、どれも1件だけ当たる（1/1件になる）');
+
+  /* 手順書の「直したあとの控え」から、同じところを切り出してくらべます */
+  const ref = (code.match(/function stReply\(req\)\{[\s\S]*?\n\}/) || [''])[0];
+  const head = ref.slice(0, ref.indexOf("        to      : to,") +
+                            "        to      : to,".length);
+  const norm = (t) => t.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
+  ok(norm(head) === norm(got),
+     '★置き換えた結果が、手順書の控えと1文字も違わない');
+  if (norm(head) !== norm(got)) {
+    console.log('--- 置き換えた結果 ---\n' + got);
+    console.log('--- 手順書の控え ---\n' + head);
+  }
+}
 
 console.log('\n── お返事（stReply）★あて先を番号から引き直す ──');
 MAILS = []; MSGS.length = 0;
@@ -192,11 +259,17 @@ SHEETS['問い合わせ'].push(
   ['2026/9/22','c@x.jp','明細について','ぶつかった例','確認中','C20260901-2']);
 MAILS = []; MSGS.length = 0;
 box.stReply({ id:'C20260901-2', body:'お返事です' });
-ok(SHEETS['問い合わせ'][1][4] === '回答済み' &&
-   SHEETS['問い合わせ'][3][4] === '回答済み',
-   '★ぶつかった行を両方「回答済み」にする（片方が確認中で残らない）');
-console.log('  ※ ただし、どちらのオーナー様に送るかは決められません。');
-console.log('     だから番号を重ならなくすること（2章）が本体です。');
+ok(MAILS.length === 1, 'メールは1通だけ送る');
+ok(SHEETS['問い合わせ'][1][4] === '回答済み',
+   '最初に見つかった行は「回答済み」になる');
+ok(SHEETS['問い合わせ'][3][4] === '確認中',
+   '★もう片方は「確認中」のまま残る（これは直していません）');
+console.log('  ※ ★あえて直していません。番号を重ならなくすれば（2章）、');
+console.log('     ぶつかった行そのものが生まれないためです。');
+console.log('     ここを直すと置き換えが3行では済まなくなり、');
+console.log('     手で貼る作業が増えるほうが危ないと判断しました。');
+ok(box.mailOfNo_('C20260901-2') === 'c@x.jp',
+   '★ぶつかっていると、あとの行のアドレスが返る（誰に送るかは決められない）');
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);
 process.exit(fail ? 1 : 0);
