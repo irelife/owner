@@ -180,7 +180,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 }
 .field .hint{ margin-left:8px; font-size:12px; font-weight:400; color:var(--mut-fg); }
 input[type=text], input[type=email], input[type=password], input[type=tel],
-select, textarea{
+input[type=date], select, textarea{
   width:100%; padding:14px 16px;
   background:var(--card-bg); color:var(--fg);
   border:1px solid var(--bd); border-radius:12px;
@@ -310,7 +310,10 @@ input[type=file]::file-selector-button{
 }
 .pp-h[disabled]{ cursor:default; }
 .pp-l{ flex:1 1 auto; min-width:0; }
-.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+/* ★いただいた React 版の break-keep にあたるもの。
+   「2026年10月」が途中で折り返されないようにします。 */
+.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em;
+  word-break:keep-all; }
 .pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
 .pp-c{
   flex:0 0 auto; width:10px; height:10px; margin-top:6px;
@@ -324,6 +327,13 @@ input[type=file]::file-selector-button{
   font-variant-numeric:tabular-nums;
 }
 .pp.big .pp-a{ font-size:48px; }
+
+/* ★3枚ならびのカードは、金額を下ぞろえにします。
+   いただいた React 版の h-44（高さをそろえる）＋ mt-auto（下へ寄せる）と
+   同じ考えです。月の字が2行になったカードだけ金額の高さがずれる、
+   というのを防ぎます。大きな1枚（.pp.big）には掛けません。 */
+.pp-grid .pp{ display:flex; flex-direction:column; }
+.pp-grid .pp-a{ margin-top:auto; }
 .pp-b{ padding:16px 24px 20px; border-top:1px solid var(--bd-40); }
 .pp-b .rows{ margin-top:0; border-top:0; }
 .pp-b .row:first-child{ border-top:0; }
@@ -368,6 +378,24 @@ input[type=file]::file-selector-button{
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
 .st-tag.out{ background:var(--pri); color:var(--pri-fg); border-color:var(--pri); }
+/* ★募集中は、オーナー様がいちばん気にされるところです。
+   改良前は 新規契約・募集中 とも既定の見た目で、見分けがつきませんでした。 */
+.st-tag.rec{ background:hsl(var(--primary) / .18); color:var(--pri);
+  border-color:hsl(var(--primary) / .45); }
+
+/* ★物件ごとのまとめ（2026-09-22。いただいた React 版から抜き取った仕様）
+   改良前： 状態ごとに縦に並び、物件を横断して混ざっていました。 */
+.st-sum{
+  margin:0 0 24px; padding:14px 18px; border-radius:16px;
+  font-size:15px; line-height:1.7;
+  background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
+}
+.st-prop{ margin-bottom:32px; }
+.st-prop:last-child{ margin-bottom:0; }
+.st-pn{
+  margin:0 0 12px; font-size:22px; font-weight:700;
+  letter-spacing:-.01em; word-break:keep-all;
+}
 .st-d{ display:block; margin-top:6px; font-size:14px; color:var(--mut-fg); }
 
 .letter{
@@ -444,6 +472,91 @@ input[type=file]::file-selector-button{
 
 .foot-note{ margin-top:24px; text-align:center; font-size:12px; color:var(--mut-fg); }
 .foot-note a{ color:var(--fg); }
+
+/* ── 火災保険（1物件＝1つの箱／2026-09-22 作り替え）──────
+ *  改良前： 1証券＝1行のべた並び。CSS が1行も当たっていませんでした。
+ *  改良後： 物件ごとの箱にまとめ、満期の近さを札で出します。 */
+.ins-due{
+  margin:20px 0 0; padding:14px 18px; border-radius:16px;
+  font-size:15px; line-height:1.7;
+  background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
+}
+.ins-due.soon{ border-color:var(--pri); color:var(--pri); }
+.ins-due.over{ border-color:var(--ng);  color:var(--ng); }
+
+#in-boxes{ margin-top:24px; }
+.ins-cap{ margin:8px 2px 0; font-size:13px; color:var(--mut-fg); }
+
+.ins-box{
+  padding:20px; margin-bottom:12px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+}
+.ins-box.soon{ border-color:hsl(var(--primary) / .75); }
+.ins-box.over{ border-color:hsl(var(--destructive) / .75); }
+
+.ins-h{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.ins-n{ font-size:20px; font-weight:700; letter-spacing:-.01em; min-width:0;
+  line-height:1.4; }
+.ins-tag{
+  flex:0 0 auto; margin-top:3px; padding:6px 12px; border-radius:999px;
+  font-size:13px; font-weight:500; white-space:nowrap;
+  background:var(--bg); color:var(--fg); border:1px solid var(--bd);
+}
+.ins-tag.none{ color:var(--mut-fg); }
+.ins-tag.soon{ background:hsl(var(--primary) / .18); color:var(--pri);
+  border-color:hsl(var(--primary) / .45); }
+.ins-tag.over{ background:hsl(var(--destructive) / .16); color:var(--ng);
+  border-color:hsl(var(--destructive) / .5); }
+
+.ins-box .kv{ align-items:baseline; }
+.ins-box .kv a{ color:var(--pri); }
+/* 電話は「電話をかける」だけを押せるようにします */
+.ins-call{
+  display:inline-block; margin-left:10px; padding:3px 10px; border-radius:999px;
+  font-size:12.5px; font-weight:600; text-decoration:none; white-space:nowrap;
+  border:1px solid hsl(var(--primary) / .5); background:hsl(var(--primary) / .14);
+}
+
+.ins-rows{ margin-top:14px; border-top:1px solid var(--bd-40); }
+.ins-r{ display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--bd-40); }
+.ins-open{
+  flex:1 1 auto; min-width:0; text-align:left;
+  padding:14px 4px; border:0; background:transparent; color:var(--fg);
+  font:inherit; cursor:pointer; border-radius:12px;
+}
+.ins-open:hover{ background:var(--acc); }
+.ins-rt{ display:block; font-size:15px; font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ins-rs{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
+.ins-x{
+  flex:0 0 auto; width:44px; height:44px; border-radius:12px;
+  border:1px solid var(--bd-60); background:transparent; color:var(--mut-fg);
+  font:inherit; font-size:15px; cursor:pointer;
+}
+.ins-x:hover{ border-color:var(--ng); color:var(--ng); }
+
+.ins-warn{ margin:14px 0 0; padding-top:14px; border-top:1px solid var(--bd-40);
+  font-size:14px; line-height:1.8; color:var(--mut-fg); }
+
+.ins-form{
+  margin-top:16px; padding:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+}
+.ins-for{ margin:0 0 20px; font-size:16px; font-weight:700; color:var(--pri); }
+.ins-acts{ display:flex; gap:12px; align-items:center; margin-top:4px; }
+.ins-acts .btn{ flex:1 1 0; }
+.ins-acts .btn.ghost{ margin-top:0; flex:0 0 auto; }
+
+/* ── 一覧のひとこま（ホームの物件一覧・2026-09-22 追加）────
+ *  改良前： .item .t .s に CSS が1行も無く、素の文字が並んでいました。 */
+.item{
+  padding:14px 4px; border-bottom:1px solid var(--bd-40);
+}
+.item:last-child{ border-bottom:0; }
+.item .t{ display:block; font-size:15px; font-weight:600; }
+.item .s{ display:block; margin-top:2px; font-size:13px; line-height:1.7;
+  color:var(--mut-fg); }
 
 /* ── 画面が広いとき ───────────────────────── */
 @media (min-width:640px){

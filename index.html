@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 
@@ -228,7 +228,12 @@
       <div id="wk-body"></div>
     </section>
 
-    <!-- ── 火災保険 ── -->
+    <!-- ── 火災保険 ──
+         2026/9/22 作り替え
+         改良前： 入力欄が7つ縦に並び、預けたものは1証券＝1行のべた並び。
+         改良後： 1物件＝1つの箱。［＋ 別の物件を追加する］で箱ごと足せます。
+         ★入力欄（#in-form-host）は #in-boxes の外に置いています。
+           中に置くと、一覧を描き直すたびに入力欄ごと消えてしまうためです。 -->
     <section id="s-insurance" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
       <h1 class="h-mincho">火災保険</h1>
@@ -236,43 +241,60 @@
       <p class="sub">証券の写しをお預かりします。万一のときに、当社ですぐお手続きに入れます。
         写真でも、PDFでも構いません。</p>
 
-      <form id="f-ins" novalidate>
-        <div class="field">
-          <label for="in-prop">物件<span class="hint">任意</span></label>
-          <input type="text" id="in-prop" placeholder="例）カルムコート東棟">
-        </div>
-        <div class="field">
-          <label for="in-maker">保険会社<span class="hint">任意</span></label>
-          <input type="text" id="in-maker" placeholder="例）○○海上">
-        </div>
-        <div class="field">
-          <label for="in-tel">保険会社の連絡先<span class="hint">任意</span></label>
-          <input type="text" id="in-tel" inputmode="tel"
-                 placeholder="例）0120-000-000／代理店 ○○（担当 △△）">
-        </div>
-        <div class="field">
-          <label for="in-mail">保険会社のメールアドレス<span class="hint">任意</span></label>
-          <input type="email" id="in-mail" inputmode="email" autocapitalize="off"
-                 spellcheck="false" placeholder="例）info@example.co.jp">
-        </div>
-        <div class="field">
-          <label for="in-no">証券番号<span class="hint">任意</span></label>
-          <input type="text" id="in-no" inputmode="latin" placeholder="例）1234-5678">
-        </div>
-        <div class="field">
-          <label for="in-until">満期日<span class="hint">任意</span></label>
-          <input type="text" id="in-until" placeholder="例）2028年3月31日">
-        </div>
-        <div class="field">
-          <label for="in-file">証券の写し<span class="hint">写真・PDF／8MBまで</span></label>
-          <input type="file" id="in-file" accept="image/*,application/pdf">
-        </div>
-        <p id="in-msg" class="msg" role="status" aria-live="polite"></p>
-        <button type="submit" id="in-go" class="btn">この内容で預ける</button>
-      </form>
+      <p id="in-due" class="ins-due" role="status" aria-live="polite" hidden></p>
 
-      <p class="sect">お預かりしているもの</p>
-      <div id="in-list"></div>
+      <div id="in-boxes"></div>
+      <p id="in-cap" class="ins-cap"></p>
+
+      <button type="button" id="in-add" class="btn ghost">＋ 別の物件を追加する</button>
+
+      <div id="in-form-host" class="ins-form" hidden>
+        <form id="f-ins" novalidate>
+          <p id="in-for" class="ins-for" hidden></p>
+
+          <div class="field" id="in-prop-wrap">
+            <label for="in-prop-sel">物件</label>
+            <select id="in-prop-sel" class="sel"></select>
+          </div>
+          <div class="field" id="in-prop-free" hidden>
+            <label for="in-prop">物件名</label>
+            <input type="text" id="in-prop" placeholder="例）カルムコート東棟">
+          </div>
+
+          <div class="field">
+            <label for="in-maker">保険会社<span class="hint">任意</span></label>
+            <input type="text" id="in-maker" placeholder="例）○○海上">
+          </div>
+          <div class="field">
+            <label for="in-tel">保険会社の連絡先<span class="hint">任意</span></label>
+            <input type="text" id="in-tel" inputmode="tel"
+                   placeholder="例）0120-000-000／代理店 ○○（担当 △△）">
+          </div>
+          <div class="field">
+            <label for="in-mail">保険会社のメールアドレス<span class="hint">任意</span></label>
+            <input type="email" id="in-mail" inputmode="email" autocapitalize="off"
+                   spellcheck="false" placeholder="例）info@example.co.jp">
+          </div>
+          <div class="field">
+            <label for="in-no">証券番号<span class="hint">任意</span></label>
+            <input type="text" id="in-no" inputmode="latin" placeholder="例）1234-5678">
+          </div>
+          <div class="field">
+            <label for="in-until">満期日<span class="hint">任意／年・月・日をお選びいただけます</span></label>
+            <input type="date" id="in-until" min="1990-01-01" max="2100-12-31">
+          </div>
+          <div class="field">
+            <label for="in-file">証券の写し<span class="hint">写真・PDF／8MBまで</span></label>
+            <input type="file" id="in-file" accept="image/*,application/pdf">
+          </div>
+
+          <p id="in-msg" class="msg" role="status" aria-live="polite"></p>
+          <div class="ins-acts">
+            <button type="submit" id="in-go" class="btn">この内容で預ける</button>
+            <button type="button" id="in-cancel" class="btn ghost">やめる</button>
+          </div>
+        </form>
+      </div>
     </section>
 
     <!-- ── お問い合わせ ── -->
@@ -320,7 +342,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=13"></script>
-<script src="js/app.js?v=13"></script>
+<script src="js/config.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>

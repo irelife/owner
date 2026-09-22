@@ -314,31 +314,187 @@
       });
   }
 
+  /* ===== 検査できる道具（tests/tst.cjs が読みます）ここから =====
+   *  ★この塊は、下の「火災保険」の塊にある insDue / insDays を
+   *    使います。tests/tst.cjs は、2つの塊をつないで読み込みます。
+   *
+   *  いただいた React（base44）版 Status.jsx から、
+   *  「物件ごとにまとめる」仕様を取り込みました。
+   *  あわせて、2026/9/22 にお決めいただいた
+   *  「解約予定日が過ぎた部屋は募集中に変える」を入れています。 */
+
+  /* 1件を、物件名と部屋に分けます。
+   *   ① サーバーが prop / room を返していれば、それを使います
+   *   ② 返していなければ、place（「カルムコート東棟 201号室」）を分けます
+   *
+   *  ★「…号室」の形があるときだけ分けます。
+   *    空白だけで切ると、「グロリオサ 東棟」の「東棟」が
+   *    部屋になってしまいます。推測で部屋番号を作りません。 */
+  function stSplit(x){
+    var prop = (x && x.prop != null) ? String(x.prop).trim() : '';
+    var room = (x && x.room != null) ? String(x.room).trim() : '';
+    if(prop) return { prop:prop, room:room };
+
+    var place = (x && x.place != null) ? String(x.place).trim() : '';
+    if(!place) return { prop:'', room:'' };
+
+    var m = place.match(
+      /^(.+?)[\s\u3000]*([0-9\uff10-\uff19A-Za-z\uff21-\uff3a\uff41-\uff5a][0-9\uff10-\uff19A-Za-z\uff21-\uff3a\uff41-\uff5a\-\u2015\u30fc]*\u53f7\u5ba4)$/);
+    if(m) return { prop:m[1].replace(/[\s\u3000]+$/, ''), room:m[2] };
+    return { prop:place, room:'' };
+  }
+
+  /* 部屋番号から数を取り出します（「10号室」が「2号室」より
+   *  前に来ないようにするためです）。 */
+  function stRoomNo(room){
+    var v = String(room == null ? '' : room);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/\d+/);
+    return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
+  }
+
+  /* 解約予定の日付は tag に入ってくることが多いですが、
+   *  detail 側にしかないこともあるので、読めたほうを使います。 */
+  function stDueOf(x){
+    if(!x) return '';
+    if(insDue(x.tag))    return String(x.tag);
+    if(insDue(x.detail)) return String(x.detail);
+    return '';
+  }
+
+  /* ★ 2026/9/22 お決めいただいたこと
+   *   解約予定日が過ぎた部屋は、「募集中」として扱います。
+   *   過ぎても「解約予定」のまま出続けると、時間が経つほど
+   *   画面が信用できなくなるためです。
+   *   日付が読めないときは、動かしません（推測しません）。 */
+  function stPast(x, today){
+    var n = insDays(stDueOf(x), today);
+    return (n != null && n < 0);
+  }
+
+  var ST_ORDER = { '募集中':0, '解約予定':1, '新規契約':2 };
+
+  /* 物件ごとにまとめます。
+   *   並び：物件名の無い箱はいちばん下。それ以外は名前順。
+   *           部屋は 募集中 → 解約予定 → 新規契約、同じなら号室順。 */
+  function stGroup(r, today){
+    var map = {}, order = [];
+
+    function add(x, kind, moved, movedDate){
+      var s = stSplit(x);
+      var key = s.prop;
+      if(!map[key]){ map[key] = { name:s.prop, rooms:[] }; order.push(key); }
+      map[key].rooms.push({
+        kind  : kind,
+        room  : s.room,
+        place : (x && x.place)  ? String(x.place)  : '',
+        tag   : (x && x.tag)    ? String(x.tag)    : '',
+        detail: (x && x.detail) ? String(x.detail) : '',
+        moved : !!moved,
+        movedDate : movedDate || ''
+      });
+    }
+
+    (Array.isArray(r && r.newc)  ? r.newc  : []).forEach(function(x){
+      add(x, '新規契約');
+    });
+    (Array.isArray(r && r.yotei) ? r.yotei : []).forEach(function(x){
+      if(stPast(x, today)) add(x, '募集中', true, insYmd(stDueOf(x)));
+      else                 add(x, '解約予定');
+    });
+    (Array.isArray(r && r.boshu) ? r.boshu : []).forEach(function(x){
+      add(x, '募集中');
+    });
+
+    var boxes = order.map(function(k){ return map[k]; });
+    boxes.forEach(function(g){
+      g.rooms.sort(function(a, b){
+        if(ST_ORDER[a.kind] !== ST_ORDER[b.kind]){
+          return ST_ORDER[a.kind] - ST_ORDER[b.kind];
+        }
+        var ra = stRoomNo(a.room), rb = stRoomNo(b.room);
+        if(ra !== rb) return ra - rb;
+        return String(a.room).localeCompare(String(b.room), 'ja');
+      });
+    });
+    boxes.sort(function(a, b){
+      var ae = !a.name, be = !b.name;
+      if(ae !== be) return ae ? 1 : -1;
+      return String(a.name).localeCompare(String(b.name), 'ja');
+    });
+    return boxes;
+  }
+
+  /* いちばん上の、まとめの一行を作ります。 */
+  function stSum(boxes){
+    var c = { '募集中':0, '解約予定':0, '新規契約':0 };
+    (boxes || []).forEach(function(g){
+      (g.rooms || []).forEach(function(u){ if(c[u.kind] != null) c[u.kind]++; });
+    });
+    var t = ['募集中', '解約予定', '新規契約']
+      .filter(function(k){ return c[k] > 0; })
+      .map(function(k){ return k + ' ' + c[k] + '室'; });
+    return t.join('　／　');
+  }
+  /* ===== 検査できる道具（入居状況）ここまで ===== */
+
+  var ST_CLASS = { '新規契約':'new', '解約予定':'out', '募集中':'rec' };
+
+  /* 【改良前】状態ごと（新規契約／解約予定／募集中）に縦に並び、
+   *           物件を横断して混ざっていました。
+   *  【改良後】物件ごとにまとめ、先頭にまとめの一行を出します。 */
   function paintStatus(r){
     $('st-month').textContent = r.month ? (r.month + '分') : '';
-    var out = '';
-    out += block('新規契約', r.newc,  'new');
-    out += block('解約予定', r.yotei, 'out');
-    out += block('募集中',   r.boshu, 'rec');
+
+    var boxes = stGroup(r);
+    var sum   = stSum(boxes);
+    var out   = '';
+
+    if(sum){
+      out += '<p class="st-sum" role="status">' + esc(sum) +
+             ' ございます。</p>';
+    }
+
+    out += boxes.map(function(g){
+      return '<section class="st-prop">' +
+        '<h2 class="st-pn">' +
+          esc(g.name || '物件名の入っていないもの') +
+        '</h2>' +
+        g.rooms.map(function(u){
+          var kind = ST_CLASS[u.kind] || 'rec';
+          var head = u.room || u.place || '—';
+          var sub  = [];
+          /* 解約予定のときの tag は日付なので、下の行に回します。
+             ★ただし detail があるときは出しません。
+               detail にも同じ日付が入っており
+               「2026年10月31日　2026/10/31 解約予定です。」と
+               二重に出ていました。tag が「解約予定」のときは
+               右の札と同じ文字になるのも防げます。 */
+          if(u.kind === '解約予定' && u.tag && !u.detail) sub.push(u.tag);
+          if(u.detail) sub.push(u.detail);
+          /* 過ぎて募集中にしたものは、その理由を出します。
+             黙って差し替えると、何が起きたのか分からなくなるためです。 */
+          if(u.moved){
+            sub.push('解約予定日（' + u.movedDate +
+                     '）を過ぎたため、募集中としております。');
+          }
+          return '<div class="stat ' + kind + '">' +
+            '<div class="st-h">' +
+              '<span class="st-t">' + esc(head) + '</span>' +
+              '<span class="st-tag ' + kind + '">' + esc(u.kind) + '</span>' +
+            '</div>' +
+            (sub.length ? '<span class="st-d">' + esc(sub.join('　')) + '</span>' : '') +
+          '</div>';
+        }).join('') +
+      '</section>';
+    }).join('');
+
     $('st-body').innerHTML = out ||
       '<div class="empty">今月、入退去の予定はございません。</div>';
 
     var has = !!(r.message && String(r.message).trim());
     $('st-letter').hidden = !has;
     if(has) $('st-msg').textContent = r.message;
-  }
-
-  function block(title, list, kind){
-    if(!Array.isArray(list) || !list.length) return '';
-    return '<p class="sect">' + esc(title) + '</p>' + list.map(function(x){
-      return '<div class="stat ' + kind + '">' +
-        '<div class="st-h">' +
-          '<span class="st-t">' + esc(x.place) + '</span>' +
-          (x.tag ? '<span class="st-tag ' + kind + '">' + esc(x.tag) + '</span>' : '') +
-        '</div>' +
-        (x.detail ? '<span class="st-d">' + esc(x.detail) + '</span>' : '') +
-      '</div>';
-    }).join('');
   }
 
   /* ── 過去の明細 ───────────────────────────── */
@@ -364,11 +520,72 @@
    * それより前は月えらびから出します。
    * 【改良前】年ごとの見出しの下に、全部の月が縦に並ぶだけでした。
    * 【改良後】いちばん見たい「今月」が、開いた形で先頭に出ます。 */
+  /* ===== 検査できる道具（tests/tpp.cjs が読みます）ここから =====
+   *  いただいた React（base44）版の Papers.jsx から、
+   *  仕様として良いところだけを取り込みました。
+   *    ・月で並べ替える（React 版の parseMonth のかわり）
+   *    ・CSV に「対象月」「送金日」を列として持つ
+   *  取り込まなかったものと、その理由は docs/引き継ぎ書.md に書いてあります。 */
+
+  /* 「2026年8月」を 202608 という数に直します。並べ替えに使います。
+   *  ★読めないときは null を返します。0 にしません。
+   *    React 版は 0 を返していたため、読めない月が2つ以上あると
+   *    並びが不定になり、いちばん大きなカードに違う月が出る恐れがありました。 */
+  function ppNo(ym){
+    var v = String(ym == null ? '' : ym);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/) ||
+            v.match(/^(\d{4})\D(\d{1,2})$/);
+    if(!m) return null;
+    var y = +m[1], mo = +m[2];
+    if(y < 1900 || y > 2200 || mo < 1 || mo > 12) return null;
+    return y * 100 + mo;
+  }
+
+  /* 新しい月から順に並べます。
+   *  ★1つでも読めない月があれば、並べ替えません。
+   *    お金の書類なので、読めないものを勝手にどこかへ寄せるより、
+   *    サーバーが返した順のままにするほうが安全です。 */
+  function ppSort(list){
+    var a = (Array.isArray(list) ? list : []).slice();
+    for(var i = 0; i < a.length; i++){
+      if(ppNo(a[i] && a[i].ym) == null) return a;
+    }
+    a.sort(function(x, y){ return ppNo(y.ym) - ppNo(x.ym); });
+    return a;
+  }
+
+  /* CSV の中身を作ります（先頭のBOMは付けません。保存するところで付けます）。
+   *  ★React 版から取り込んだところ：
+   *      1行ごとに「対象月」「送金日」を持たせます。
+   *      何か月ぶんを1つの表に貼っても、どの月の行か分かるためです。
+   *  ★React 版と変えたところ：
+   *      金額は引用符で囲みません。Excel が文字として読むことがあるためです。 */
+  function csvOf(it){
+    if(!it) return '';
+    var q = function(v){
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    };
+    var ym = it.ym || '', sk = it.sokinDate || '';
+    var line = ['対象月,送金日,項目,金額'];
+    (Array.isArray(it.rows) ? it.rows : []).forEach(function(x){
+      line.push([q(ym), q(sk), q(x.label), Number(x.amount || 0)].join(','));
+    });
+    /* 合計の行は、対象月・送金日を空にします。
+       月で絞り込んだときに、合計まで足してしまわないようにするためです。 */
+    if(it.total != null){
+      line.push([q(''), q(''), q('ご送金額'), Number(it.total)].join(','));
+    }
+    return line.join('\r\n');
+  }
+  /* ===== 検査できる道具（送金明細）ここまで ===== */
+
   function paintPapers(r){
     var all = [];
     (Array.isArray(r.years) ? r.years : []).forEach(function(y){
       (y.items || []).forEach(function(it){ all.push(it); });
     });
+    all = ppSort(all);          /* 新しい月から順に。読めない月があれば、そのまま */
 
     if(!all.length){
       $('pp-hero').innerHTML = '<div class="empty">明細はまだありません。</div>';
@@ -464,23 +681,23 @@
 
   /* ★ CSV は、いま画面が持っている内わけから作ります。
    *   サーバーに窓口を増やす必要はありません。
+   *   中身の作りは csvOf（上の「検査できる道具」）です。
    *   先頭に BOM を付けるのは、Excel で開いたときに
-   *   日本語が化けないようにするためです。 */
+   *   日本語が化けないようにするためです。
+   *
+   *   【改良前】「項目,金額」の2列。そのあとに「送金日」の行が
+   *             続き、表の形が崩れていました。ファイル名も「収支明細」で、
+   *             画面の「送金明細」と言葉が違っていました。
+   *   【改良後】「対象月,送金日,項目,金額」の4列。ファイル名も送金明細。 */
   function saveCsv(ym){
     var it = ppKeep.filter(function(x){ return x.ym === ym; })[0];
     if(!it) return;
-    var line = ['項目,金額'];
-    (it.rows || []).forEach(function(x){
-      line.push('"' + String(x.label).replace(/"/g, '""') + '",' + Number(x.amount || 0));
-    });
-    if(it.total != null) line.push('ご送金額,' + it.total);
-    if(it.sokinDate)     line.push('"送金日","' + String(it.sokinDate) + '"');
 
     var url = URL.createObjectURL(
-      new Blob(['﻿' + line.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+      new Blob(['﻿' + csvOf(it)], { type:'text/csv;charset=utf-8' }));
     var a = document.createElement('a');
     a.href = url;
-    a.download = ym + 'ぶん 収支明細.csv';
+    a.download = ym + 'ぶん 送金明細.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -750,47 +967,340 @@
    *
    *  ★写しは共有リンクにしません。Apps Script が読んで、
    *    ご本人にだけお渡しします。
+   *
+   *  ★2026/9/22 作り替え
+   *    改良前： 入力欄が7つ縦に並び、預けたものは1証券＝1行のべた並び。
+   *             同じ物件の証券が離れて並び、物件は「任意」だったため
+   *             空のまま預けられ、まとまりませんでした。満期は見るだけ。
+   *    改良後： 1物件＝1つの箱。箱の中に、その物件の証券をまとめます。
+   *             ［＋ 別の物件を追加する］で箱ごと足せます。
+   *             物件は必須にし、明細から分かる物件名から選べます。
+   *             満期の近い箱が上に来て、近づくと札が出ます。
+   *
+   *  ★サーバーの窓口は1つも増やしていません。
+   *    insList が返す prop（物件名）でまとめているだけです。
    * ══════════════════════════════════════════════ */
+
+  /* ===== 検査できる道具（tests/tins.cjs が読みます）ここから =====
+   *  ここから下は、画面にも通信にも触りません。
+   *  文字を受け取って、文字か数を返すだけです。だから検査できます。 */
+
+  /* 物件名を、見比べるための形にそろえます。
+   *  「カルムコート 東棟」「ｶﾙﾑｺｰﾄ東棟」「カルムコート東棟」を同じと見ます。 */
+  function insNorm(s){
+    var v = String(s == null ? '' : s);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    return v.toLowerCase().replace(/\s+/g, '');
+  }
+
+  /* 年月日を、1日＝1つの番号に直します（引き算できるようにするため）。 */
+  function insDayNo(y, m, d){ return Math.floor(Date.UTC(y, m - 1, d) / 86400000); }
+
+  /* 満期日の文字を、年・月・日に読み解きます。
+   *  読めるもの： 2028-03-31 ／ 2028/3/31 ／ 2028年3月31日 ／ 20280331 ／ 2028年3月
+   *  日が書かれていないときは、その月の末日として扱います。
+   *  ★読めないときは null を返します。推測はしません。 */
+  function insDue(s){
+    var v = String(s == null ? '' : s);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    v = v.replace(/\s+/g, '');
+    var m = v.match(/^(\d{4})(\d{2})(\d{2})$/) ||
+            v.match(/(\d{4})\D{1,2}(\d{1,2})(?:\D{1,2}(\d{1,2}))?/);
+    if(!m) return null;
+    var y = +m[1], mo = +m[2], d = m[3] ? +m[3] : 0;
+    if(y < 1900 || y > 2200 || mo < 1 || mo > 12) return null;
+    var last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    if(d && (d < 1 || d > last)) return null;
+    return { y:y, m:mo, d:(d || 0), n:insDayNo(y, mo, (d || last)) };
+  }
+
+  /* 満期まで、あと何日か。過ぎていれば負の数。読めなければ null。 */
+  function insDays(until, today){
+    var u = insDue(until);
+    if(!u) return null;
+    var t = (today == null) ? new Date() : new Date(today);
+    return u.n - insDayNo(t.getFullYear(), t.getMonth() + 1, t.getDate());
+  }
+
+  /* 満期日を、お読みいただく形にします。読めないものは、そのまま出します。 */
+  function insYmd(s){
+    var u = insDue(s);
+    if(!u) return String(s == null ? '' : s);
+    return u.y + '年' + u.m + '月' + (u.d ? (u.d + '日') : '末日');
+  }
+
+  /* 連絡先の文字から、そのまま電話をかけられる数字だけを取り出します。
+   *  「0120-000-000／代理店 ○○（担当 △△）」→ 0120000000
+   *  取り出せないときは '' を返します（押せない電話の札は出しません）。 */
+  function insTel(s){
+    var v = String(s == null ? '' : s);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/0\d[\d\-()]{7,}/);
+    if(!m) return '';
+    var d = m[0].replace(/\D/g, '');
+    return (d.length === 10 || d.length === 11) ? d : '';
+  }
+
+  /* 1物件＝1つの箱にまとめます。
+   *   ・物件名は insNorm でそろえて見比べます
+   *   ・箱の満期は、その箱の中でいちばん近いもの
+   *   ・保険会社・連絡先などは、その箱の中でいちばん後に入れられたもの
+   *   ・並び：物件名の無い箱はいちばん下。それ以外は満期の近い順、
+   *           満期の分からないものはそのあと、名前順 */
+  function insGroup(list, today){
+    var map = {}, order = [];
+
+    (Array.isArray(list) ? list : []).forEach(function(x){
+      var key = insNorm(x && x.prop);
+      if(!map[key]){
+        map[key] = { key:key, name:'', items:[], days:null, until:'',
+                     maker:'', tel:'', mail:'', no:'' };
+        order.push(key);
+      }
+      var g = map[key];
+      if(!g.name && x && x.prop) g.name = String(x.prop).trim();
+
+      /* 後のものが勝ちます＝いちばん新しく預けられたもの */
+      ['maker', 'tel', 'mail', 'no'].forEach(function(f){
+        var v = (x && x[f] != null) ? String(x[f]).trim() : '';
+        if(v) g[f] = v;
+      });
+
+      var n = insDays(x && x.until, today);
+      if(n != null && (g.days == null || n < g.days)){
+        g.days  = n;
+        g.until = String(x.until).trim();
+      }
+      g.items.push(x);
+    });
+
+    var boxes = order.map(function(k){ return map[k]; });
+    boxes.sort(function(a, b){
+      var ae = !a.name, be = !b.name;
+      if(ae !== be) return ae ? 1 : -1;                 /* 名無しは、いちばん下 */
+      var an = (a.days == null), bn = (b.days == null);
+      if(an !== bn) return an ? 1 : -1;                 /* 満期不明は、あとに */
+      if(!an && a.days !== b.days) return a.days - b.days;
+      return String(a.name).localeCompare(String(b.name), 'ja');
+    });
+    return boxes;
+  }
+
+  /* 満期の近さを、3つに分けます。 */
+  function insRank(days){
+    if(days == null)  return 'none';
+    if(days <  0)     return 'over';
+    if(days <= 90)    return 'soon';
+    return 'ok';
+  }
+  /* ===== 検査できる道具（火災保険）ここまで ===== */
+
+  var INS_MAX  = 12;        /* おひとり12件まで（Apps Script 側と同じ数） */
+  var insRows  = [];        /* 直近に読んだ証券の一覧 */
+
   function loadIns(){
-    $('in-list').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    $('in-boxes').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    insShut();
+    /* 物件の候補にホームの物件一覧を使うので、まだ無ければ静かに取ります */
+    if(!cache.home){
+      auth('home').then(function(r){ cache.home = r; }).catch(function(){});
+    }
     auth('insList')
-      .then(function(r){ paintIns(r.list || []); })
+      .then(function(r){
+        insRows = Array.isArray(r.list) ? r.list : [];
+        paintIns();
+      })
       .catch(function(e){
-        $('in-list').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+        insRows = [];
+        $('in-boxes').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+        $('in-due').hidden = true;
+        $('in-cap').textContent = '';
       });
   }
 
-  function paintIns(list){
-    if(!list.length){
-      $('in-list').innerHTML =
-        '<div class="empty">まだお預かりしていません。</div>';
+  function paintIns(){
+    var boxes = insGroup(insRows);
+    var host  = $('in-boxes');
+
+    insNote(boxes);
+
+    if(!boxes.length){
+      host.innerHTML = '<div class="empty">まだお預かりしていません。<br>' +
+        '下の［＋ 別の物件を追加する］から、1件目をお入れください。</div>';
       return;
     }
-    $('in-list').innerHTML = list.map(function(x){
-      var sub = [x.prop, x.maker, x.tel, x.mail, x.no ? ('証券 ' + x.no) : '',
-                 x.until ? ('満期 ' + x.until) : '']
-                .filter(function(v){ return v; }).join('　');
-      return '<div class="item ins">' +
-        '<button type="button" class="row-btn" data-ins="' + esc(x.id) + '">' +
-          '<span class="t">' + esc(x.label) + '</span>' +
-          (sub ? '<span class="s">' + esc(sub) + '</span>' : '') +
+
+    host.innerHTML = boxes.map(insBox).join('');
+
+    Array.prototype.forEach.call(host.querySelectorAll('[data-ins]'), function(b){
+      b.addEventListener('click', function(){ openIns(b.getAttribute('data-ins'), b); });
+    });
+    Array.prototype.forEach.call(host.querySelectorAll('[data-insdel]'), function(b){
+      b.addEventListener('click', function(){
+        dropIns(b.getAttribute('data-insdel'), b.getAttribute('data-insname'));
+      });
+    });
+    Array.prototype.forEach.call(host.querySelectorAll('[data-insadd]'), function(b){
+      b.addEventListener('click', function(){ insForm(b.getAttribute('data-insadd')); });
+    });
+  }
+
+  /* 箱の1つぶん */
+  function insBox(g){
+    var rank = insRank(g.days);
+    var name = g.name || '物件名の入っていないもの';
+
+    /* ★箱の見出しに出すのは、万一のときにすぐ要るものだけです。
+     *  証券番号は証券ごとに違うので、下の1件ずつの行に出します
+     *  （箱にも出すと、2枚あるときにどちらの番号か分からなくなります）。 */
+    var kv = [];
+    if(g.maker) kv.push(['保険会社', esc(g.maker)]);
+    if(g.tel){
+      /* ★電話の押せる場所は、番号のところだけにします。
+       *  説明の文まで押せると、「（担当 △△）」を押して電話がかかります。 */
+      var t = insTel(g.tel);
+      kv.push(['連絡先', esc(g.tel) +
+        (t ? ('<a class="ins-call" href="tel:' + esc(t) + '">電話をかける</a>') : '')]);
+    }
+    if(g.mail) kv.push(['メール',
+      '<a href="mailto:' + esc(g.mail) + '">' + esc(g.mail) + '</a>']);
+
+    var rows = g.items.map(function(x){
+      var sub = [];
+      if(x.no)    sub.push('証券 ' + x.no);
+      if(x.until) sub.push('満期 ' + insYmd(x.until));
+      return '<div class="ins-r">' +
+        '<button type="button" class="ins-open" data-ins="' + esc(x.id) + '">' +
+          '<span class="ins-rt">' + esc(x.label || '証券の写し') + '</span>' +
+          (sub.length ? '<span class="ins-rs">' + esc(sub.join('　')) + '</span>' : '') +
         '</button>' +
-        '<button type="button" class="x" data-insdel="' + esc(x.id) +
-          '" aria-label="消す">✕</button>' +
+        '<button type="button" class="ins-x" data-insdel="' + esc(x.id) +
+          '" data-insname="' + esc(name) + '" aria-label="この写しを消す">✕</button>' +
       '</div>';
     }).join('');
 
-    Array.prototype.forEach.call($('in-list').querySelectorAll('[data-ins]'), function(b){
-      b.addEventListener('click', function(){ openIns(b.getAttribute('data-ins'), b); });
+    return '<section class="ins-box ' + rank + '">' +
+      '<div class="ins-h">' +
+        '<span class="ins-n">' + esc(name) + '</span>' +
+        insTag(g) +
+      '</div>' +
+      (kv.length
+        ? '<div class="kv">' + kv.map(function(p){
+            return '<span class="k">' + p[0] + '</span><span class="v">' + p[1] + '</span>';
+          }).join('') + '</div>'
+        : '') +
+      '<div class="ins-rows">' + rows + '</div>' +
+      (g.name
+        ? '<button type="button" class="btn ghost sm" data-insadd="' + esc(g.name) +
+            '">＋ この物件に証券を追加する</button>'
+        : '<p class="ins-warn">物件名が入っていません。' +
+          'お手数ですが、物件名を入れて預け直していただくと、物件ごとにまとまります。</p>') +
+    '</section>';
+  }
+
+  function insTag(g){
+    switch(insRank(g.days)){
+      case 'none': return '<span class="ins-tag none">満期日が未記入</span>';
+      case 'over': return '<span class="ins-tag over">満期が過ぎています</span>';
+      case 'soon': return '<span class="ins-tag soon">' +
+        (g.days === 0 ? '本日が満期です' : ('満期まで あと' + g.days + '日')) + '</span>';
+      default:     return '<span class="ins-tag">満期 ' + esc(insYmd(g.until)) + '</span>';
+    }
+  }
+
+  /* いちばん上の、まとめの一行 */
+  function insNote(boxes){
+    var el = $('in-due');
+    var c  = { over:0, soon:0, none:0 };
+    boxes.forEach(function(g){
+      var r = insRank(g.days);
+      if(c[r] != null) c[r]++;
     });
-    Array.prototype.forEach.call($('in-list').querySelectorAll('[data-insdel]'), function(b){
-      b.addEventListener('click', function(){ dropIns(b.getAttribute('data-insdel')); });
+
+    var t = [];
+    if(c.over) t.push('満期の過ぎた物件が ' + c.over + '件');
+    if(c.soon) t.push('満期まで90日以内の物件が ' + c.soon + '件');
+    if(c.none) t.push('満期日をいただいていない物件が ' + c.none + '件');
+
+    el.hidden    = !t.length;
+    el.className = 'ins-due' + (c.over ? ' over' : (c.soon ? ' soon' : ''));
+    el.textContent = t.length ? (t.join('　／　') + ' ございます。') : '';
+
+    $('in-cap').textContent = insRows.length
+      ? ('お預かりしているもの ' + insRows.length + '件（おひとり ' + INS_MAX + '件までです）')
+      : '';
+    $('in-add').disabled = (insRows.length >= INS_MAX);
+  }
+
+  /* ── 入力の箱 ──────────────────────────────
+   *  ★入力欄は1組だけで、置く場所も動かしません。
+   *    同じIDの欄を2つ以上作ると、どちらに入れたのか分からなくなるためです。
+   *    また、一覧を描き直すたびに入力欄が消えてしまうのを防ぐため、
+   *    一覧（#in-boxes）の中には置きません。 */
+  function insForm(name){
+    var fixed = !!name;
+    var host  = $('in-form-host');
+
+    $('f-ins').reset();
+    say($('in-msg'), '');
+
+    $('in-for').textContent  = fixed ? (name + ' に、証券を追加します。') : '';
+    $('in-for').hidden       = !fixed;
+    $('in-prop-wrap').hidden = fixed;
+    $('in-prop-free').hidden = true;
+    $('in-prop').value       = fixed ? name : '';
+
+    if(!fixed) insCands();
+
+    host.hidden = false;
+    try{ host.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    catch(e){ host.scrollIntoView(); }
+
+    var first = fixed ? $('in-maker') : $('in-prop-sel');
+    if(first){ try{ first.focus({ preventScroll:true }); }catch(e){} }
+  }
+
+  function insShut(){
+    var host = $('in-form-host');
+    if(!host) return;
+    host.hidden = true;
+    $('f-ins').reset();
+    say($('in-msg'), '');
+    $('in-prop-free').hidden = true;
+  }
+
+  /* 物件の候補。明細から分かっている物件のうち、まだ箱の無いものを出します。
+   *  ★ここに無い物件は［一覧にない物件を入力する］で手で入れられます。
+   *    明細がまだ1件も届いていないお客様でも、お預けいただけるようにするためです。 */
+  function insCands(){
+    var sel  = $('in-prop-sel');
+    var have = {};
+    insGroup(insRows).forEach(function(g){ if(g.key) have[g.key] = 1; });
+
+    var names = [];
+    var props = (cache.home && Array.isArray(cache.home.props)) ? cache.home.props : [];
+    props.forEach(function(p){
+      var n = (p && p.name) ? String(p.name).trim() : '';
+      if(n && !have[insNorm(n)] && names.indexOf(n) < 0) names.push(n);
     });
+
+    sel.innerHTML =
+      '<option value="">選んでください</option>' +
+      names.map(function(n){
+        return '<option value="' + esc(n) + '">' + esc(n) + '</option>';
+      }).join('') +
+      '<option value="__free__">一覧にない物件を入力する</option>';
+
+    sel.onchange = function(){
+      var free = (sel.value === '__free__');
+      $('in-prop-free').hidden = !free;
+      $('in-prop').value = free ? '' : sel.value;
+      if(free){ try{ $('in-prop').focus(); }catch(e){} }
+    };
   }
 
   function openIns(id, btn){
     if(!id) return;
-    var old = btn && btn.textContent;
     if(btn){ btn.disabled = true; }
     auth('insFile', { id: id })
       .then(function(r){
@@ -802,23 +1312,43 @@
         setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
       })
       .catch(function(e){ toast(e.message); })
-      .then(function(){ if(btn){ btn.disabled = false; if(old) btn.textContent = old; } });
+      .then(function(){ if(btn){ btn.disabled = false; } });
   }
 
-  function dropIns(id){
-    if(!window.confirm('お預かりしている証券の写しを消します。\n\nよろしいですか？')) return;
+  function dropIns(id, name){
+    if(!id) return;
+    if(!window.confirm(
+      (name ? (name + ' の') : 'お預かりしている') + '証券の写しを1件消します。\n\n' +
+      'よろしいですか？')) return;
     auth('insDrop', { id: id })
       .then(function(){ toast('消しました'); loadIns(); })
       .catch(function(e){ toast(e.message); });
   }
 
+  $('in-add').addEventListener('click', function(){ insForm(''); });
+  $('in-cancel').addEventListener('click', function(){ insShut(); });
+
   $('f-ins').addEventListener('submit', function(ev){
     ev.preventDefault();
-    var msg = $('in-msg');
-    var f = $('in-file').files && $('in-file').files[0];
+    var msg  = $('in-msg');
+    var prop = ($('in-prop').value || '').trim();
+    var f    = $('in-file').files && $('in-file').files[0];
+
+    /* ★物件は必須にしました（改良前は任意）。
+     *  空のまま預けられると、物件ごとにまとまらないためです。 */
+    if(!prop){
+      say(msg, '物件をお選びください。一覧に無いときは' +
+               '［一覧にない物件を入力する］からお入れください。');
+      return;
+    }
     if(!f){ say(msg, '証券の写しを選んでください。'); return; }
     if(f.size > 8 * 1024 * 1024){
       say(msg, 'ファイルが大きすぎます。8MB までにしてください。'); return;
+    }
+    if(insRows.length >= INS_MAX){
+      say(msg, 'お預かりは、おひとり ' + INS_MAX + '件までです。' +
+               '古いものを消してから、もう一度お試しください。');
+      return;
     }
 
     busy($('in-go'), true, '預かっています…');
@@ -832,21 +1362,21 @@
         b64   : b64,
         name  : f.name || '火災保険の証券',
         mime  : f.type || 'application/pdf',
-        prop  : ($('in-prop').value  || '').trim(),
+        prop  : prop,
         maker : ($('in-maker').value || '').trim(),
         tel   : ($('in-tel').value   || '').trim(),
         mail  : ($('in-mail').value  || '').trim(),
         no    : ($('in-no').value    || '').trim(),
+        /* ★満期日は 2028-03-31 の形で送ります（日付の欄にしたため）。
+         *  前に文字で入れられたもの（2028年3月31日）も、そのまま読めます。 */
         until : ($('in-until').value || '').trim()
       })
       .then(function(){
-        $('f-ins').reset();
-        say(msg, '');
+        insShut();
         loadIns();
         toast('お預かりしました。ありがとうございます。');
-        /* 預かったものの一覧が見えるところまで送ります */
-        try{ $('in-list').scrollIntoView({ behavior:'smooth', block:'center' }); }
-        catch(e){ $('in-list').scrollIntoView(); }
+        try{ $('in-boxes').scrollIntoView({ behavior:'smooth', block:'start' }); }
+        catch(e){ $('in-boxes').scrollIntoView(); }
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('in-go'), false); });
