@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="マイページ">
 <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22IRE%20%E3%82%AA%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22short_name%22%3A%22%E3%83%9E%E3%82%A4%E3%83%9A%E3%83%BC%E3%82%B8%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%233D1E24%22%2C%22theme_color%22%3A%22%233D1E24%22%2C%22start_url%22%3A%22.%22%7D">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 
@@ -193,12 +193,28 @@
       </div>
     </section>
 
-    <!-- ── 過去の明細 ── -->
+    <!-- ── 送金明細 ── -->
     <section id="s-papers" class="scr pad" hidden>
       <button type="button" class="back" data-go="home">← ホーム</button>
-      <h1 class="h-mincho">過去の明細</h1>
+      <h1 class="h-mincho">送金明細</h1>
       <span class="bar-line"></span>
       <p class="sub">3年分を保存しています。いつでも、何度でもご覧いただけます。</p>
+
+      <!-- いちばん新しい1件 -->
+      <div id="pp-hero"></div>
+
+      <!-- そのつぎの3か月 -->
+      <div id="pp-grid" class="pp-grid"></div>
+
+      <!-- それ以前 -->
+      <div id="pp-more" hidden>
+        <p class="sect sm">それ以前の明細を検索</p>
+        <select id="pp-sel" class="sel">
+          <option value="">月を選択してください</option>
+        </select>
+        <div id="pp-one"></div>
+      </div>
+
       <div id="pp-body"></div>
     </section>
 
@@ -304,7 +320,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=12"></script>
-<script src="js/app.js?v=12"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/app.js?v=13"></script>
 </body>
 </html>

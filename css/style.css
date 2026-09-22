@@ -293,84 +293,67 @@ input[type=file]::file-selector-button{
   color:var(--mut-fg); white-space:nowrap;
 }
 
-/* ── 明細1件（押すと内わけが開きます） ───────── */
+/* ── 送金明細 ─────────────────────────────
+   いちばん新しい1件は .pp.big（全幅）、
+   そのつぎの3か月は .pp-grid の中の .pp（3枚並び）です。 */
 .pp{
   background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
-  overflow:hidden;
+  overflow:hidden; margin-top:20px;
 }
+.pp-grid{ display:grid; grid-template-columns:1fr; gap:20px; }
+.pp-grid .pp{ margin-top:0; }
+
 .pp-h{
-  display:flex; align-items:center; gap:12px; width:100%;
-  padding:16px 20px; border:0; background:transparent; color:var(--fg);
-  font:inherit; text-align:left; cursor:pointer; transition:background-color .15s;
+  display:flex; align-items:flex-start; gap:12px; width:100%;
+  padding:20px 24px 0; border:0; background:transparent; color:var(--fg);
+  font:inherit; text-align:left; cursor:pointer;
 }
-.pp-h:hover{ background:var(--acc); }
+.pp-h[disabled]{ cursor:default; }
 .pp-l{ flex:1 1 auto; min-width:0; }
-.pp-t{ display:block; font-size:16px; font-weight:700; }
+.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em; }
 .pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
-.pp-a{
-  flex:0 0 auto; font-size:20px; font-weight:700; letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;
-}
 .pp-c{
-  flex:0 0 auto; width:10px; height:10px; margin-left:2px;
+  flex:0 0 auto; width:10px; height:10px; margin-top:6px;
   border-right:2px solid var(--mut-fg); border-bottom:2px solid var(--mut-fg);
   transform:rotate(45deg) translate(-2px,-2px); transition:transform .15s;
 }
 .pp-h.open .pp-c{ transform:rotate(-135deg) translate(-2px,-2px); }
-.pp-b{ padding:0 20px 20px; }
-.pp-b .rows{ margin-top:0; }
-.pp-b .btn{ margin-top:16px; }
-.ic-up{
-  display:inline-block; width:22px; height:22px; margin-right:8px;
-  vertical-align:-3px; background:var(--pri);
-  -webkit-mask:var(--ic-up) center / contain no-repeat;
-          mask:var(--ic-up) center / contain no-repeat;
+.pp-a{
+  margin:8px 0 0; padding:0 24px 20px;
+  font-size:36px; font-weight:700; line-height:1.15; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+}
+.pp.big .pp-a{ font-size:48px; }
+.pp-b{ padding:16px 24px 20px; border-top:1px solid var(--bd-40); }
+.pp-b .rows{ margin-top:0; border-top:0; }
+.pp-b .row:first-child{ border-top:0; }
+.pp-acts{ display:flex; gap:12px; margin-top:16px; }
+.pp-acts .btn{ flex:1 1 0; }
+
+/* 小さめのボタン（PDF・CSV） */
+.btn.sm{
+  min-height:44px; padding:0 14px; font-size:14px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn.sm svg{
+  width:17px; height:17px; flex:0 0 auto;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
 }
 
-/* ── 一覧（物件・明細・保険） ─────────────── */
-.list{ display:flex; flex-direction:column; gap:10px; }
-.item{
-  display:flex; align-items:center; gap:12px;
-  padding:16px 20px; background:var(--card-bg);
-  border:1px solid var(--bd); border-radius:16px;
+/* 月えらび */
+.sect.sm{ margin:40px 0 10px; font-size:15px; font-weight:600; color:var(--mut-fg); }
+.sel{
+  width:100%; max-width:420px; box-sizing:border-box;
+  min-height:52px; padding:0 40px 0 16px;
+  font:inherit; font-size:16px; color:var(--fg);
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:12px;
+  -webkit-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A87A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center; background-size:18px;
 }
-.item .t{ display:block; font-size:16px; font-weight:600; }
-.item .s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
-.row-btn{
-  flex:1; min-width:0; padding:0; border:0; background:transparent;
-  color:inherit; font:inherit; text-align:left; cursor:pointer;
-}
-.row-btn:hover .t{ color:var(--pri); }
-.item .pdf{
-  flex:0 0 auto; padding:4px 12px; border-radius:999px;
-  background:var(--acc); color:var(--mut-fg); font-size:12px; font-weight:600;
-}
-.item .x{
-  flex:0 0 auto; width:32px; height:32px; border:0; border-radius:999px;
-  background:transparent; color:var(--mut-fg); font-size:15px; cursor:pointer;
-}
-.item .x:hover{ color:var(--ng); background:hsl(var(--destructive) / .12); }
-
-/* ── タイル（ホームのカード） ─────────────── */
-.tiles{
-  display:grid; grid-template-columns:1fr; gap:20px; margin-top:48px;
-}
-.tile{
-  display:flex; flex-direction:column; text-align:left;
-  padding:32px; border:1px solid var(--bd); border-radius:24px;
-  background:var(--card-bg); color:var(--fg); cursor:pointer;
-  font:inherit; transition:border-color .15s;
-}
-.tile:hover{ border-color:hsl(var(--primary) / .6); }
-.tile-k{
-  font-size:12px; font-weight:600; letter-spacing:.04em;
-  color:var(--pri); text-transform:uppercase;
-}
-.tile-t{ margin-top:8px; font-size:20px; font-weight:700; letter-spacing:-.02em;
-  line-height:1.4; word-break:keep-all; }
-.tile-a{ margin-top:4px; font-size:36px; font-weight:700; line-height:1.15;
-  letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
-.tile-d{ margin-top:12px; font-size:14px; line-height:1.75; color:var(--mut-fg); }
+.sel:focus{ outline:2px solid var(--pri); outline-offset:1px; }
+.sel option{ background:var(--card-bg); color:var(--fg); }
 
 /* ── 入居状況 ─────────────────────────────── */
 .stat{
@@ -474,6 +457,8 @@ input[type=file]::file-selector-button{
   .tile-t{ font-size:22px; }
   .tile-a{ font-size:48px; }
   .lead{ padding-top:48px; font-size:24px; }
+  .pp-grid{ grid-template-columns:1fr 1fr 1fr; }
+  .pp.big .pp-a{ font-size:60px; }
 }
 
 @media (prefers-reduced-motion:reduce){

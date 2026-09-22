@@ -359,19 +359,88 @@
       });
   }
 
+  /* ── 送金明細 ─────────────────────────────
+   * いちばん新しい1件を大きく、そのつぎの3か月を横に3枚、
+   * それより前は月えらびから出します。
+   * 【改良前】年ごとの見出しの下に、全部の月が縦に並ぶだけでした。
+   * 【改良後】いちばん見たい「今月」が、開いた形で先頭に出ます。 */
   function paintPapers(r){
-    var years = Array.isArray(r.years) ? r.years : [];
-    if(!years.length){
-      $('pp-body').innerHTML = '<div class="empty">明細はまだありません。</div>';
+    var all = [];
+    (Array.isArray(r.years) ? r.years : []).forEach(function(y){
+      (y.items || []).forEach(function(it){ all.push(it); });
+    });
+
+    if(!all.length){
+      $('pp-hero').innerHTML = '<div class="empty">明細はまだありません。</div>';
+      $('pp-grid').innerHTML = '';
+      $('pp-more').hidden = true;
       return;
     }
-    $('pp-body').innerHTML = years.map(function(y){
-      return '<p class="year">' + esc(y.year) + '年</p><div class="list">' +
-             y.items.map(paperOne).join('') + '</div>';
+
+    ppKeep = all;                                  /* 月えらびで引くために覚えます */
+    $('pp-hero').innerHTML = ppCard(all[0], true, true);
+    $('pp-grid').innerHTML = all.slice(1, 4).map(function(it){
+      return ppCard(it, false, false);
     }).join('');
 
-    /* 見出しを押すと、その月の内わけが開きます */
-    Array.prototype.forEach.call($('pp-body').querySelectorAll('.pp-h'), function(h){
+    var rest = all.slice(4);
+    $('pp-more').hidden = !rest.length;
+    if(rest.length){
+      $('pp-sel').innerHTML = '<option value="">月を選択してください</option>' +
+        rest.map(function(it, i){
+          return '<option value="' + (i + 4) + '">' + esc(it.ym) + '</option>';
+        }).join('');
+      $('pp-one').innerHTML = '';
+    }
+
+    ppBind($('pp-hero'));
+    ppBind($('pp-grid'));
+  }
+
+  var ppKeep = [];
+
+  /* 明細1枚。open は はじめから開いておくか、big は大きく出すか。 */
+  function ppCard(it, open, big){
+    var rows = Array.isArray(it.rows) ? it.rows : [];
+    var naka = rows.length || it.id;               /* 開く中身があるか */
+    return '<div class="pp' + (big ? ' big' : '') + '">' +
+      '<button type="button" class="pp-h' + (open ? ' open' : '') + '"' +
+              (naka ? '' : ' disabled') + '>' +
+        '<span class="pp-l">' +
+          '<span class="pp-t">' + esc(it.ym) + '</span>' +
+          '<span class="pp-s">送金日 ' + esc(it.sokinDate || '—') + '</span>' +
+        '</span>' +
+        (naka ? '<span class="pp-c" aria-hidden="true"></span>' : '') +
+      '</button>' +
+      '<p class="pp-a">' + (it.total == null ? '—' : '¥' + yen(it.total)) + '</p>' +
+      (naka ? '<div class="pp-b"' + (open ? '' : ' hidden') + '>' +
+        (rows.length ? '<div class="rows">' + rows.map(function(x){
+          var minus = Number(x.amount) < 0;
+          return '<div class="row' + (minus ? ' minus' : '') + '">' +
+                 '<span>' + esc(x.label) + '</span>' +
+                 '<span>' + (minus ? '−¥' : '¥') +
+                 esc(yen(Math.abs(x.amount))) + '</span></div>';
+        }).join('') + '</div>' : '') +
+        '<div class="pp-acts">' +
+          (it.id ? '<button type="button" class="btn ghost sm" data-pdf="' + esc(it.id) +
+                   '">' + IC_DL + 'PDF</button>' : '') +
+          (rows.length ? '<button type="button" class="btn ghost sm" data-csv="' +
+                   esc(it.ym) + '">' + IC_SHEET + 'CSV</button>' : '') +
+        '</div>' +
+      '</div>' : '') +
+    '</div>';
+  }
+
+  var IC_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/>' +
+              '<path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>';
+  var IC_SHEET = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+              '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>' +
+              '<path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+
+  /* 押したときの動きを付けます */
+  function ppBind(box){
+    if(!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('.pp-h'), function(h){
       h.addEventListener('click', function(){
         var body = h.parentNode.querySelector('.pp-b');
         if(!body) return;
@@ -379,45 +448,52 @@
         h.classList.toggle('open', !body.hidden);
       });
     });
-    Array.prototype.forEach.call($('pp-body').querySelectorAll('[data-pdf]'), function(b){
+    Array.prototype.forEach.call(box.querySelectorAll('[data-pdf]'), function(b){
       b.addEventListener('click', function(e){
         e.stopPropagation();
         openPdf(b.getAttribute('data-pdf'), b);
       });
     });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-csv]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        saveCsv(b.getAttribute('data-csv'));
+      });
+    });
   }
 
-  /* 明細1件。
-   * ★ 送金額がまだ届かないサーバーでも止まらないよう、
-   *   金額が無いときは、これまでどおりの1行だけにします。 */
-  function paperOne(it){
-    var rows = Array.isArray(it.rows) ? it.rows : [];
-    if(it.total == null && !rows.length){
-      return '<div class="item"><button type="button" class="row-btn" data-pdf="' +
-             esc(it.id) + '"><span class="t">' + esc(it.label) +
-             '</span></button><span class="pdf">PDF</span></div>';
-    }
-    return '<div class="pp">' +
-      '<button type="button" class="pp-h">' +
-        '<span class="pp-l">' +
-          '<span class="pp-t">' + esc(it.label) + '</span>' +
-          (it.sokinDate ? '<span class="pp-s">' + esc(it.sokinDate) + ' お振込</span>' : '') +
-        '</span>' +
-        '<span class="pp-a">' + (it.total == null ? '—' : '\u00a5' + yen(it.total)) + '</span>' +
-        '<span class="pp-c" aria-hidden="true"></span>' +
-      '</button>' +
-      '<div class="pp-b" hidden>' +
-        (rows.length ? '<div class="rows">' + rows.map(function(x){
-          var minus = Number(x.amount) < 0;
-          return '<div class="row' + (minus ? ' minus' : '') + '">' +
-                 '<span>' + esc(x.label) + '</span>' +
-                 '<span>' + (minus ? '\u2212' : '') + esc(yen(Math.abs(x.amount))) + '</span></div>';
-        }).join('') + '</div>' : '') +
-        (it.id ? '<button type="button" class="btn ghost" data-pdf="' + esc(it.id) +
-                 '">明細のPDFを開く</button>' : '') +
-      '</div>' +
-    '</div>';
+  /* ★ CSV は、いま画面が持っている内わけから作ります。
+   *   サーバーに窓口を増やす必要はありません。
+   *   先頭に BOM を付けるのは、Excel で開いたときに
+   *   日本語が化けないようにするためです。 */
+  function saveCsv(ym){
+    var it = ppKeep.filter(function(x){ return x.ym === ym; })[0];
+    if(!it) return;
+    var line = ['項目,金額'];
+    (it.rows || []).forEach(function(x){
+      line.push('"' + String(x.label).replace(/"/g, '""') + '",' + Number(x.amount || 0));
+    });
+    if(it.total != null) line.push('ご送金額,' + it.total);
+    if(it.sokinDate)     line.push('"送金日","' + String(it.sokinDate) + '"');
+
+    var url = URL.createObjectURL(
+      new Blob(['﻿' + line.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = ym + 'ぶん 収支明細.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
   }
+
+  /* 月をえらぶと、その1件を下に出します */
+  $('pp-sel').addEventListener('change', function(){
+    var i = Number($('pp-sel').value);
+    if(!$('pp-sel').value || !ppKeep[i]){ $('pp-one').innerHTML = ''; return; }
+    $('pp-one').innerHTML = ppCard(ppKeep[i], true, true);
+    ppBind($('pp-one'));
+  });
 
   /* ── 年間の収支（ホーム） ─────────────────── */
   function loadChart(){
