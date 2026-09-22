@@ -107,8 +107,9 @@
 
   /* ── 画面の出し入れ ───────────────────────── */
   var SCREENS = ['login','forgot','newpass','home','status','papers',
-                 'works','insurance','contact'];
-  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1, contact:1 };
+                 'works','insurance','contact','accountant'];
+  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1,
+                      contact:1, accountant:1 };
 
   function show(name){
     SCREENS.forEach(function(n){
@@ -277,8 +278,11 @@
       out += mvRows(r.newc,  '新規契約', 'new');
       out += mvRows(r.yotei, '解約予定', 'out');
     }
-    $('hm-moves').innerHTML = out ||
-      '<div class="empty">今月、入退去の予定はございません。</div>';
+    /* ★ 見本と同じく、入退去の予定があるときだけ見出しごと出します。
+     *   「ございません」とだけ書かれた箱は、置かないことにしました。 */
+    $('hm-moves-wrap').hidden = !out;
+    if(!out) return;
+    $('hm-moves').innerHTML = out;
     Array.prototype.forEach.call($('hm-moves').querySelectorAll('.mv'), function(el){
       el.addEventListener('click', function(){ show('status'); });
     });
@@ -495,9 +499,38 @@
     ppBind($('pp-one'));
   });
 
-  /* ── 年間の収支（ホーム） ─────────────────── */
+  /* ── 年間の収支（ホーム） ───────────────────
+   * 上の図 … 月ごとの 収入（棒）と 支出（棒）
+   * 下の図 … 累積収支（折れ線）
+   *
+   * ★ なぜ2つに分けたか
+   *   見本は1つの図に左右2本のものさしを置いていました。収入は約53万円、
+   *   累積収支は12か月で約580万円。11倍ちがうものが同じ高さに描かれ、
+   *   「今月の収入と、これまでの累計が同じくらい」と読めてしまいます。
+   *   図を2つに分ければ、どちらも自分のものさしで正しく読めます。
+   *   月の並び（横軸）は上下でそろえてあります。 */
   function loadChart(){
     getPapers().then(paintChart).catch(function(){ $('hm-chart-wrap').hidden = true; });
+  }
+
+  /* 明細の内わけから、月ごとの 収入・支出・累積収支 を作ります */
+  function chartRows(r){
+    var all = [];
+    (Array.isArray(r.years) ? r.years : []).forEach(function(y){
+      (y.items || []).forEach(function(it){ all.push(it); });
+    });
+    var run = 0;
+    return all.slice(0, 12).reverse().map(function(it){
+      var inc = 0, out = 0;
+      (it.rows || []).forEach(function(x){
+        var v = Number(x.amount) || 0;
+        if(v >= 0) inc += v; else out += -v;
+      });
+      /* 内わけが無い月は、ご送金額を収入として見ます */
+      if(!inc && !out && it.total != null) inc = it.total;
+      run += inc - out;
+      return { ym: it.ym, month: it.month, inc: inc, out: out, run: run };
+    });
   }
 
   /* 万の単位で短くします（棒が細いためです）。1万円に満たなければそのまま。 */
@@ -508,25 +541,274 @@
     return yen(v);
   }
 
-  function paintChart(r){
-    var list = (r && Array.isArray(r.chart)) ? r.chart : [];
-    var has  = list.filter(function(x){ return x.total != null; });
-    /* 1か月ぶんしか無いと、山にならないので出しません */
-    if(has.length < 2){ $('hm-chart-wrap').hidden = true; return; }
+  /* 横軸の月。いちばん左と1月には、年も添えます。
+     年をまたいだことが分かるようにするためです。 */
+  function monLabel(x, i){
+    if(x.month == null) return '';
+    var y = String(x.ym || '').match(/(\d{4})/);
+    if((i === 0 || x.month === 1) && y) return "'" + y[1].slice(2) + ' ' + x.month;
+    return String(x.month);
+  }
 
-    var max = Math.max.apply(null, has.map(function(x){ return Number(x.total) || 0; }));
-    $('hm-chart').innerHTML = '<div class="ch">' + list.map(function(x){
-      var v = (x.total == null) ? null : Number(x.total);
-      var h = (v == null || max <= 0) ? 0 : Math.max(2, Math.round(v / max * 100));
-      return '<div class="ch-c" title="' + esc(x.ym + '　' +
-               (v == null ? '—' : yen(v) + '円')) + '">' +
-             '<span class="ch-v">' + (v == null ? '' : esc(man(v))) + '</span>' +
-             '<span class="ch-w"><span class="ch-b" style="height:' + h + '%"></span></span>' +
-             '<span class="ch-x">' + esc(x.month == null ? '' : (x.month + '月')) + '</span>' +
-             '</div>';
-    }).join('') + '</div>';
+  function paintChart(r){
+    var d = chartRows(r);
+    /* 1か月ぶんでは山にならないので出しません */
+    if(d.length < 2){ $('hm-chart-wrap').hidden = true; return; }
+
+    var maxBar = Math.max.apply(null, d.map(function(x){
+      return Math.max(x.inc, x.out); })) || 1;
+    var runs   = d.map(function(x){ return x.run; });
+    var runHi  = Math.max.apply(null, runs);
+    var runLo  = Math.min.apply(null, runs.concat([0]));
+    var span   = (runHi - runLo) || 1;
+    var last   = d.length - 1;
+
+    /* ── 上の図：収入と支出 ───────────────── */
+    var bars = d.map(function(x, i){
+      var hi = Math.round(x.inc / maxBar * 100);
+      var ho = Math.round(x.out / maxBar * 100);
+      return '<div class="c2">' +
+        '<span class="c2-v">' + (i === last ? esc(man(x.inc)) : '') + '</span>' +
+        '<span class="c2-w">' +
+          '<span class="c2-b inc" style="height:' + Math.max(x.inc ? 2 : 0, hi) + '%"></span>' +
+          '<span class="c2-b out" style="height:' + Math.max(x.out ? 2 : 0, ho) + '%"></span>' +
+        '</span>' +
+        '<span class="c2-x">' + esc(monLabel(x, i)) + '</span>' +
+        '<span class="c2-tip" role="tooltip">' +
+          '<b>' + esc(x.ym) + '</b>' +
+          '<i><em class="sw inc"></em>収入<s>¥' + esc(yen(x.inc)) + '</s></i>' +
+          '<i><em class="sw out"></em>支出<s>−¥' + esc(yen(x.out)) + '</s></i>' +
+          '<i><em class="sw run"></em>累積収支<s>¥' + esc(yen(x.run)) + '</s></i>' +
+        '</span>' +
+      '</div>';
+    }).join('');
+
+    /* ── 下の図：累積収支の折れ線 ─────────── */
+    var pts = d.map(function(x, i){
+      var px = ((i + 0.5) / d.length) * 100;
+      var py = 100 - ((x.run - runLo) / span) * 92 - 4;
+      return px.toFixed(2) + ',' + py.toFixed(2);
+    });
+    /* ★ 点（circle）は置きません。図を横いっぱいに伸ばすので、
+     *   まるい点が楕円につぶれてしまうためです。線だけにします。 */
+    var line = '<svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none"' +
+      ' aria-hidden="true"><polyline points="' + pts.join(' ') + '"' +
+      ' vector-effect="non-scaling-stroke" class="ln-p"/></svg>';
+
+    $('hm-chart').innerHTML =
+      '<div class="ch2">' + bars + '</div>' +
+      '<div class="ln-wrap">' + line +
+        '<span class="ln-k">累積収支</span>' +
+        '<span class="ln-a">¥' + esc(yen(d[last].run)) + '</span>' +
+      '</div>' +
+      '<div class="ch-lg">' +
+        '<span><em class="sw inc"></em>収入</span>' +
+        '<span><em class="sw out"></em>支出</span>' +
+        '<span><em class="sw run line"></em>累積収支</span>' +
+      '</div>' +
+      '<details class="ch-tb"><summary>数字で見る</summary>' +
+        '<table><thead><tr><th>月</th><th>収入</th><th>支出</th><th>累積収支</th></tr></thead>' +
+        '<tbody>' + d.map(function(x){
+          return '<tr><th scope="row">' + esc(x.ym) + '</th>' +
+                 '<td>¥' + esc(yen(x.inc)) + '</td>' +
+                 '<td>−¥' + esc(yen(x.out)) + '</td>' +
+                 '<td>¥' + esc(yen(x.run)) + '</td></tr>';
+        }).join('') + '</tbody></table></details>';
+
     $('hm-chart-wrap').hidden = false;
   }
+
+  /* ── 入居状況 ─────────────────────────────── */
+  function loadStatus(){
+    if(cache.status){ paintStatus(cache.status); return; }
+    $('st-body').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    auth('status')
+      .then(function(r){ cache.status = r; paintStatus(r); })
+      .catch(function(e){
+        $('st-body').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+  }
+
+  function paintStatus(r){
+    $('st-month').textContent = r.month ? (r.month + '分') : '';
+    var out = '';
+    out += block('新規契約', r.newc,  'new');
+    out += block('解約予定', r.yotei, 'out');
+    out += block('募集中',   r.boshu, 'rec');
+    $('st-body').innerHTML = out ||
+      '<div class="empty">今月、入退去の予定はございません。</div>';
+
+    var has = !!(r.message && String(r.message).trim());
+    $('st-letter').hidden = !has;
+    if(has) $('st-msg').textContent = r.message;
+  }
+
+  function block(title, list, kind){
+    if(!Array.isArray(list) || !list.length) return '';
+    return '<p class="sect">' + esc(title) + '</p>' + list.map(function(x){
+      return '<div class="stat ' + kind + '">' +
+        '<div class="st-h">' +
+          '<span class="st-t">' + esc(x.place) + '</span>' +
+          (x.tag ? '<span class="st-tag ' + kind + '">' + esc(x.tag) + '</span>' : '') +
+        '</div>' +
+        (x.detail ? '<span class="st-d">' + esc(x.detail) + '</span>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  /* ── 過去の明細 ───────────────────────────── */
+  /* ★ ホームの「年間の収支」と、この画面は同じ中身を使います。
+   *   読むのは一度だけにして、二度目からは覚えたものを使います。 */
+  function getPapers(){
+    if(cache.papers) return Promise.resolve(cache.papers);
+    return auth('papers').then(function(r){ cache.papers = r; return r; });
+  }
+
+  function loadPapers(){
+    if(cache.papers){ paintPapers(cache.papers); return; }
+    $('pp-body').innerHTML = '<div class="empty">読み込んでいます…</div>';
+    getPapers()
+      .then(paintPapers)
+      .catch(function(e){
+        $('pp-body').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+  }
+
+  /* ── 送金明細 ─────────────────────────────
+   * いちばん新しい1件を大きく、そのつぎの3か月を横に3枚、
+   * それより前は月えらびから出します。
+   * 【改良前】年ごとの見出しの下に、全部の月が縦に並ぶだけでした。
+   * 【改良後】いちばん見たい「今月」が、開いた形で先頭に出ます。 */
+  function paintPapers(r){
+    var all = [];
+    (Array.isArray(r.years) ? r.years : []).forEach(function(y){
+      (y.items || []).forEach(function(it){ all.push(it); });
+    });
+
+    if(!all.length){
+      $('pp-hero').innerHTML = '<div class="empty">明細はまだありません。</div>';
+      $('pp-grid').innerHTML = '';
+      $('pp-more').hidden = true;
+      return;
+    }
+
+    ppKeep = all;                                  /* 月えらびで引くために覚えます */
+    $('pp-hero').innerHTML = ppCard(all[0], true, true);
+    $('pp-grid').innerHTML = all.slice(1, 4).map(function(it){
+      return ppCard(it, false, false);
+    }).join('');
+
+    var rest = all.slice(4);
+    $('pp-more').hidden = !rest.length;
+    if(rest.length){
+      $('pp-sel').innerHTML = '<option value="">月を選択してください</option>' +
+        rest.map(function(it, i){
+          return '<option value="' + (i + 4) + '">' + esc(it.ym) + '</option>';
+        }).join('');
+      $('pp-one').innerHTML = '';
+    }
+
+    ppBind($('pp-hero'));
+    ppBind($('pp-grid'));
+  }
+
+  var ppKeep = [];
+
+  /* 明細1枚。open は はじめから開いておくか、big は大きく出すか。 */
+  function ppCard(it, open, big){
+    var rows = Array.isArray(it.rows) ? it.rows : [];
+    var naka = rows.length || it.id;               /* 開く中身があるか */
+    return '<div class="pp' + (big ? ' big' : '') + '">' +
+      '<button type="button" class="pp-h' + (open ? ' open' : '') + '"' +
+              (naka ? '' : ' disabled') + '>' +
+        '<span class="pp-l">' +
+          '<span class="pp-t">' + esc(it.ym) + '</span>' +
+          '<span class="pp-s">送金日 ' + esc(it.sokinDate || '—') + '</span>' +
+        '</span>' +
+        (naka ? '<span class="pp-c" aria-hidden="true"></span>' : '') +
+      '</button>' +
+      '<p class="pp-a">' + (it.total == null ? '—' : '¥' + yen(it.total)) + '</p>' +
+      (naka ? '<div class="pp-b"' + (open ? '' : ' hidden') + '>' +
+        (rows.length ? '<div class="rows">' + rows.map(function(x){
+          var minus = Number(x.amount) < 0;
+          return '<div class="row' + (minus ? ' minus' : '') + '">' +
+                 '<span>' + esc(x.label) + '</span>' +
+                 '<span>' + (minus ? '−¥' : '¥') +
+                 esc(yen(Math.abs(x.amount))) + '</span></div>';
+        }).join('') + '</div>' : '') +
+        '<div class="pp-acts">' +
+          (it.id ? '<button type="button" class="btn ghost sm" data-pdf="' + esc(it.id) +
+                   '">' + IC_DL + 'PDF</button>' : '') +
+          (rows.length ? '<button type="button" class="btn ghost sm" data-csv="' +
+                   esc(it.ym) + '">' + IC_SHEET + 'CSV</button>' : '') +
+        '</div>' +
+      '</div>' : '') +
+    '</div>';
+  }
+
+  var IC_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/>' +
+              '<path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>';
+  var IC_SHEET = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+              '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>' +
+              '<path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+
+  /* 押したときの動きを付けます */
+  function ppBind(box){
+    if(!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('.pp-h'), function(h){
+      h.addEventListener('click', function(){
+        var body = h.parentNode.querySelector('.pp-b');
+        if(!body) return;
+        body.hidden = !body.hidden;
+        h.classList.toggle('open', !body.hidden);
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-pdf]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        openPdf(b.getAttribute('data-pdf'), b);
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-csv]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        saveCsv(b.getAttribute('data-csv'));
+      });
+    });
+  }
+
+  /* ★ CSV は、いま画面が持っている内わけから作ります。
+   *   サーバーに窓口を増やす必要はありません。
+   *   先頭に BOM を付けるのは、Excel で開いたときに
+   *   日本語が化けないようにするためです。 */
+  function saveCsv(ym){
+    var it = ppKeep.filter(function(x){ return x.ym === ym; })[0];
+    if(!it) return;
+    var line = ['項目,金額'];
+    (it.rows || []).forEach(function(x){
+      line.push('"' + String(x.label).replace(/"/g, '""') + '",' + Number(x.amount || 0));
+    });
+    if(it.total != null) line.push('ご送金額,' + it.total);
+    if(it.sokinDate)     line.push('"送金日","' + String(it.sokinDate) + '"');
+
+    var url = URL.createObjectURL(
+      new Blob(['﻿' + line.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = ym + 'ぶん 収支明細.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }
+
+  /* 月をえらぶと、その1件を下に出します */
+  $('pp-sel').addEventListener('change', function(){
+    var i = Number($('pp-sel').value);
+    if(!$('pp-sel').value || !ppKeep[i]){ $('pp-one').innerHTML = ''; return; }
+    $('pp-one').innerHTML = ppCard(ppKeep[i], true, true);
+    ppBind($('pp-one'));
+  });
 
   /* ★ PDF は Apps Script から受け取って、その場で開きます。
        共有リンクにはしません。リンクが1本漏れると、
