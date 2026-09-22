@@ -81,7 +81,7 @@ node tests/tpp.cjs     送金明細（33件）
 node tests/tst.cjs     入居状況（46件）
 node tests/tacc.cjs    税理士へ送信（43件）
 node tests/tmy.cjs     マイアカウント（69件）
-node tests/tgas.cjs    ext.gs の直しかた（24件）
+node tests/tgas.cjs    ext.gs の直しかた（37件）
 ```
 
 ログインの検査は、本物のブラウザを使うので先に道具を入れます。
