@@ -417,6 +417,10 @@ input[type=file]::file-selector-button{
   font-size:14px; font-weight:700; line-height:1;
   font-variant-numeric:tabular-nums;
 }
+/* ★hidden を付けただけでは消えません。display:flex を自分で書いているため、
+     ブラウザの [hidden]{display:none} に勝ってしまいます。
+     0件のときに「0」が出てしまうので、ここで打ち消します。 */
+.tile-n[hidden]{ display:none; }
 /* 件数がある分、見出しが数字にぶつからないようにします */
 .tile.has .tile-k, .tile.has .tile-t{ padding-right:44px; }
 .tile-k{
