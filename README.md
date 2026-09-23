@@ -17,7 +17,8 @@ js/app.js         画面の動き
 staff.html        当社用の画面（合言葉で入ります）
 tests/            検査。tlogin（ログイン）／ tins（火災保険）／ tpp（送金明細）／
                   tst（入居状況）／ tacc（税理士へ送信）／ tmy（マイアカウント）／
-                  tgas（ext.gs の直しかた）／ tct（返事の数）
+                  tgas（ext.gs の直しかた）／ tct（返事の数）／
+                  tseen（届いたか・見たか）
 docs/             引き継ぎ書・はじめの設定・PIVOT側の追加・使いかた・やること
 gas/              Apps Script の控え（置きかたは gas/README.md）
 ```
@@ -83,6 +84,7 @@ node tests/tacc.cjs    税理士へ送信（43件）
 node tests/tmy.cjs     マイアカウント（69件）
 node tests/tgas.cjs    ext.gs の直しかた（37件）
 node tests/tct.cjs     お問い合わせの返事の数（26件）
+node tests/tseen.cjs   届いたか・見たかの記録（53件）
 ```
 
 ログインの検査は、本物のブラウザを使うので先に道具を入れます。
