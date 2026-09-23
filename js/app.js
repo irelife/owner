@@ -697,10 +697,17 @@
         }).join('') + '</div>' : '') +
         '<div class="pp-acts">' +
           (it.id ? '<button type="button" class="btn ghost sm" data-pdf="' + esc(it.id) +
-                   '">' + IC_DL + 'PDF</button>' : '') +
+                   '">' + IC_DL + '明細書（PDF）</button>' : '') +
           (rows.length ? '<button type="button" class="btn ghost sm" data-csv="' +
-                   esc(it.ym) + '">' + IC_SHEET + 'CSV</button>' : '') +
+                   esc(it.ym) + '">' + IC_SHEET + '明細データ（CSV）</button>' : '') +
         '</div>' +
+        /* ★PDFが無いときは、黙って隠さずに理由をお出しします。
+         *   ボタンが出ないだけだと、オーナー様も当社も原因が分かりません。
+         *   （明細PDFは PIVOT2 の［マイページへ送る］で入ります。
+         *     PDFを取り込まずに押すと、この行が出ます。） */
+        (it.id ? '' :
+          '<p class="pp-n">この月の明細書（PDF）は、まだ登録されておりません。' +
+          '恐れ入りますが、当社までお問い合わせくださいませ。</p>') +
       '</div>' : '') +
     '</div>';
   }
