@@ -189,6 +189,26 @@
                    'お手数ですが、担当者へご連絡ください。');
           return;
         }
+        /* ══════════════════════════════════════════
+         *  ★login が中身も返してきたら、そのまま控えに入れます。
+         *
+         *  なぜ： Apps Script は同じ利用者の呼び出しを、順番に1つずつ
+         *    処理します。ログインのあと home／status／papers／talks を
+         *    呼ぶと、4つぶん待つことになります。実測でこうでした。
+         *
+         *      いま                 数字 3.1秒 ／ グラフ 6.1秒 ／ 通信4回
+         *      login が中身も返す   数字 1.6秒 ／ グラフ 1.6秒 ／ 通信1回
+         *
+         *  ★GAS がまだ返してこないときは、ここは何もしません。
+         *    今までどおり4回呼びます。だから先に入れても壊れません。
+         *  ★load〇〇 は控えがあればそれを使うので、これだけで効きます。
+         * ══════════════════════════════════════════ */
+        if(r.home){   cache.home   = r.home;   homeKeep(r.home); }
+        if(r.status){ cache.status = r.status; }
+        if(r.papers){ cache.papers = r.papers; }
+        if(r.talks){  cache.talks  = Array.isArray(r.talks) ? r.talks
+                                     : (r.talks.list || []); }
+
         try{ localStorage.setItem(TKEY, token); }catch(e){}
         /* ★マイアカウントでお見せするため、アドレスも控えます。
          *   me 窓口はお名前と宛名しか返さないためです。
@@ -2367,6 +2387,13 @@
     auth('me')
       .then(function(r){
         me = r.owner || null;
+        /* ★再読み込みのときは login ではなく me が呼ばれます。
+         *   こちらにも中身が載っていれば、同じだけ速くなります。 */
+        if(r.home){   cache.home   = r.home;   homeKeep(r.home); }
+        if(r.status){ cache.status = r.status; }
+        if(r.papers){ cache.papers = r.papers; }
+        if(r.talks){  cache.talks  = Array.isArray(r.talks) ? r.talks
+                                     : (r.talks.list || []); }
         paintName();
         if(r.mustChange){ openChangePass(true); return; }
         show('home');
