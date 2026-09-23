@@ -34,7 +34,7 @@ if (!ins || !st) {
 }
 const box = new Function(
   ins + st +
-  '; return { stSplit, stRoomNo, stDueOf, stPast, stGroup, stSum, insYmd };'
+  '; return { stSplit, stRoomNo, stDueOf, stPast, stGroup, stSum, insYmd, stIsRent, stRent, stWho, stYenMonth, stOnlyDate };'
 )();
 
 let pass = 0, fail = 0;
@@ -171,6 +171,85 @@ eq(box.stSum(null), '', '何も来なくても落ちない');
 {
   const g = box.stGroup({ boshu: [{ place: 'A荘 101号室' }] }, TODAY);
   eq(box.stSum(g), '募集中 1室', '★0件の区分は出さない');
+}
+
+console.log('\n── 賃料だけの文字か（stIsRent）──');
+ok(box.stIsRent('62,000円／月'),  '全角スラッシュの「円／月」');
+ok(box.stIsRent('62,000円/月'),   '半角スラッシュも読める');
+ok(box.stIsRent('¥130,000/月'),   '¥ 付きも読める');
+ok(box.stIsRent('62000円／月'),   'カンマが無くても読める');
+ok(!box.stIsRent('佐藤 花子'),     '★お名前は賃料ではない');
+ok(!box.stIsRent('2026/10/31 解約予定です。'), '★日付や文は賃料ではない');
+ok(!box.stIsRent(''),              '空は賃料ではない');
+ok(!box.stIsRent('62,000円'),      '★「／月」が無いものは、賃料の行に回さない');
+
+console.log('\n── 賃料の行（stRent）──');
+eq(box.stRent({ rent:'62000' }),        '¥62,000/月', '数で来たら組み立てる');
+eq(box.stRent({ rent:'130,000' }),      '¥130,000/月', 'カンマ入りの数も読める');
+eq(box.stRent({ rent:'62,000円／月' }),  '¥62,000/月',
+   '★書きかたは1つにそろえる（数は変えない）');
+eq(box.stRent({ detail:'62,000円／月' }), '¥62,000/月',
+   '★rent が無くても、detail が賃料だけなら賃料として出す');
+eq(box.stRent({ rent:'応相談' }),        '応相談',
+   '★賃料と読めない文字は、そのまま出す（触らない）');
+eq(box.stRent({ rent:'007' }),           '007',
+   '★組み直して元と1字でも変わるものは、来たまま出す');
+
+console.log('\n── 賃料の書きかたをそろえる（stYenMonth）──');
+eq(box.stYenMonth('110,000円／月'), '¥110,000/月', '「円／月」をそろえる');
+eq(box.stYenMonth('62000'),        '¥62,000/月',  'カンマを入れる');
+eq(box.stYenMonth('１３０，０００円／月'), '¥130,000/月', '★全角でも読める');
+eq(box.stYenMonth('応相談'),        '',           '数が無ければ空');
+eq(box.stYenMonth(''),             '',           '空は空');
+
+console.log('\n── 日付だけかを見る（stOnlyDate）──');
+ok(box.stOnlyDate('2026年10月31日'),  '年月日');
+ok(box.stOnlyDate('2026/10/31'),      'スラッシュ');
+ok(box.stOnlyDate('2026-10-31'),      'ハイフン');
+ok(!box.stOnlyDate('2026/10/31 解約予定です。'), '★字が混ざっていれば、日付だけではない');
+ok(!box.stOnlyDate('解約予定'),        '★ことばは日付ではない');
+ok(!box.stOnlyDate(''),               '空は日付ではない');
+eq(box.stRent({ detail:'佐藤 花子' }),   '', '★detail がお名前なら、賃料の行は出さない');
+eq(box.stRent({}),                      '', '何も無ければ空');
+eq(box.stRent(null),                    '', '無いものは空');
+
+console.log('\n── 入居者名と契約終了日の行（stWho）──');
+eq(box.stWho({ tenant:'佐藤 花子', end:'2028年9月30日' }),
+   '佐藤 花子　｜　契約終了 2028年9月30日', '両方あれば並べる');
+eq(box.stWho({ tenant:'佐藤 花子' }), '佐藤 花子', 'お名前だけ');
+eq(box.stWho({ end:'2026年9月20日' }), '契約終了 2026年9月20日', '日付だけ');
+eq(box.stWho({ detail:'62,000円／月' }), '—',
+   '★賃料だけの detail は、ここには出さない（下の賃料の行に回すため）');
+eq(box.stWho({ detail:'2026/10/31 解約予定です。' }), '2026/10/31 解約予定です。',
+   '★Apps Script がまだ分けて返していないときは、いままでどおり detail を出す');
+eq(box.stWho({ start:'2026年9月5日' }), 'ご入居 2026年9月5日',
+   '★ご入居日だけのときは「ご入居」を付ける');
+eq(box.stWho({ tenant:'佐藤 花子', start:'2026年9月5日' }),
+   '佐藤 花子　｜　ご入居 2026年9月5日', 'お名前とご入居日');
+eq(box.stWho({ start:'2026年9月5日', end:'2028年9月30日' }), '契約終了 2028年9月30日',
+   '★両方あるときは「契約終了」だけ（1行が長くなるため）');
+eq(box.stWho({ kind:'新規契約', tag:'2026/9/5' }), 'ご入居 2026/9/5',
+   '★新規契約で、日付が tag にしか無いときは「ご入居」を付けて出す');
+eq(box.stWho({ kind:'新規契約', tag:'新規' }), '—',
+   '★tag が「新規」という字のときは出さない（右の札と同じ字が2つ並ぶため）');
+eq(box.stWho({ kind:'解約予定', tag:'2026年10月31日' }), '契約終了 2026年10月31日',
+   '★日付が tag にしか無いときは、「契約終了」を付けて出す');
+eq(box.stWho({ kind:'解約予定', tag:'2026/10/31 解約予定です。' }),
+   '2026/10/31 解約予定です。',
+   '★字が混ざっている tag は、書き替えずにそのまま出す');
+eq(box.stWho({ kind:'解約予定', tag:'解約予定' }), '—',
+   '★tag が右の札と同じ文字なら、二重に出さない');
+eq(box.stWho({}), '—', '★何も来ていなければ「—」。名前や日付は作らない');
+eq(box.stWho(null), '—', '無いものは「—」');
+
+console.log('\n── 3つの新しい列を、物件ごとのまとめが持ち回せるか ──');
+{
+  const g = box.stGroup({ newc:[{ place:'カルムコート東棟 301号室',
+    tenant:'佐藤 花子', end:'2028年9月30日', rent:'130000' }] }, new Date(2026,8,23));
+  eq(g[0].rooms[0].tenant, '佐藤 花子',    '入居者名が渡る');
+  eq(g[0].rooms[0].end,    '2028年9月30日', '契約終了日が渡る');
+  eq(box.stRent(g[0].rooms[0]), '¥130,000/月', '賃料が渡って、組み立てられる');
+  eq(box.stWho(g[0].rooms[0]),  '佐藤 花子　｜　契約終了 2028年9月30日', '2段目が作れる');
 }
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);

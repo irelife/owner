@@ -130,8 +130,12 @@ console.log('\n── 件名と本文（acMail）──');
 }
 {
   const m = box.acMail({}, '2026年8月', 'IREライフ株式会社', true);
-  ok(m.body.indexOf('明細データ（CSV）と明細書（PDF）を添付') > 0,
-     '★PDFを付けられるときは、両方を書く');
+  /* ★当社から送信する道（taxsend）で付くのは、明細書（PDF）だけです。
+       CSV は付きません。本文に「CSVも添付」と書いてはいけません。 */
+  ok(m.body.indexOf('明細書（PDF）を添付') > 0,
+     '★PDFを付けられるときは、明細書（PDF）と書く');
+  ok(m.body.indexOf('明細データ（CSV）と明細書（PDF）') < 0,
+     '★実際には付かない CSV を、本文に書かない');
 }
 {
   const m = box.acMail(null, '2026年8月', null);

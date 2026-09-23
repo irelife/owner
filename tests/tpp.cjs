@@ -21,7 +21,7 @@ if (a < 0 || b < 0 || b < a) {
   console.log('PASS=0 FAIL=1');
   process.exit(1);
 }
-const box = new Function(src.slice(a, b) + '; return { ppNo, ppSort, csvOf };')();
+const box = new Function(src.slice(a, b) + '; return { ppNo, ppSort, csvOf, ppShort };')();
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
@@ -108,6 +108,22 @@ eq(box.csvOf({ ym:'2026年8月', rows:[{ label:'家賃', amount:null }], total:0
    '対象月,送金日,項目,金額\r\n"2026年8月","","家賃",0\r\n"","","ご送金額",0',
    '★金額が空なら 0。合計が 0 のときは、0 として出す（行を消さない）');
 eq(box.csvOf(null), '', '明細が無ければ空');
+
+console.log('\n── 送金日を短くする（ppShort）──');
+eq(box.ppShort('2026年8月15日'),   '8月15日', '年を外す');
+eq(box.ppShort('2026年12月5日'),   '12月5日', '2けたの月');
+eq(box.ppShort('2026 年 8 月 15 日'), '8月15日', '空白が入っていても読める');
+eq(box.ppShort('２０２６年８月１５日'), '8月15日', '★全角でも読める');
+eq(box.ppShort('2026/09/25'),      '9/25',    'スラッシュの形も短くする');
+eq(box.ppShort('2026-09-25'),      '9/25',    'ハイフンの形も短くする');
+eq(box.ppShort('9月25日'),         '9月25日', '★もう年が無いものは、触らない');
+eq(box.ppShort('未定'),            '未定',    '★読めない形は、そのまま出す（作り替えない）');
+eq(box.ppShort('2026年8月'),       '2026年8月',
+   '★日が無いものは、そのまま出す（勝手に日を足さない）');
+eq(box.ppShort(''),                '',        '空は空');
+eq(box.ppShort(null),              '',        '無いものは空');
+eq(box.ppShort('2026年8月15日 予定'), '2026年8月15日 予定',
+   '★ことばが付いているものは、削らない（意味が消えるため）');
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);
 process.exit(fail ? 1 : 0);
