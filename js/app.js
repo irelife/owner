@@ -492,6 +492,99 @@
     return (n != null && n < 0);
   }
 
+  /* ★見本（base44）の Status.jsx は、1部屋につき
+   *    ①号室 ②入居者名 ｜ 契約終了日 ③賃料／月 の3段で出しています。
+   *    こちらに合わせます（2026-09-23 ご指示）。
+   *
+   *  ★ただし、入居者名・契約終了日・賃料は、Apps Script が
+   *    返してきたものだけを出します。
+   *    返ってきていないものは「—」のままにします。
+   *    お金や契約の日付を、こちらで組み立てることはしません。 */
+
+  /* 「62,000円／月」のような、賃料だけの文字かどうかを見ます。 */
+  function stIsRent(s){
+    var v = String(s == null ? '' : s).trim();
+    if(!v) return false;
+    try{ if(v.normalize) v = v.normalize('NFKC').replace(/\uff65/g, ''); }catch(e){}
+    return /^[¥￥]?[0-9,]+\s*円?\s*[\/／]\s*月$/.test(v);
+  }
+
+  /* 賃料を「¥110,000/月」の書きかたにそろえます。
+   *  ★数そのものは、いっさい変えません。
+   *    取り出した数字を組み直したものが、元の数字と1字でも違えば、
+   *    そろえるのをやめて、来たままの文字を出します。
+   *    （「007」のような形を、勝手に「7」にしてしまわないためです。） */
+  function stYenMonth(s){
+    var v = String(s == null ? '' : s).trim();
+    if(!v) return '';
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/([0-9][0-9,]*)/);
+    if(!m) return '';
+    var d = m[1].replace(/,/g, '');
+    if(!/^[0-9]+$/.test(d)) return '';
+    var n = Number(d);
+    if(!isFinite(n) || String(n) !== d) return '';
+    return '¥' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '/月';
+  }
+
+  /* 賃料の行。
+   *   ① rent が来ていれば、それを使います
+   *   ② rent が無くても、detail が賃料だけの文字なら、それを賃料として使います
+   *      （いまの台帳は、そこに入っているためです）
+   *   ③ それ以外は空（行そのものを出しません）
+   *
+   *  ★見本（base44）と同じ「¥110,000/月」にそろえます。
+   *    そろえる前は「¥130,000/月」と「110,000円／月」が
+   *    同じ画面に並んでいて、そろっていませんでした。 */
+  function stRent(u){
+    if(!u) return '';
+    var v = (u.rent == null) ? '' : String(u.rent).trim();
+    if(v){
+      if(/^[0-9,]+$/.test(v) || stIsRent(v)) return stYenMonth(v) || v;
+      return v;                              /* 賃料と読めない文字は、触りません */
+    }
+    var d = (u.detail == null) ? '' : String(u.detail).trim();
+    if(stIsRent(d)) return stYenMonth(d) || d;
+    return '';
+  }
+
+  /* 「2026年10月31日」「2026/10/31」のように、日付だけかを見ます。 */
+  function stOnlyDate(s){
+    var v = String(s == null ? '' : s).trim();
+    if(!v) return false;
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    return /^\d{4}\s*[年\/\-\.]\s*\d{1,2}\s*[月\/\-\.]\s*\d{1,2}\s*日?$/.test(v);
+  }
+
+  /* 入居者名と契約終了日の行。
+   *  ★どちらも無いときは「—」です（見本も、募集中の部屋は「—」です）。 */
+  function stWho(u){
+    if(!u) return '—';
+    var a = [];
+    var t = (u.tenant == null) ? '' : String(u.tenant).trim();
+    var e = (u.end    == null) ? '' : String(u.end).trim();
+    if(t) a.push(t);
+    if(e) a.push('契約終了 ' + e);
+    if(a.length) return a.join('　｜　');
+
+    /* Apps Script がまだ分けて返していないとき。
+       いままでどおり detail を出します。ただし賃料だけの文字は、
+       下の賃料の行に回すので、ここでは出しません（二重になるため）。 */
+    var d = (u.detail == null) ? '' : String(u.detail).trim();
+    if(d && !stIsRent(d)) return d;
+
+    /* 解約予定で、日付が tag にしか入っていないとき。
+       ★tag が「日付だけ」のときは「契約終了」を付けます。
+         解約予定日は、契約が終わる日そのものです。
+         日付のほかに字が混ざっているものは、そのまま出します
+         （「2026/10/31 解約予定です。」を書き替えないためです）。 */
+    if(u.kind === '解約予定'){
+      var g = (u.tag == null) ? '' : String(u.tag).trim();
+      if(g && g !== u.kind) return stOnlyDate(g) ? ('契約終了 ' + g) : g;
+    }
+    return '—';
+  }
+
   var ST_ORDER = { '募集中':0, '解約予定':1, '新規契約':2 };
 
   /* 物件ごとにまとめます。
@@ -510,6 +603,10 @@
         place : (x && x.place)  ? String(x.place)  : '',
         tag   : (x && x.tag)    ? String(x.tag)    : '',
         detail: (x && x.detail) ? String(x.detail) : '',
+        /* ★Apps Script が返してきたときだけ入ります（無ければ空） */
+        tenant: (x && x.tenant != null) ? String(x.tenant) : '',
+        end   : (x && x.end    != null) ? String(x.end)    : '',
+        rent  : (x && x.rent   != null) ? String(x.rent)   : '',
         moved : !!moved,
         movedDate : movedDate || ''
       });
@@ -583,27 +680,23 @@
         g.rooms.map(function(u){
           var kind = ST_CLASS[u.kind] || 'rec';
           var head = u.room || u.place || '—';
-          var sub  = [];
-          /* 解約予定のときの tag は日付なので、下の行に回します。
-             ★ただし detail があるときは出しません。
-               detail にも同じ日付が入っており
-               「2026年10月31日　2026/10/31 解約予定です。」と
-               二重に出ていました。tag が「解約予定」のときは
-               右の札と同じ文字になるのも防げます。 */
-          if(u.kind === '解約予定' && u.tag && !u.detail) sub.push(u.tag);
-          if(u.detail) sub.push(u.detail);
-          /* 過ぎて募集中にしたものは、その理由を出します。
-             黙って差し替えると、何が起きたのか分からなくなるためです。 */
-          if(u.moved){
-            sub.push('解約予定日（' + u.movedDate +
-                     '）を過ぎたため、募集中としております。');
-          }
+          /* 【改良前】号室の下に、tag と detail を1行につないで出していました
+           *           （「2026年10月31日　62,000円／月」）。
+           *  【改良後】見本（base44）と同じ3段にします。
+           *           ① 号室 ② 入居者名 ｜ 契約終了日 ③ 賃料／月 */
+          var who  = stWho(u);
+          var rent = stRent(u);
           return '<div class="stat ' + kind + '">' +
             '<div class="st-h">' +
               '<span class="st-t">' + esc(head) + '</span>' +
               '<span class="st-tag ' + kind + '">' + esc(u.kind) + '</span>' +
             '</div>' +
-            (sub.length ? '<span class="st-d">' + esc(sub.join('　')) + '</span>' : '') +
+            '<span class="st-d">' + esc(who) + '</span>' +
+            (rent ? '<span class="st-r">' + esc(rent) + '</span>' : '') +
+            /* 過ぎて募集中にしたものは、その理由を出します。
+               黙って差し替えると、何が起きたのか分からなくなるためです。 */
+            (u.moved ? '<span class="st-w">解約予定日（' + esc(u.movedDate) +
+                       '）を過ぎたため、募集中としております。</span>' : '') +
           '</div>';
         }).join('') +
       '</section>';
@@ -681,6 +774,24 @@
    *      何か月ぶんを1つの表に貼っても、どの月の行か分かるためです。
    *  ★React 版と変えたところ：
    *      金額は引用符で囲みません。Excel が文字として読むことがあるためです。 */
+  /* 送金日を短くします（3枚ならびのカード用）。
+   *  【改良前】「送金日 2026年8月15日」がそのまま入り、
+   *            横に入りきらず「日」だけが2行目に折り返していました。
+   *  【改良後】年を外して「送金日 8月15日」にします。
+   *  ★年を外すのは、カードの見出しに年が出ているときだけで足ります。
+   *    読めない形（「9/25」「未定」など）は、いっさい触りません。
+   *    日付を作り替えることはしません。 */
+  function ppShort(s){
+    var v = String(s == null ? '' : s).trim();
+    if(!v) return '';
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    var m = v.match(/^\s*\d{4}\s*年\s*(\d{1,2}\s*月\s*\d{1,2}\s*日)\s*$/);
+    if(m) return m[1].replace(/\s+/g, '');
+    var n = v.match(/^\s*\d{4}\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})\s*$/);
+    if(n) return String(Number(n[1])) + '/' + String(Number(n[2]));
+    return v;
+  }
+
   function csvOf(it){
     if(!it) return '';
     var q = function(v){
@@ -745,7 +856,9 @@
               (naka ? '' : ' disabled') + '>' +
         '<span class="pp-l">' +
           '<span class="pp-t">' + esc(it.ym) + '</span>' +
-          '<span class="pp-s">送金日 ' + esc(it.sokinDate || '—') + '</span>' +
+          '<span class="pp-s">送金日 ' +
+            esc((big ? (it.sokinDate || '—') : ppShort(it.sokinDate) || '—')) +
+          '</span>' +
         '</span>' +
         (naka ? '<span class="pp-c" aria-hidden="true"></span>' : '') +
       '</button>' +
@@ -1210,7 +1323,13 @@
       body   : atena + '\n' + sensei + '\n\n' +
                'いつもお世話になっております。\n\n' +
                what + 'の送金明細を、お送りいたします。\n' +
-               (hasPdf ? '明細データ（CSV）と明細書（PDF）を添付しております。\n\n'
+               /* ★2026-09-23 直し
+                *  改良前： 「明細データ（CSV）と明細書（PDF）を添付しております。」
+                *  改良後： 「明細書（PDF）を添付しております。」
+                *  理由： 当社から送信する道（taxsend）で付くのは、明細書（PDF）
+                *        だけです。CSV は付きません。本文と、実際に付くものが
+                *        食い違わないようにします。 */
+               (hasPdf ? '明細書（PDF）を添付しております。\n\n'
                        : '明細データ（CSV）を添付しております。\n\n') +
                'ご確認のほど、よろしくお願い申し上げます。\n\n' +
                line + '\n' +
@@ -1301,6 +1420,7 @@
       $('ac-csv').disabled = true;
       $('ac-pdf').disabled = true;
       $('ac-pdf').hidden   = false;
+      acSendBtn(null);
       acText();
       return;
     }
@@ -1325,6 +1445,7 @@
       /* 原本PDFがあるときだけ */
       $('ac-pdf').hidden   = false;
       $('ac-pdf').disabled = !it.id;
+      acSendBtn(it);
     }else{
       var sum = 0, got = false;
       $('ac-prev').innerHTML = '<div class="rows">' + g.list.map(function(it){
@@ -1336,6 +1457,7 @@
           (got ? ('¥' + yen(sum)) : '—') + '</span></div>';
       /* ★12か月を1つのPDFにまとめるには、当社側の用意が必要です */
       $('ac-pdf').hidden = true;
+      acSendBtn(null);
     }
     acText();
   }
@@ -1355,7 +1477,9 @@
   $('ac-year').addEventListener('change', function(){ acFillMonths(); acPaint(); });
   $('ac-month').addEventListener('change', acPaint);
   ['ac-firm','ac-name','ac-mail'].forEach(function(id){
-    $(id).addEventListener('input', function(){ /* 覚えるのは押したときだけ */ });
+    /* ★宛先を書き替えたら、確認の箱は閉じます。
+         古い宛先を出したまま送ってしまわないようにするためです。 */
+    $(id).addEventListener('input', function(){ acCfHide(); });
   });
 
   $('ac-save').addEventListener('click', function(){
@@ -1407,6 +1531,113 @@
     document.body.removeChild(a);
     say($('ac-msg'), 'メールソフトを起動しました。' +
         '保存したファイルを添付のうえ、ご送信ください。', true);
+  });
+
+  /* ── 当社から、明細書（PDF）を添付して送信する ─────────
+   *
+   *  【改良前】 添付は、いっさい自動ではありませんでした。
+   *            ・CSV と PDF をご自身で保存する
+   *            ・［メールを作成する］でメールソフトを開く
+   *            ・保存したものを、ご自身で添付する
+   *            この3手が必要でした。
+   *            ブラウザから添付を付けることは、メールソフトの決まりで
+   *            できません（mailto に添付を付ける手だてはありません）。
+   *
+   *  【改良後】 明細書（PDF）がある月は、Apps Script が
+   *            その PDF を添付して送信します。オーナー様は
+   *            ［明細書（PDF）を添付して送信］を押すだけです。
+   *
+   *  ★宛先は、必ず一度ご確認いただいてから送ります。
+   *    明細書にはご送金額が載っております。打ち間違いのまま
+   *    よその方へ届くと、取り返しがつきません。
+   *
+   *  ★年別（12か月）は送信できません。12か月を1つの明細書（PDF）に
+   *    まとめたものが、そもそも無いためです。無いものは送りません。 */
+
+  var acSendIt = null;          /* いま送れる月。送れないときは null */
+
+  function acSendBtn(it){
+    var b = $('ac-send'), n = $('ac-send-n');
+    acCfHide();
+    if(!b) return;
+    if(it && it.id){
+      acSendIt = it;
+      b.disabled = false;
+      if(n) n.textContent = '当社から、明細書（PDF）を添付してお送りします。' +
+                            'お使いのメールソフトを開く必要はございません。';
+      return;
+    }
+    acSendIt = null;
+    b.disabled = true;
+    if(!n) return;
+    if(acMode === 'year'){
+      n.textContent = '年別は、12か月を1つの明細書（PDF）にまとめたものが' +
+                      'ございませんため、当社からの送信はご利用いただけません。' +
+                      '下の［ご自身のメールソフトで作成する］をご利用ください。';
+    }else if(it){
+      n.textContent = 'この月の明細書（PDF）は、まだ登録されておりません。' +
+                      '下の［ご自身のメールソフトで作成する］をご利用ください。';
+    }else{
+      n.textContent = '送金明細がまだございません。';
+    }
+  }
+
+  function acCfHide(){
+    var c = $('ac-cf');
+    if(c) c.hidden = true;
+  }
+
+  $('ac-send').addEventListener('click', function(){
+    var to = ($('ac-mail').value || '').trim();
+    if(!to){
+      say($('ac-msg'), '税理士事務所のメールアドレスをご入力ください。');
+      acCfHide();
+      return;
+    }
+    if(!acSendIt || !acSendIt.id){ acCfHide(); return; }
+    say($('ac-msg'), '');
+    $('ac-cf-to').textContent = to;
+    $('ac-cf').hidden = false;
+  });
+
+  $('ac-cf-no').addEventListener('click', function(){
+    acCfHide();
+    say($('ac-msg'), '送信を取り消しました。');
+  });
+
+  $('ac-cf-ok').addEventListener('click', function(){
+    var to = ($('ac-mail').value || '').trim();
+    var it = acSendIt;
+    if(!to || !it || !it.id){ acCfHide(); return; }
+    var g = acPicked();
+    var btn = $('ac-cf-ok');
+    say($('ac-msg'), '');
+    busy(btn, true, '送信しています…');
+    auth('taxsend', {
+      id     : it.id,
+      to     : to,
+      subject: $('ac-subj').value,
+      body   : $('ac-body').value,
+      name   : (g.what || '送金明細') + ' 送金明細.pdf',
+      /* ★控えの宛先は送りません。Apps Script が、入館証から
+           ご本人のアドレスを見て送ります（打ち間違いが混ざらないように）。 */
+      copy   : !!$('ac-copy').checked
+    })
+      .then(function(){
+        busy(btn, false);
+        acCfHide();
+        say($('ac-msg'), to + ' 宛に、明細書（PDF）を添付して送信いたしました。' +
+            ($('ac-copy').checked ? '控えも、ご自身のメールアドレスへお送りしました。' : ''),
+            true);
+      })
+      .catch(function(e){
+        busy(btn, false);
+        acCfHide();
+        /* ★黙って失敗させません。何が起きたかと、代わりの道をお出しします。 */
+        say($('ac-msg'), (e && e.message ? e.message : '送信できませんでした。') +
+            '　お急ぎのときは、下の［ご自身のメールソフトで作成する］を' +
+            'ご利用くださいませ。');
+      });
   });
 
   /* 原本PDFを、開かずに保存します（税理士先生へ添付していただくため）。 */

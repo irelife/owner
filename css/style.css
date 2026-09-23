@@ -528,7 +528,7 @@ input[type=file]::file-selector-button{
 .pp-n{
   margin:12px 0 0; padding:10px 12px; border-radius:10px;
   background:var(--mut); color:var(--fg);
-  font-size:12.5px; line-height:1.8;
+  font-size:14px; line-height:1.8;
 }
 .pp.big .pp-a{ font-size:48px; }
 
@@ -541,8 +541,18 @@ input[type=file]::file-selector-button{
 .pp-b{ padding:16px 24px 20px; border-top:1px solid var(--bd-40); }
 .pp-b .rows{ margin-top:0; border-top:0; }
 .pp-b .row:first-child{ border-top:0; }
-.pp-acts{ display:flex; gap:12px; margin-top:16px; }
-.pp-acts .btn{ flex:1 1 0; }
+/* ★ボタンの段組み（2026-09-23）
+   【改良前】display:flex ＋ flex:1 1 0 で、折り返しなし。
+             ボタンが3つある月は、1行に3つ押し込まれて字が詰まっていました。
+   【改良後】折り返しを許し、最小の幅を 150px にします。
+             2つの月は横に2つ、3つの月は「2つ＋下に1つ（全幅）」になります。
+             見本（base44）の、横に並べて等分する形と同じ見えかたです。 */
+.pp-acts{ display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }
+/* ★最小の幅を 220px にしています。
+     672px の画面では、ボタンが2つの月は「横に2つ」、
+     3つの月は「横に2つ＋下に1つ（全幅）」になります。
+     150px にすると3つが1行に詰め込まれ、字が窮屈でした。 */
+.pp-acts .btn{ flex:1 1 220px; min-width:0; }
 
 /* 小さめのボタン（PDF・CSV） */
 .btn.sm{
@@ -600,7 +610,16 @@ input[type=file]::file-selector-button{
   margin:0 0 12px; font-size:22px; font-weight:700;
   letter-spacing:-.01em; word-break:keep-all;
 }
+/* ★1部屋の3段（2026-09-23。見本 base44 の Status.jsx と同じ形）
+     ① .st-t  号室
+     ② .st-d  入居者名 ｜ 契約終了日（どちらも無いときは「—」）
+     ③ .st-r  賃料／月
+     ④ .st-w  募集中に切り替えた理由（そのときだけ） */
 .st-d{ display:block; margin-top:6px; font-size:14px; color:var(--mut-fg); }
+.st-r{ display:block; margin-top:4px; font-size:16px; font-weight:500;
+  color:var(--fg); font-variant-numeric:tabular-nums; }
+.st-w{ display:block; margin-top:8px; font-size:13px; line-height:1.7;
+  color:var(--mut-fg); }
 
 .letter{
   margin-top:32px; padding:24px;
@@ -771,6 +790,36 @@ input[type=file]::file-selector-button{
 .acc-note{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
 .acc-note.ok{ color:var(--pri); }
 .acc-acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+
+/* ★控えを自分にも送るか（2026-09-23） */
+.ac-cc{
+  display:flex; align-items:flex-start; gap:10px; margin-top:16px;
+  font-size:15px; line-height:1.7; color:var(--fg); cursor:pointer;
+}
+.ac-cc input{
+  flex:0 0 auto; width:20px; height:20px; margin:2px 0 0;
+  accent-color:hsl(var(--primary));
+}
+
+/* ★宛先のご確認（送信の前に、必ず一度お見せします）
+   明細書にはご送金額が載っております。打ち間違いのまま
+   よその方へ届くことを防ぎます。 */
+.ac-cf{
+  margin-top:16px; padding:20px; border-radius:16px;
+  background:var(--mut); border:1px solid hsl(var(--primary) / .45);
+}
+.ac-cf-h{ margin:0; font-size:16px; font-weight:700; }
+.ac-cf-to{
+  margin:10px 0 0; padding:12px 16px; border-radius:12px;
+  background:hsl(var(--input)); border:1px solid var(--bd);
+  font-size:17px; font-weight:500; word-break:break-all;
+}
+.ac-cf-n{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
+
+/* ★もう一方の道（メールソフトで作る）への区切り */
+.ac-or{
+  margin:24px 0 12px; font-size:14px; color:var(--mut-fg); text-align:center;
+}
 .acc-acts .btn{ margin-top:0; }
 
 /* 1か月ぶん／1年ぶん */

@@ -28,7 +28,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=29">
+<link rel="stylesheet" href="css/style.css?v=30">
 </head>
 <body>
 
@@ -230,7 +230,7 @@ try{
       <button type="button" class="back" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
       <h1 class="h-mincho">送金明細</h1>
       <span class="bar-line"></span>
-      <p class="sub">過去3年分の送金明細をご覧いただけます。</p>
+      <p class="sub">3年分を保存しております。いつでも、何度でもご覧いただけます。</p>
 
       <!-- いちばん新しい1件 -->
       <div id="pp-hero"></div>
@@ -251,15 +251,20 @@ try{
     </section>
 
     <!-- ── 税理士へ送信 ──
-         ★添付は自動化していません。CSV・PDF をお手元に保存し、
-           メールソフトで添付していただく形です。自動送信には
-           Apps Script 側の窓口（taxSend）が要ります。docs/TODO.md をご覧ください。 -->
+         2026-09-23 作り替え
+         改良前： 添付は自動ではありません。CSV・PDF を保存し、
+                 メールソフトで付けていただく形だけでした。
+         改良後： 月別で明細書（PDF）がある月は、Apps Script から
+                 添付して送信します（窓口 taxsend）。
+                 メールソフトで作る道も、そのまま残しています。
+         ★窓口がまだ入っていないときは、その旨を画面に出し、
+           メールソフトの道へご案内します（黙って失敗させません）。 -->
     <section id="s-accountant" class="scr pad" hidden>
       <button type="button" class="back" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
       <h1 class="h-mincho">税理士へ送信</h1>
       <span class="bar-line"></span>
       <p class="sub">月別・年別の送金明細を、税理士事務所へお送りいただけます。
-        明細データ（CSV）と明細書（PDF）をお手元に保存し、定型の文面でご送付いただけます。</p>
+        月別で明細書（PDF）がある月は、当社から添付してそのまま送信できます。</p>
 
       <!-- ① 税理士事務所のご連絡先 -->
       <section class="acc">
@@ -322,10 +327,35 @@ try{
           <label for="ac-body">本文</label>
           <textarea id="ac-body" rows="12"></textarea>
         </div>
+        <label class="ac-cc" for="ac-copy">
+          <input type="checkbox" id="ac-copy" checked>
+          <span>送信の控えを、ご自身のメールアドレスにも送る</span>
+        </label>
         <p id="ac-msg" class="msg" role="status" aria-live="polite"></p>
-        <button type="button" id="ac-go" class="btn">メールを作成する</button>
+
+        <!-- ① 当社から、明細書（PDF）を付けてそのまま送る -->
+        <button type="button" id="ac-send" class="btn">明細書（PDF）を添付して送信</button>
+        <p class="acc-note" id="ac-send-n">当社から、明細書（PDF）を添付してお送りします。
+          お使いのメールソフトを開く必要はございません。</p>
+
+        <!-- 宛先のご確認（押すと出ます） -->
+        <div class="ac-cf" id="ac-cf" hidden>
+          <p class="ac-cf-h">こちらの宛先へ送信いたします。</p>
+          <p class="ac-cf-to" id="ac-cf-to"></p>
+          <p class="ac-cf-n">明細書には、ご送金額などが記載されております。
+            宛先に誤りがないか、ご確認くださいませ。</p>
+          <div class="acc-acts">
+            <button type="button" id="ac-cf-ok" class="btn sm">この宛先へ送信する</button>
+            <button type="button" id="ac-cf-no" class="btn ghost sm">取り消す</button>
+          </div>
+        </div>
+
+        <!-- ② これまでどおり、ご自身のメールソフトで送る -->
+        <p class="ac-or">または</p>
+        <button type="button" id="ac-go" class="btn ghost">ご自身のメールソフトで作成する</button>
         <p class="acc-note">お使いのメールソフトが、件名と本文の入った状態で起動します。
-          上で保存したファイルを添付のうえ、ご送信ください。</p>
+          上で保存したファイルを添付のうえ、ご送信ください。
+          （メールソフトの決まりにより、添付は自動では付きません。）</p>
       </section>
     </section>
 
@@ -570,7 +600,7 @@ try{
 <div id="pp-print" class="prt" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=29"></script>
-<script src="js/app.js?v=29"></script>
+<script src="js/config.js?v=30"></script>
+<script src="js/app.js?v=30"></script>
 </body>
 </html>
