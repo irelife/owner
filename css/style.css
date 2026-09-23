@@ -16,6 +16,35 @@
  *    text-4xl=36px  text-xl=20px  text-lg=18px  text-sm=14px  text-xs=12px
  * ================================================================== */
 
+/* ══════════ 見本（base44）の寸法 ══════════
+ *  いただいた MyAccount.jsx に書かれている Tailwind の値を、そのまま px に直しました。
+ *  ★写真から測るのではなく、コードに書いてある値を使います。
+ *    写真は縮尺が分からず、私は一度読み違えました。
+ *
+ *    max-w-2xl      42rem   = 672px   … 1画面の幅
+ *    space-y-10     2.5rem  = 40px    … 節と節のあいだ
+ *    rounded-2xl    1rem    = 16px    … カードの角
+ *    rounded-xl     .75rem  = 12px    … 入力欄の角
+ *    rounded-full           = 999px   … ボタンの角
+ *    p-6            1.5rem  = 24px    … カードの内側
+ *    p-4            1rem    = 16px    … 小さい札の内側
+ *    px-4 py-3      16／12px          … 入力欄の内側
+ *    px-6 py-3      24／12px          … ボタンの内側
+ *    text-xl        1.25rem = 20px    … 節の見出し（font-bold = 700）
+ *    text-base      1rem    = 16px    … 入力の文字
+ *    text-sm        .875rem = 14px    … ラベル・注記（font-medium = 500）
+ *    mb-4           1rem    = 16px    … 見出しの下
+ *    mb-1.5         .375rem = 6px     … ラベルの下
+ *    gap-2          .5rem   = 8px
+ *    ring-2                 = 2px     … 選んだときの光り
+ *    border-2               = 2px
+ *
+ *  ★入力欄の「中の色」だけは、見本より暗くしています。
+ *    見本は透明な節の上に bg-card を置くので、欄が「まわりより明るい」形です。
+ *    ご指示が「濃くしてほしい・見やすい」でしたので、暗いほうを取りました。
+ *    どちらも見分けはつきます（数値は23章）。
+ * ══════════════════════════════════════════ */
+
 :root{
   --background: 349 34% 18%;
   --foreground: 20 37% 92%;
@@ -149,7 +178,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 .sub{ margin:12px 0 0; font-size:18px; line-height:1.75; color:var(--mut-fg); }
 .card .sub{ font-size:14px; margin:6px 0 20px; }
 .sect{
-  margin:40px 0 16px; font-size:24px; font-weight:700; letter-spacing:-.02em;
+  margin:40px 0 16px; font-size:20px; font-weight:700; letter-spacing:-.02em;
 }
 .lead{
   margin:0; padding-top:24px; font-size:20px; line-height:1.75;
@@ -183,10 +212,10 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 /* ── ボタン ───────────────────────────────── */
 .btn{
   display:flex; align-items:center; justify-content:center; gap:8px;
-  width:100%; margin-top:16px; padding:14px 24px;
+  width:100%; margin-top:16px; padding:12px 24px;
   border:0; border-radius:999px; cursor:pointer;
   background:var(--pri); color:var(--pri-fg);
-  font:inherit; font-size:14px; font-weight:600;
+  font:inherit; font-size:16px; font-weight:500;
   transition:opacity .15s;
 }
 .btn:hover{ opacity:.9; }
@@ -197,7 +226,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 }
 .btn.link:hover{ color:var(--fg); }
 .btn.ghost{
-  margin-top:12px; padding:10px 20px; width:auto;
+  margin-top:12px; padding:12px 24px; width:auto; border-radius:999px;
   background:transparent; color:var(--fg);
   border:1px solid var(--bd);
 }
@@ -217,7 +246,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
  *   枠の色は、すでに合っていました（見本 #886664／いま #876361）。 */
 input[type=text], input[type=email], input[type=password], input[type=tel],
 input[type=date], select, textarea{
-  width:100%; padding:14px 16px;
+  width:100%; padding:12px 16px;
   background:hsl(var(--input)); color:var(--fg);
   border:1px solid var(--bd); border-radius:12px;
   font:inherit; font-size:16px; line-height:1.5;
@@ -229,7 +258,7 @@ input[type=date], select, textarea{
 input::placeholder, textarea::placeholder{ color:hsl(var(--muted-foreground) / .6); }
 input:focus, select:focus, textarea:focus{
   outline:none; border-color:var(--pri);
-  box-shadow:0 0 0 3px hsl(var(--ring) / .35);
+  box-shadow:0 0 0 2px hsl(var(--ring) / .55);
 }
 textarea{ resize:vertical; line-height:1.8; }
 select{
@@ -425,7 +454,7 @@ input[type=file]::file-selector-button{
 .tile{
   position:relative;
   display:flex; flex-direction:column; text-align:left;
-  padding:32px; border:1px solid var(--bd); border-radius:24px;
+  padding:24px; border:1px solid var(--bd); border-radius:16px;
   background:var(--card-bg); color:var(--fg); cursor:pointer;
   font:inherit; transition:border-color .15s, box-shadow .15s;
 }
@@ -584,8 +613,8 @@ input[type=file]::file-selector-button{
 
 /* ── 修繕・お問い合わせ（やりとり） ───────── */
 .work{
-  padding:20px; margin-bottom:12px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  padding:24px; margin-bottom:12px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
 .wk-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .wk-p{ font-size:14px; font-weight:600; color:var(--mut-fg); }
@@ -629,8 +658,8 @@ input[type=file]::file-selector-button{
 .ask[open] summary::before{ content:'− '; }
 .ask textarea{ margin-top:12px; }
 .ask .msg{ display:block; margin-top:8px; }
-#ct-new{ margin:0 0 24px; padding:20px; border-top:0;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px; }
+#ct-new{ margin:0 0 40px; padding:24px; border-top:0;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px; }
 
 /* ── 読み込み中 ───────────────────────────── */
 .boot{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
@@ -715,8 +744,8 @@ input[type=file]::file-selector-button{
   font-size:14px; line-height:1.8; color:var(--mut-fg); }
 
 .ins-form{
-  margin-top:16px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  margin-top:40px; padding:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
 .ins-for{ margin:0 0 20px; font-size:16px; font-weight:700; color:var(--pri); }
 .ins-acts{ display:flex; gap:12px; align-items:center; margin-top:4px; }
@@ -735,11 +764,11 @@ input[type=file]::file-selector-button{
 
 /* ── 税理士へ送信（2026-09-22）───────────── */
 .acc{
-  margin-top:24px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  margin-top:40px; padding:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
-.acc-h{ margin:0 0 18px; font-size:17px; font-weight:700; }
-.acc-note{ margin:10px 0 0; font-size:12.5px; line-height:1.8; color:var(--mut-fg); }
+.acc-h{ margin:0 0 16px; font-size:20px; font-weight:700; }
+.acc-note{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
 .acc-note.ok{ color:var(--pri); }
 .acc-acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px; }
 .acc-acts .btn{ margin-top:0; }
@@ -912,14 +941,14 @@ html.th-move, html.th-move *{
 
 /* ══════════ マイアカウント ══════════ */
 .mya{
-  margin-top:24px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  margin-top:40px; padding:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
 .mya-h{
-  margin:0 0 18px; font-size:17px; font-weight:700;
+  margin:0 0 16px; font-size:20px; font-weight:700;
   display:flex; align-items:center; gap:8px;
 }
-.mya-note{ margin:0 0 16px; font-size:12.5px; line-height:1.9; color:var(--mut-fg); }
+.mya-note{ margin:0 0 16px; font-size:14px; line-height:1.9; color:var(--mut-fg); }
 .mya-note.ok{ color:var(--pri); }
 
 /* ご登録情報 */
@@ -937,7 +966,7 @@ html.th-move, html.th-move *{
 .th-list{ display:grid; gap:12px; }
 .th-i{
   display:flex; align-items:center; gap:14px;
-  min-height:62px; padding:12px 16px; border-radius:16px;
+  min-height:62px; padding:16px; border-radius:16px;
   border:2px solid var(--bd-60); background:transparent; color:var(--fg);
   font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
   transition:background .15s, border-color .15s;
