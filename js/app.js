@@ -21,6 +21,7 @@
   var CFG   = window.APP_CONFIG || {};
   var TKEY  = 'ire_owner_token';
   var MKEY  = 'ire_owner_mail';      /* ログインに使ったアドレス。この端末の中だけ */
+  var HKEY  = 'ire_owner_home';      /* 前回のホームの中身。この端末の中だけ */
   var THKEY = 'ire_owner_theme';     /* 配色。この端末の中だけ */
   var token = '';
   var me    = null;     /* { name, atena } */
@@ -275,16 +276,58 @@
   });
 
   /* ── ホーム ───────────────────────────────── */
+  /* ══════════════════════════════════════════════
+   *  ホームの出しかた
+   *
+   *  ★2026/9/23 まで、ログインのあと 4つの窓口（home／status／papers／
+   *    talks）を一度に呼んでいました。Apps Script は同じ利用者の呼び出しを
+   *    順番に1つずつ処理するため、4つぶん待つことになり、
+   *    「数字がしばらく出ない」状態でした。
+   *
+   *  ★2つ直します。
+   *    ① 前回の中身をこの端末に控え、押した瞬間に出す（待たせない）
+   *    ② 図と件数は、ホームの数字が出てから読む（先を争わせない）
+   *
+   *  ★控えはこの端末の中だけです。ログアウトで消します。
+   *    本当に速くするには、4つを1つにまとめる窓口（boot）が要ります。
+   * ══════════════════════════════════════════════ */
+  function homeSaved(){
+    try{ return JSON.parse(localStorage.getItem(HKEY) || 'null'); }catch(e){ return null; }
+  }
+  function homeKeep(r){
+    try{ localStorage.setItem(HKEY, JSON.stringify(r)); }catch(e){}
+  }
+
   function loadHome(){
-    if(cache.home){ paintHome(cache.home); }
-    else{
-      auth('home')
-        .then(function(r){ cache.home = r; paintHome(r); })
-        .catch(function(e){ toast(e.message); });
+    var after = function(){ loadMoves(); loadChart(); loadCt(); };
+
+    if(cache.home){ paintHome(cache.home); after(); return; }
+
+    /* ★まず控えを出します。通信を待ちません。 */
+    var old = homeSaved();
+    var shown = false;
+    if(old){
+      paintHome(old);
+      shown = true;
+      var w = $('hm-stale');
+      if(w) w.hidden = false;
     }
-    loadMoves();
-    loadChart();
-    loadCt();
+
+    auth('home')
+      .then(function(r){
+        cache.home = r;
+        homeKeep(r);
+        paintHome(r);
+        var w = $('hm-stale');
+        if(w) w.hidden = true;
+      })
+      .catch(function(e){
+        /* 控えを出せているなら、黙って置いておきます */
+        if(!shown) toast(e.message);
+      })
+      /* ★図と件数は、ホームが返ってから読みます。
+       *   同時に投げると、Apps Script の順番待ちで数字が遅くなります。 */
+      .then(after);
   }
 
   function paintHome(r){
@@ -696,24 +739,30 @@
                  esc(yen(Math.abs(x.amount))) + '</span></div>';
         }).join('') + '</div>' : '') +
         '<div class="pp-acts">' +
+          /* ★原本（当社が作った明細書PDF）があるときは、それをお渡しします。 */
           (it.id ? '<button type="button" class="btn ghost sm" data-pdf="' + esc(it.id) +
                    '">' + IC_DL + '明細書（PDF）</button>' : '') +
           (rows.length ? '<button type="button" class="btn ghost sm" data-csv="' +
                    esc(it.ym) + '">' + IC_SHEET + '明細データ（CSV）</button>' : '') +
+          /* ★原本が無い月でも、この画面の内容をPDFにして保存できるようにします。
+           *   ★お使いのブラウザの印刷を通します。jsPDF などの道具は使いません。
+           *     あの道具は日本語の字を持っておらず、文字が出ないためです。
+           *     印刷を通せば、日本語もそのまま出て、文字も選べます。 */
+          (rows.length ? '<button type="button" class="btn ghost sm" data-print="' +
+                   esc(it.ym) + '">' + IC_PRINT + 'この内容をPDFで保存</button>' : '') +
         '</div>' +
-        /* ★PDFが無いときは、黙って隠さずに理由をお出しします。
-         *   ボタンが出ないだけだと、オーナー様も当社も原因が分かりません。
-         *   （明細PDFは PIVOT2 の［マイページへ送る］で入ります。
-         *     PDFを取り込まずに押すと、この行が出ます。） */
         (it.id ? '' :
-          '<p class="pp-n">この月の明細書（PDF）は、まだ登録されておりません。' +
-          '恐れ入りますが、当社までお問い合わせくださいませ。</p>') +
+          '<p class="pp-n">この月の「当社が作成した明細書（PDF）」は、まだ登録されておりません。' +
+          'お急ぎのときは、上の［この内容をPDFで保存］をご利用くださいませ。</p>') +
       '</div>' : '') +
     '</div>';
   }
 
   var IC_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/>' +
               '<path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>';
+  var IC_PRINT = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+              '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16' +
+              'a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>';
   var IC_SHEET = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
               '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>' +
               '<path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
@@ -741,6 +790,64 @@
         saveCsv(b.getAttribute('data-csv'));
       });
     });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-print]'), function(b){
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        printPaper(b.getAttribute('data-print'));
+      });
+    });
+  }
+
+  /* ── この月の明細を、1枚の紙にして印刷（PDF保存）します ──
+   *  ★お使いのブラウザの印刷を通します。
+   *    ［印刷］の画面で「送信先」を「PDFに保存」にすると、PDFになります。
+   *    iPhone・Android でも、共有から「PDFで保存」が選べます。
+   *  ★jsPDF のような道具は使いません。日本語の字を持っていないため、
+   *    文字が出ないか、黒い四角になります。 */
+  function printPaper(ym){
+    var it = null;
+    for(var i = 0; i < ppKeep.length; i++){
+      if(String(ppKeep[i].ym) === String(ym)){ it = ppKeep[i]; break; }
+    }
+    if(!it) return;
+
+    var rows = Array.isArray(it.rows) ? it.rows : [];
+    var host = $('pp-print');
+    if(!host) return;
+
+    host.innerHTML =
+      '<div class="prt-h">' +
+        '<p class="prt-co">' + esc(CFG.COMPANY || 'IREライフ株式会社') + '</p>' +
+        '<h1>送金明細</h1>' +
+      '</div>' +
+      '<table class="prt-t"><tbody>' +
+        '<tr><th>宛名</th><td>' + esc((me && me.atena) || '') + '</td></tr>' +
+        '<tr><th>対象月</th><td>' + esc(it.ym) + '</td></tr>' +
+        '<tr><th>送金日</th><td>' + esc(it.sokinDate || '—') + '</td></tr>' +
+      '</tbody></table>' +
+      (rows.length ? '<table class="prt-r"><thead><tr><th>項目</th><th>金額</th></tr></thead>' +
+        '<tbody>' + rows.map(function(x){
+          var minus = Number(x.amount) < 0;
+          return '<tr><td>' + esc(x.label) + '</td><td class="n">' +
+                 (minus ? '−¥' : '¥') + esc(yen(Math.abs(x.amount))) + '</td></tr>';
+        }).join('') + '</tbody></table>' : '') +
+      '<p class="prt-sum">ご送金額　' +
+        (it.total == null ? '—' : '¥' + esc(yen(it.total))) + '</p>' +
+      '<p class="prt-f">この紙は、オーナーマイページの画面をそのまま写したものです。' +
+        '当社が作成した明細書（PDF）とは別のものです。</p>';
+
+    document.body.classList.add('printing');
+
+    /* ★印刷が終わってから外します。
+     *   時間で外していたところ、ブラウザによっては印刷が始まる前に
+     *   外れてしまい、白紙になりました。
+     *   ★この目印は画面には何も影響しません（@media print の中だけで効きます）。
+     *     ですので、万一 afterprint が来なくても、見た目は変わりません。 */
+    var off = function(){ document.body.classList.remove('printing'); };
+    try{ window.addEventListener('afterprint', off, { once:true }); }catch(e){}
+
+    /* ★描き終わってから呼びます。先に呼ぶと、白紙になることがあります。 */
+    setTimeout(function(){ try{ window.print(); }catch(e){} }, 60);
   }
 
   /* ★ CSV は、いま画面が持っている内訳から作ります。
@@ -965,6 +1072,10 @@
 
   /* ★ホームのついでに読みます。失敗しても画面は出したままにします。 */
   function loadCt(){
+    /* ★一度読んでいれば、もう一度読みません。
+     *   ホームへ戻るたびに読み直すと、Apps Script の順番待ちが増えて
+     *   数字が出るのが遅くなります。件数は控えから出します。 */
+    if(cache.talks){ ctBadge(ctNew(cache.talks, ctSeenGet())); return; }
     auth('talks', null, true)
       .then(function(r){
         var list = Array.isArray(r.list) ? r.list : [];
@@ -1350,7 +1461,7 @@
       $('ct-list').innerHTML = '<div class="empty">お問い合わせの履歴はありません。</div>';
       return;
     }
-    $('ct-list').innerHTML = list.map(function(t){
+    $('ct-list').innerHTML = list.map(function(t, i){
       var done = String(t.state || '') === '回答済み';
       var talk = (t.msgs || []).map(function(m){
         var mine = (m.who === 'オーナー');
@@ -1360,25 +1471,41 @@
                '<span class="bub-b">' + esc(m.body) + '</span></div>';
       }).join('');
 
-      return '<div class="work">' +
-        '<div class="wk-h">' +
-          '<span class="wk-p">' + esc(t.date) + '</span>' +
+      /* ★2026/9/23 まで、やりとりを全部開いたまま並べていました。
+       *   件数が増えると画面がとても長くなるため、送金明細と同じ
+       *   開閉式にします。いちばん新しい1件だけ開いておきます。 */
+      return '<div class="tk' + (i === 0 ? ' open' : '') + '">' +
+        '<button type="button" class="tk-h">' +
+          '<span class="tk-l">' +
+            '<span class="tk-t">' + esc(t.kind) + '</span>' +
+            '<span class="tk-d">' + esc(t.date) + '</span>' +
+          '</span>' +
           '<span class="chip' + (done ? ' done' : ' wait') + '">' +
             (done ? '回答済み' : '確認中') + '</span>' +
+          '<span class="tk-c" aria-hidden="true"></span>' +
+        '</button>' +
+        '<div class="tk-b"' + (i === 0 ? '' : ' hidden') + '>' +
+          '<div class="talk">' + talk + '</div>' +
+          '<details class="ask">' +
+            '<summary>このお問い合わせに返信する</summary>' +
+            '<textarea rows="4" data-tk="' + esc(t.id) +
+              '" placeholder="ご質問・ご要望をご記入ください。"></textarea>' +
+            '<button type="button" class="btn ghost" data-tksend="' + esc(t.id) +
+              '">送信する</button>' +
+            '<span class="msg" data-tkmsg="' + esc(t.id) + '"></span>' +
+          '</details>' +
         '</div>' +
-        '<p class="wk-t">' + esc(t.kind) + '</p>' +
-        '<div class="talk">' + talk + '</div>' +
-        '<details class="ask">' +
-          '<summary>このお問い合わせに返信する</summary>' +
-          '<textarea rows="4" data-tk="' + esc(t.id) +
-            '" placeholder="ご質問・ご要望をご記入ください。"></textarea>' +
-          '<button type="button" class="btn ghost" data-tksend="' + esc(t.id) +
-            '">送信する</button>' +
-          '<span class="msg" data-tkmsg="' + esc(t.id) + '"></span>' +
-        '</details>' +
       '</div>';
     }).join('');
 
+    Array.prototype.forEach.call($('ct-list').querySelectorAll('.tk-h'), function(h){
+      h.addEventListener('click', function(){
+        var body = h.parentNode.querySelector('.tk-b');
+        if(!body) return;
+        body.hidden = !body.hidden;
+        h.parentNode.classList.toggle('open', !body.hidden);
+      });
+    });
     Array.prototype.forEach.call($('ct-list').querySelectorAll('[data-tksend]'), function(b){
       b.addEventListener('click', function(){ sendTalk(b.getAttribute('data-tksend'), b); });
     });
@@ -2009,6 +2136,7 @@
     token = ''; me = null; cache = {};
     try{ localStorage.removeItem(TKEY); }catch(e){}
     try{ localStorage.removeItem(MKEY); }catch(e){}
+    try{ localStorage.removeItem(HKEY); }catch(e){}
     $('li-mail').value = ''; $('li-pass').value = '';
     paintName();
     show('login');

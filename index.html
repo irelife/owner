@@ -28,7 +28,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=24">
+<link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body>
 
@@ -150,6 +150,9 @@ try{
     <!-- ── ホーム ── -->
     <section id="s-home" class="scr pad" hidden>
       <p class="lead">資産管理を、ひとつの画面で。</p>
+      <!-- ★前回の内容をすぐ出したときに、まだ最新でないことをお伝えします。
+           最新が届いたら消えます。 -->
+      <p class="stale" id="hm-stale" hidden>前回ご覧になった内容を表示しています。最新の内容を読み込んでいます…</p>
 
       <nav class="tiles">
         <button type="button" class="tile" data-go="papers">
@@ -563,9 +566,11 @@ try{
   </main>
 </div>
 
+<!-- ★印刷（PDF保存）のときだけ出す紙。ふだんは隠れています。 -->
+<div id="pp-print" class="prt" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/config.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
+<script src="js/config.js?v=25"></script>
+<script src="js/app.js?v=25"></script>
 </body>
 </html>
