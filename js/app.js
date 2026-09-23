@@ -407,16 +407,22 @@
   function mvRows(list, label, kind){
     if(!Array.isArray(list)) return '';
     return list.map(function(x){
-      /* ★ 右の札には「新規契約」「解約予定」と出します。
-       *   サーバーが返す tag は、解約予定のときは日付なので、
-       *   下の行に回します。 */
-      var sub = [];
-      if(x.tag && x.tag !== label && x.tag !== '新規') sub.push(x.tag);
-      if(x.detail) sub.push(x.detail);
+      /* ★ 2026-09-23 直し。
+       *  【改良前】 tag と detail を両方つないで出していました。
+       *            解約予定のとき tag は日付、detail は
+       *            「2026年09月30日 解約予定です。」なので、
+       *            「2026年9月30日　2026年09月30日 解約予定です。」と
+       *            **同じ日付が2回**出ていました。
+       *  【改良後】 入居状況の画面と同じ道具（stWho）を使います。
+       *            → 「契約終了 2026年9月30日」の1行になります。
+       *            ★2か所で別の書きかたをすると、片方だけ直り続けます。 */
+      var who = stWho({ kind:label, tenant:x.tenant, end:x.end,
+                        start:x.start, tag:x.tag, detail:x.detail });
       return '<button type="button" class="mv">' +
         '<span class="mv-l">' +
           '<span class="mv-t">' + esc(x.place) + '</span>' +
-          (sub.length ? '<span class="mv-s">' + esc(sub.join('　')) + '</span>' : '') +
+          (who && who !== '—'
+            ? '<span class="mv-s">' + esc(who) + '</span>' : '') +
         '</span>' +
         '<span class="st-tag ' + kind + '">' + esc(label) + '</span>' +
       '</button>';
