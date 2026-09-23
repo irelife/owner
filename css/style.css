@@ -467,6 +467,12 @@ input[type=file]::file-selector-button{
   font-size:36px; font-weight:700; line-height:1.15; letter-spacing:-.03em;
   font-variant-numeric:tabular-nums;
 }
+/* 明細書（PDF）がまだ入っていない月の、ご案内 */
+.pp-n{
+  margin:12px 0 0; padding:10px 12px; border-radius:10px;
+  background:var(--mut); color:var(--fg);
+  font-size:12.5px; line-height:1.8;
+}
 .pp.big .pp-a{ font-size:48px; }
 
 /* ★3枚ならびのカードは、金額を下ぞろえにします。
