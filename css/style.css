@@ -140,6 +140,18 @@ img{ max-width:100%; }
 }
 .logo-mark span{ font-weight:700; }
 .logo-mark.big{ font-size:26px; margin-bottom:18px; }
+/* ★ロゴを押すと、ホームに戻ります（2026-09-23 ご指示）。
+   見た目は今までと1ドットも変えません。
+   ★font-size と font-weight は .logo-mark のものを使うため、
+     ここでは触りません（font:inherit と書くと 20px が消えます）。
+   押せることが分かるように、カーソルと、指を置いたときの濃さだけ変えます。 */
+.logo-btn{
+  padding:0; border:0; background:transparent;
+  font-family:inherit; line-height:inherit; text-align:left;
+  color:var(--pri); cursor:pointer; border-radius:8px;
+}
+.logo-btn:hover{ opacity:.78; }
+.logo-btn:focus-visible{ outline:2px solid var(--pri); outline-offset:3px; }
 .hd-name{ margin-left:auto; font-size:14px; color:var(--mut-fg);
   max-width:40vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .icon-btn{
