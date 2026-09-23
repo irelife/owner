@@ -563,8 +563,12 @@
     var a = [];
     var t = (u.tenant == null) ? '' : String(u.tenant).trim();
     var e = (u.end    == null) ? '' : String(u.end).trim();
+    var b = (u.start  == null) ? '' : String(u.start).trim();
     if(t) a.push(t);
-    if(e) a.push('契約終了 ' + e);
+    /* ★契約終了日があればそちらを。無ければご入居日を出します。
+         両方出すと1行が長くなり、大事な「いつまで」が読みにくくなります。 */
+    if(e)      a.push('契約終了 ' + e);
+    else if(b) a.push('ご入居 ' + b);
     if(a.length) return a.join('　｜　');
 
     /* Apps Script がまだ分けて返していないとき。
@@ -578,10 +582,14 @@
          解約予定日は、契約が終わる日そのものです。
          日付のほかに字が混ざっているものは、そのまま出します
          （「2026/10/31 解約予定です。」を書き替えないためです）。 */
-    if(u.kind === '解約予定'){
-      var g = (u.tag == null) ? '' : String(u.tag).trim();
-      if(g && g !== u.kind) return stOnlyDate(g) ? ('契約終了 ' + g) : g;
+    var g = (u.tag == null) ? '' : String(u.tag).trim();
+    if(u.kind === '解約予定' && g && g !== u.kind){
+      return stOnlyDate(g) ? ('契約終了 ' + g) : g;
     }
+    /* ★新規契約の tag は、いまは「新規」という字です。
+         日付が入ってきたときだけ「ご入居」を付けます。
+         「新規」をそのまま出すと、右の札と同じ字が2つ並びます。 */
+    if(u.kind === '新規契約' && stOnlyDate(g)) return 'ご入居 ' + g;
     return '—';
   }
 
@@ -606,6 +614,7 @@
         /* ★Apps Script が返してきたときだけ入ります（無ければ空） */
         tenant: (x && x.tenant != null) ? String(x.tenant) : '',
         end   : (x && x.end    != null) ? String(x.end)    : '',
+        start : (x && x.start  != null) ? String(x.start)  : '',
         rent  : (x && x.rent   != null) ? String(x.rent)   : '',
         moved : !!moved,
         movedDate : movedDate || ''
