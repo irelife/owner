@@ -17,18 +17,22 @@
      app.js を待つと、ワイン以外をお選びの方に
      一瞬だけワインが見えてしまうためです。
      ★色の値は js/app.js の THEMES と対になっています。
-       片方を直したときは、もう片方も直してください。 -->
+       2026-09-24 まで、ここに配色の id を1つずつ書き並べていました。
+       配色を足すたびに、ここを直し忘れると「選んだのに一瞬ワインが出る」
+       ことになります。一覧の形にして、足す場所を1か所にしました。
+       ★ずれていないかは tests/tmy.cjs が見張ります。 -->
 <script>
 try{
+  var _TH = { midnight:'#141D2E', charcoal:'#23211F', indigo:'#1E2243' };
   var _t = localStorage.getItem('ire_owner_theme');
-  if(_t === 'midnight' || _t === 'charcoal'){
+  if(_t && _TH[_t]){
     document.documentElement.setAttribute('data-theme', _t);
     var _m = document.querySelector('meta[name="theme-color"]');
-    if(_m) _m.setAttribute('content', _t === 'midnight' ? '#141D2E' : '#23211F');
+    if(_m) _m.setAttribute('content', _TH[_t]);
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=33">
+<link rel="stylesheet" href="css/style.css?v=34">
 </head>
 <body>
 
@@ -605,6 +609,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=33"></script>
+<script src="js/app.js?v=34"></script>
 </body>
 </html>

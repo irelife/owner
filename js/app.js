@@ -2447,7 +2447,8 @@
   var THEMES = [
     { id:'wine',     name:'ワイン',       bg:'#3E1E24', pri:'#C79C6B' },
     { id:'midnight', name:'ミッドナイト', bg:'#141D2E', pri:'#D8AE64' },
-    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' }
+    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' },
+    { id:'indigo',   name:'藍',           bg:'#1E2243', pri:'#D8AE64' }
   ];
 
   /* 一覧にない・空・こわれている → 既定のワインに戻します */
