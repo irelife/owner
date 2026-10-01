@@ -32,7 +32,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=34">
+<link rel="stylesheet" href="css/style.css?v=35">
 </head>
 <body>
 
@@ -173,11 +173,6 @@ try{
           <span class="tile-k">入居状況</span>
           <span class="tile-t">すべての物件の入居状況</span>
           <span class="tile-d">入居・空室・解約予定をリアルタイムで把握できる管理画面です。</span>
-        </button>
-        <button type="button" class="tile" data-go="works">
-          <span class="tile-k">修繕</span>
-          <span class="tile-t">修繕履歴と費用の管理</span>
-          <span class="tile-d">これまでの修繕内容と、送金から相殺される費用をまとめて確認できます。</span>
         </button>
         <button type="button" class="tile" data-go="insurance">
           <span class="tile-k">火災保険</span>
@@ -367,15 +362,15 @@ try{
       </section>
     </section>
 
-    <!-- ── 原状回復・修繕 ── -->
-    <section id="s-works" class="scr pad" hidden>
-      <button type="button" class="back" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-      <h1 class="h-mincho">原状回復・修繕</h1>
-      <span class="bar-line"></span>
-      <p class="sub">工事の時期・内容・金額・ご送金からの相殺予定を、1件ずつご確認いただけます。
-        ご不明な点は「お問い合わせ」より、ご用件「修繕について」でお知らせください。</p>
-      <div id="wk-body"></div>
-    </section>
+    <!-- ★「原状回復・修繕」の画面は 2026/10/1 に取り下げました。
+         ご指示「修繕やりとり欄は削除してください。やりとりしない」→
+         やりとりを外すと見るだけの画面になり、置いておく意味が
+         薄くなるため、画面ごと取り下げました。
+         ・ホームのタイルも外しています
+         ・工事の費用は、送金明細の「原状回復（◯号室）」の行に
+           これまでどおり出ます（別の作りです）
+         ・マイページ側（Apps Script）の works / workMsg は残してあります。
+           台帳の記録を消さないためです。もう呼びません。 -->
 
     <!-- ── 火災保険 ──
          2026/9/22 作り替え
@@ -609,6 +604,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=35"></script>
+<script src="js/app.js?v=36"></script>
 </body>
 </html>

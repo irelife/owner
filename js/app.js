@@ -133,9 +133,12 @@
   }
 
   /* ── 画面の出し入れ ───────────────────────── */
+  /* ★'works'（原状回復・修繕）は 2026/10/1 に取り下げました。
+       一覧に残すと、古いリンクや戻る操作で「何も無い画面」が
+       出てしまうためです。 */
   var SCREENS = ['login','forgot','newpass','home','status','papers',
-                 'works','insurance','contact','accountant','account'];
-  var AFTER_LOGIN = { home:1, status:1, papers:1, works:1, insurance:1,
+                 'insurance','contact','accountant','account'];
+  var AFTER_LOGIN = { home:1, status:1, papers:1, insurance:1,
                       contact:1, accountant:1, account:1 };
 
   function show(name){
@@ -153,7 +156,6 @@
     if(name === 'papers')  loadPapers();
     if(name === 'contact') loadContact();
     if(name === 'accountant') loadAcc();
-    if(name === 'works')     loadWorks();
     if(name === 'insurance') loadIns();
     if(name === 'account')   loadAccount();
   }
@@ -1817,84 +1819,21 @@
       .then(function(){ busy($('ct-go'), false); });
   });
 
-  /* ══════════════════════════════════════════════
-   *  原状回復・修繕
+  /* ★「原状回復・修繕」の画面は、2026/10/1 に取り下げました。
    *
-   *  いつ・何を・いくら・いつ相殺するかを1件ずつ。
-   *  そのまま、その工事についてご連絡いただけます。
+   *  ご指示： 「修繕やりとり欄は削除してください。やりとりしない」
+   *
+   *  やりとりを外すと、この画面は「見るだけ」になりました。
+   *  置いておく意味が薄いため、画面ごと取り下げています。
+   *    消したもの … WK_STATE ／ loadWorks ／ paintWorks ／ line ／ sendWork
+   *                 ホームのタイル ／ s-works の画面 ／ .work .wk-* の見た目
+   *    残したもの … 工事の費用は、送金明細の「原状回復（◯号室）」の行に
+   *                 これまでどおり出ます（まったく別の作りです）
+   *
+   *  ★マイページ側（Apps Script）の works / workMsg は残してあります。
+   *    台帳に過去のやりとりと工事の記録が入っており、窓口を消すと
+   *    読めなくなるためです。この画面からは、もう呼びません。
    * ══════════════════════════════════════════════ */
-  var WK_STATE = {
-    '見積中'  : 'wait',
-    '着手待ち': 'wait',
-    '工事中'  : 'wait',
-    '完了'    : 'done',
-    '精算済'  : 'done'
-  };
-
-  function loadWorks(){
-    if(cache.works){ paintWorks(cache.works); return; }
-    $('wk-body').innerHTML = '<div class="empty">読み込んでいます…</div>';
-    auth('works')
-      .then(function(r){ cache.works = r; paintWorks(r); })
-      .catch(function(e){
-        $('wk-body').innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
-      });
-  }
-
-  function paintWorks(r){
-    var list = Array.isArray(r.list) ? r.list : [];
-    if(!list.length){
-      $('wk-body').innerHTML =
-        '<div class="empty">現在、原状回復・修繕の予定はありません。</div>';
-      return;
-    }
-    $('wk-body').innerHTML = list.map(function(w){
-      var kind = WK_STATE[w.state] || 'wait';
-      var rows = '';
-      if(w.from || w.to){
-        rows += line('期間', (w.from || '—') + (w.to ? '　〜　' + w.to : '　〜'));
-      }
-      if(w.yen !== null && w.yen !== undefined){
-        rows += line('費用', yen(w.yen) + ' 円');
-      }
-      if(w.offset){ rows += line('相殺予定', w.offset); }
-      if(w.note){   rows += line('備考', w.note); }
-
-      /* ★2026/10/1 … この画面から「やりとり」を外しました。
-       *
-       *  ご指示： 「修繕やりとり欄は削除してください。やりとりしない」
-       *
-       *  改良前は、工事1件ごとに吹き出しのやりとりと
-       *  ［この工事についてお問い合わせ］の入力欄が付いていました。
-       *  これで、お問い合わせの入り口が2か所（この画面と
-       *  「お問い合わせ」画面）に分かれていました。
-       *
-       *  改良後は、この画面は**見るだけ**です。
-       *  ご相談は「お問い合わせ」に1本化します。
-       *
-       *  ★工事の中身（場所・内容・期間・費用・相殺予定・備考）は
-       *    そのまま残します。消したのは、やりとりだけです。 */
-      return '<div class="work">' +
-        '<div class="wk-h">' +
-          '<span class="wk-p">' + esc(w.place || '—') + '</span>' +
-          '<span class="chip ' + kind + '">' + esc(w.state) + '</span>' +
-        '</div>' +
-        '<p class="wk-t">' + esc(w.what || '—') + '</p>' +
-        '<div class="kv">' + rows + '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  function line(k, v){
-    return '<span class="k">' + esc(k) + '</span><span class="v">' + esc(v) + '</span>';
-  }
-
-  /* ★sendWork（この工事についてお問い合わせ）は 2026/10/1 に外しました。
-   *   ご指示「修繕やりとり欄は削除してください。やりとりしない」。
-   *   ご相談は「お問い合わせ」に1本化します。
-   *   ★マイページ側（Apps Script）の workMsg は残してあります。
-   *     過去のやりとりが台帳に入っており、消すと読めなくなるためです。
-   *     この画面からは、もう呼びません。 */
 
   /* ══════════════════════════════════════════════
    *  火災保険の証券

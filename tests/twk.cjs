@@ -1,18 +1,20 @@
-/* ★★ 「原状回復・修繕」から、やりとりが外れたままかを見る検査
+/* ★★ 「原状回復・修繕」の画面が、取り下げられたままかを見る検査
  *
  *  ご指示（2026/10/1）：
  *    「修繕やりとり欄は削除してください。やりとりしない」
+ *    → 2（画面ごと、まるごと消す）
  *
  *  なぜ検査が要るか
- *    この画面は「見るだけ」になりました。ところが、やりとりを
- *    足すのは かんたんです（お問い合わせ画面に同じ作りが残っており、
- *    写すだけで戻ってしまいます）。消したことを言葉で覚えておくのを
- *    やめて、検査で押さえます。
+ *    画面を1つ消す作業は、消し残しが出やすいところです。
+ *      ・ホームのタイルだけ残る → 押すと何も無い画面になります
+ *      ・SCREENS の一覧に残る   → 戻る操作で空の画面が出ます
+ *      ・読み込みだけ残る       → 毎回むだに通信します
+ *    どれも「エラーは出ないのに、おかしい」形です。気づけません。
  *
  *  ★消しすぎていないことも、あわせて見ます。
- *    ・工事の中身（場所・内容・期間・費用・相殺予定・備考）は残す
- *    ・「お問い合わせ」画面のやりとり（吹き出し）は残す
- *      ← ここを消してしまうと、ご相談の行き先がなくなります
+ *      ・送金明細の「原状回復（◯号室）」の行は別の作りなので残る
+ *      ・お問い合わせ画面のやりとり（吹き出し）は残る
+ *      ・.chip（確認中／回答済み）と .kv（火災保険）は残る
  *
  *  使いかた： node tests/twk.cjs [場所]
  */
@@ -21,78 +23,80 @@ const path = require('path');
 const DIR  = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 const app  = fs.readFileSync(path.join(DIR, 'js/app.js'), 'utf8');
 const html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+const css  = fs.readFileSync(path.join(DIR, 'css/style.css'), 'utf8');
 
 let P = 0, F = 0;
 const ok = (n, c, x) => {
   if (c) { P++; console.log('  ✅ ' + n); }
   else   { F++; console.log('  ❌ ' + n + (x !== undefined ? ('  → ' + JSON.stringify(x)) : '')); }
 };
-
-/* paintWorks の中だけを切り出します */
-function cut(head, tail){
-  const a = app.indexOf(head);
-  if (a < 0) return null;
-  const b = app.indexOf(tail, a);
-  return b < 0 ? null : app.slice(a, b);
+/* コメント（/* … *&#47; と // …）を外した「生きているコード」だけを見ます。
+   説明書きに works と書いてあるのは、消し残しではありません。 */
+function live(src){
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 }
-const wk = cut('  function paintWorks(r){', '  function line(k, v){');
-
-console.log('\n❶ 修繕の画面に、やりとりが無いこと');
-ok('paintWorks が見つかる', !!wk);
-if (wk) {
-  ok('★★ 吹き出し（bub）を作っていない',        wk.indexOf('bub') < 0);
-  ok('★★ やりとりの枠（talk）を作っていない',    wk.indexOf('talk') < 0);
-  ok('★★ 入力欄（textarea）を作っていない',      wk.indexOf('textarea') < 0);
-  ok('★★ 送信ボタン（data-send）を作っていない', wk.indexOf('data-send') < 0);
-  ok('★ 開閉の問い合わせ欄（details class="ask"）を作っていない',
-     wk.indexOf('class="ask"') < 0);
-  ok('★ w.msgs（やりとりの中身）を見ていない',   wk.indexOf('w.msgs') < 0);
+function liveHtml(src){
+  return src.replace(/<!--[\s\S]*?-->/g, '');
 }
-ok('★★ sendWork（送信の処理）が残っていない', !/function\s+sendWork\s*\(/.test(app));
-ok('★ workMsg を呼んでいない',
-   !/auth\(\s*'workMsg'/.test(app) && !/auth\(\s*"workMsg"/.test(app));
+/* ★css も、説明書きを外してから見ます。
+     2026/10/1 … 外さずに見たため、「.wk-h を消しました」と書いた
+     自分の説明書きを「消し残し」として拾ってしまいました。 */
+const A = live(app), H = liveHtml(html), C = live(css);
 
-console.log('\n❷ 消しすぎていないこと（工事の中身は残す）');
-if (wk) {
-  ok('★ 場所（wk-p）を出す',       wk.indexOf('wk-p') >= 0);
-  ok('★ 内容（wk-t）を出す',       wk.indexOf('wk-t') >= 0);
-  ok('★ 状態（chip）を出す',       wk.indexOf('chip') >= 0);
-  ok('★ 期間を出す',               wk.indexOf("line('期間'") >= 0);
-  ok('★ 費用を出す',               wk.indexOf("line('費用'") >= 0);
-  ok('★ 相殺予定を出す',           wk.indexOf("line('相殺予定'") >= 0);
-  ok('★ 備考を出す',               wk.indexOf("line('備考'") >= 0);
-}
-ok('★ 工事の一覧を取りにいく窓口（works）はそのまま',
-   /auth\(\s*'works'\s*\)/.test(app));
+console.log('\n❶ ★★ 画面そのものが無いこと');
+ok('★★ s-works の画面が無い',            H.indexOf('s-works') < 0);
+ok('★★ ホームのタイル（data-go="works"）が無い',
+   H.indexOf('data-go="works"') < 0);
+ok('★★ 画面の一覧（SCREENS）に works が無い',
+   !/SCREENS\s*=\s*\[[^\]]*'works'/.test(A));
+ok('★★ ログイン後の一覧（AFTER_LOGIN）に works が無い',
+   !/AFTER_LOGIN\s*=\s*\{[^}]*works\s*:/.test(A));
+ok('★★ 画面を出すところで loadWorks を呼んでいない',
+   A.indexOf('loadWorks') < 0);
+ok('★★ paintWorks が残っていない',       A.indexOf('paintWorks') < 0);
+ok('★★ WK_STATE が残っていない',         A.indexOf('WK_STATE') < 0);
+ok('★★ wk-body が残っていない',          A.indexOf('wk-body') < 0 && H.indexOf('wk-body') < 0);
+ok('★ sendWork が残っていない',          !/function\s+sendWork\s*\(/.test(A));
+ok('★ line()（修繕だけで使っていた道具）が残っていない',
+   !/function\s+line\s*\(/.test(A));
+ok('★★ works / workMsg の窓口を、もう呼んでいない',
+   !/auth\(\s*['"]works['"]/.test(A) && !/auth\(\s*['"]workMsg['"]/.test(A));
+ok('★ 画面ごとの読み込み置き場（cache.works）を使っていない',
+   A.indexOf('cache.works') < 0);
+ok('★ 見た目（.work .wk-h .wk-p .wk-t）が残っていない',
+   !/^\.work\{/m.test(C) && C.indexOf('.wk-h') < 0 &&
+   C.indexOf('.wk-p') < 0 && C.indexOf('.wk-t') < 0);
 
-console.log('\n❸ 画面の文（お問い合わせへ案内しているか）');
-const sec = (() => {
-  const a = html.indexOf('<section id="s-works"');
-  const b = html.indexOf('</section>', a);
-  return (a < 0 || b < 0) ? '' : html.slice(a, b);
-})();
-ok('修繕の画面が見つかる', !!sec);
-ok('★★ 画面に入力欄が置かれていない', sec.indexOf('textarea') < 0);
-ok('★ 「各工事からそのままお問い合わせ」という案内が消えている',
-   sec.indexOf('各工事からそのまま') < 0);
-ok('★ 「お問い合わせ」へ案内している', /お問い合わせ/.test(sec));
+console.log('\n❷ ★消しすぎていないこと');
+ok('★★ お問い合わせの画面は残っている',   H.indexOf('s-contact') >= 0);
+ok('★★ お問い合わせのやりとり（吹き出し）は残っている',
+   A.indexOf('bub') >= 0);
+ok('★★ お問い合わせの返信（sendTalk）は残っている',
+   /function\s+sendTalk\s*\(/.test(A));
+ok('★ ご用件に「修繕について」は残っている（ご相談の行き先）',
+   H.indexOf('修繕について') >= 0);
+ok('★ .chip（確認中／回答済み）は残っている',  /^\.chip\{/m.test(C));
+ok('★ .kv（火災保険で使っています）は残っている', /^\.kv\{/m.test(C));
+ok('★ 火災保険の画面は残っている',        H.indexOf('s-insurance') >= 0);
+ok('★ 送金明細の画面は残っている',        H.indexOf('s-papers') >= 0);
+ok('★ 入居状況の画面は残っている',        H.indexOf('s-status') >= 0);
+ok('★ 税理士へ送信の画面は残っている',    H.indexOf('s-accountant') >= 0);
 
-console.log('\n❹ ★「お問い合わせ」画面のやりとりは、消していないこと');
-const ct = cut("    $('ct-list').innerHTML = list.map(function(t, i){",
-               '    Array.prototype.forEach.call(');
-ok('お問い合わせの描きかたが見つかる', !!ct);
-if (ct) {
-  ok('★★ 吹き出し（bub）は残っている',        ct.indexOf('bub') >= 0);
-  ok('★★ 「お客様」「IREライフ」の札は残っている',
-     ct.indexOf('お客様') >= 0 && ct.indexOf('IREライフ') >= 0);
-  ok('★★ 返信の入力欄は残っている',            ct.indexOf('data-tk=') >= 0);
-}
-ok('★ 返信の処理（sendTalk）は残っている', /function\s+sendTalk\s*\(/.test(app));
+console.log('\n❸ ホームのタイルの数');
+const tiles = (H.match(/class="tile"/g) || []).length +
+              (H.match(/class="tile" id=/g) || []).length;
+const goes = (H.match(/data-go="([a-z-]+)"/g) || [])
+               .map(s => s.replace(/.*"([a-z-]+)".*/, '$1'));
+console.log('    タイルの行き先:', goes.join(' / '));
+ok('★ 行き先に works が1つも無い', goes.indexOf('works') < 0);
+ok('★ ホームに戻る（home）は残っている', goes.indexOf('home') >= 0);
 
-console.log('\n❺ ?v= を上げたか（上げないと、直しが1台にも届きません）');
-const m = html.match(/js\/app\.js\?v=(\d+)/);
-ok('app.js に ?v= がある', !!m);
-if (m) console.log('    いまの app.js は ?v=' + m[1]);
+console.log('\n❹ ?v= を上げたか（上げないと、直しが1台にも届きません）');
+const mj = html.match(/js\/app\.js\?v=(\d+)/);
+const mc = html.match(/css\/style\.css\?v=(\d+)/);
+ok('app.js に ?v= がある',    !!mj);
+ok('style.css に ?v= がある', !!mc);
+if (mj && mc) console.log('    app.js ?v=' + mj[1] + ' ／ style.css ?v=' + mc[1]);
 
 console.log('\nPASS=' + P + '  FAIL=' + F);
 process.exit(F ? 1 : 0);
