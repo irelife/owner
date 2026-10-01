@@ -510,7 +510,25 @@ input[type=file]::file-selector-button{
   background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
   overflow:hidden; margin-top:20px;
 }
-.pp-grid{ display:grid; grid-template-columns:1fr; gap:20px; }
+/* ★2026/10/1 … 画面の幅ではなく「この枠の幅」で列数を決めます。
+ *
+ *  改良前： .pp-grid{ 1列 } ＋ @media (min-width:1024px){ 3列 }
+ *          画面が 1024px 以上なら3列にしていました。ところが
+ *          送金明細の画面は max-width:672px です。
+ *          672 − 余白40 − すきま40 ＝ 592 ÷ 3 ＝ 1枚 197px。
+ *          金額（36px）は「¥2,781,083」で 169px 必要で、
+ *          内側の余白48pxを引いた 147px には入りません。
+ *          右の余白を食いつぶして、切れて見えていました。
+ *          （672px に合わせる前は画面幅＝枠幅だったので、入っていました）
+ *
+ *  改良後： auto-fit で、枠に入るぶんだけ並べます。
+ *          672px のときは2列（1枚 306px／文字が入る幅 258px）。
+ *          スマホでは1列。画面の幅を見ないので、画面の幅と
+ *          枠の幅がずれても、もう崩れません。 */
+.pp-grid{
+  display:grid; gap:20px;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+}
 .pp-grid .pp{ margin-top:0; }
 
 .pp-h{
@@ -542,7 +560,19 @@ input[type=file]::file-selector-button{
   background:var(--mut); color:var(--fg);
   font-size:14px; line-height:1.8;
 }
-.pp.big .pp-a{ font-size:48px; }
+/* ★2026/10/1 … 大きな1枚の金額を、枠に合わせて縮むようにしました。
+ *
+ *  検査（tests/tpap.cjs）が見つけました。
+ *  画面 360px の端末で「¥123,456,789」（8桁）を出すと、
+ *  入る幅 270px に対して文字が 276px 必要で、6px はみ出します。
+ *  いまのオーナー様で最大は ¥2,781,083（7桁）なので今は出ませんが、
+ *  桁が増えた月に、はじめて切れる——という形にはしません。
+ *
+ *  ★clamp（最小28px・画面の8.5%・最大48px）にします。
+ *    画面の幅で「列の数」を決めるのはやめましたが、
+ *    「文字の大きさ」は画面の幅に素直についてきてよいところです
+ *    （スマホでは 画面の幅 ≒ 枠の幅 なので、ずれません）。 */
+.pp.big .pp-a{ font-size:clamp(28px, 8.5vw, 48px); }
 
 /* ★3枚ならびのカードは、金額を下ぞろえにします。
    いただいた React 版の h-44（高さをそろえる）＋ mt-auto（下へ寄せる）と
@@ -1099,7 +1129,8 @@ html.th-move, html.th-move *{
   .tile-t{ font-size:20px; }
   .tile-a{ font-size:48px; }
   .lead{ padding-top:48px; font-size:24px; }
-  .pp-grid{ grid-template-columns:1fr 1fr 1fr; }
+  /* ★.pp-grid の3列は 2026/10/1 にやめました（上の auto-fit に任せます）。
+       画面の幅で決めると、枠の幅（672px）と合わずに金額が切れます。 */
   .pp.big .pp-a{ font-size:60px; }
 }
 
