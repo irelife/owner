@@ -1860,14 +1860,20 @@
       if(w.offset){ rows += line('相殺予定', w.offset); }
       if(w.note){   rows += line('備考', w.note); }
 
-      var talk = (w.msgs || []).map(function(m){
-        var mine = (m.who === 'オーナー');
-        return '<div class="bub' + (mine ? ' mine' : '') + '">' +
-               '<span class="bub-w">' + esc(mine ? 'お客様' : 'IREライフ') +
-               '　' + esc(m.at) + '</span>' +
-               '<span class="bub-b">' + esc(m.body) + '</span></div>';
-      }).join('');
-
+      /* ★2026/10/1 … この画面から「やりとり」を外しました。
+       *
+       *  ご指示： 「修繕やりとり欄は削除してください。やりとりしない」
+       *
+       *  改良前は、工事1件ごとに吹き出しのやりとりと
+       *  ［この工事についてお問い合わせ］の入力欄が付いていました。
+       *  これで、お問い合わせの入り口が2か所（この画面と
+       *  「お問い合わせ」画面）に分かれていました。
+       *
+       *  改良後は、この画面は**見るだけ**です。
+       *  ご相談は「お問い合わせ」に1本化します。
+       *
+       *  ★工事の中身（場所・内容・期間・費用・相殺予定・備考）は
+       *    そのまま残します。消したのは、やりとりだけです。 */
       return '<div class="work">' +
         '<div class="wk-h">' +
           '<span class="wk-p">' + esc(w.place || '—') + '</span>' +
@@ -1875,47 +1881,20 @@
         '</div>' +
         '<p class="wk-t">' + esc(w.what || '—') + '</p>' +
         '<div class="kv">' + rows + '</div>' +
-        (talk ? '<div class="talk">' + talk + '</div>' : '') +
-        '<details class="ask">' +
-          '<summary>この工事についてお問い合わせ</summary>' +
-          '<textarea rows="4" data-wk="' + esc(w.id) +
-            '" placeholder="ご質問・ご要望をご記入ください。"></textarea>' +
-          '<button type="button" class="btn ghost" data-send="' + esc(w.id) + '">送信する</button>' +
-          '<span class="msg" data-msg="' + esc(w.id) + '"></span>' +
-        '</details>' +
       '</div>';
     }).join('');
-
-    Array.prototype.forEach.call($('wk-body').querySelectorAll('[data-send]'), function(b){
-      b.addEventListener('click', function(){ sendWork(b.getAttribute('data-send'), b); });
-    });
   }
 
   function line(k, v){
     return '<span class="k">' + esc(k) + '</span><span class="v">' + esc(v) + '</span>';
   }
 
-  function sendWork(id, btn){
-    var ta  = $('wk-body').querySelector('[data-wk="' + id + '"]');
-    var msg = $('wk-body').querySelector('[data-msg="' + id + '"]');
-    var body = ta ? (ta.value || '').trim() : '';
-    if(!body){ say(msg, '内容をご入力ください。'); return; }
-    if(body.length > 2000){ say(msg, '文字数が上限を超えています。2,000文字以内でご入力ください。'); return; }
-
-    busy(btn, true);
-    auth('workMsg', { id: id, body: body })
-      .then(function(){
-        if(ta) ta.value = '';
-        /* ★ここで一覧を描き直すので、この欄の字は消えてしまいます。
-           消えない帯（toast）でお伝えします。
-           書いたものがその場でやりとりに並ぶので、それも目印になります。 */
-        toast('送信しました。担当者より回答いたします。');
-        cache.works = null;
-        loadWorks();
-      })
-      .catch(function(e){ say(msg, e.message); })
-      .then(function(){ busy(btn, false); });
-  }
+  /* ★sendWork（この工事についてお問い合わせ）は 2026/10/1 に外しました。
+   *   ご指示「修繕やりとり欄は削除してください。やりとりしない」。
+   *   ご相談は「お問い合わせ」に1本化します。
+   *   ★マイページ側（Apps Script）の workMsg は残してあります。
+   *     過去のやりとりが台帳に入っており、消すと読めなくなるためです。
+   *     この画面からは、もう呼びません。 */
 
   /* ══════════════════════════════════════════════
    *  火災保険の証券
