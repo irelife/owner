@@ -508,7 +508,24 @@ input[type=file]::file-selector-button{
   line-height:1.45; word-break:keep-all; }
 .tile-a{ margin-top:4px; font-size:36px; font-weight:700; line-height:1.15;
   letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
-.tile-d{ margin-top:12px; font-size:14px; line-height:1.75; color:var(--mut-fg); }
+/* ★2026/10/1 … 説明文を「下ぞろえ」にしました。
+ *
+ *  改良前は margin-top:12px でした。すると「今月のご送金」の
+ *  タイルだけ金額（36px）が入っているぶん説明文が下へ押され、
+ *  ほかのタイルは説明文の下に大きな空きができていました。
+ *      送金明細　　 説明文の下の余白 25px
+ *      入居状況　　 　　　　　　　　 84px   ← ★そろっていない
+ *      火災保険　　 　　　　　　　　 84px
+ *      お問い合わせ 　　　　　　　　 25px
+ *  同じ行なのに中の字の位置がちがうため、「バラバラ」に見えていました。
+ *
+ *  margin-top:auto で、説明文を下へ寄せます。
+ *  どのタイルも、説明文の下の余白が同じになります。
+ *  ★padding-top で、上との最小の間隔（12px）は残します。 */
+.tile-d{
+  margin-top:auto; padding-top:12px;
+  font-size:14px; line-height:1.75; color:var(--mut-fg);
+}
 
 /* ── 送金明細 ─────────────────────────────
    いちばん新しい1件は .pp.big（全幅）、
@@ -1130,7 +1147,11 @@ html.th-move, html.th-move *{
   .card{ padding:40px 36px; }
 }
 @media (min-width:1024px){
-  .tiles{ grid-template-columns:1fr 1fr 1fr; }
+  /* ★2026/10/1 … 1fr → minmax(0, 1fr) にしました。
+   *   1fr は「中身の最小の幅」より狭くならないため、長い字が入った
+   *   列だけ広がります。実測で 309.8 / 324.4 / 309.8px と不均等でした。
+   *   minmax(0, …) にすると、3列がきっちり同じ幅になります。 */
+  .tiles{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
   .h-mincho{ font-size:40px; }
   .amount{ font-size:64px; }
   .tile-t{ font-size:20px; }
