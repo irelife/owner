@@ -34,16 +34,47 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
 const eq = (got, want, m) => ok(got === want, m + '（' + JSON.stringify(got) + '）');
 
 console.log('\n── 配色の一覧（THEMES）──');
-eq(box.THEMES.length, 3, '3つ');
+eq(box.THEMES.length, 4, '4つ');
 eq(box.THEMES[0].id, 'wine', '1つめは既定のワイン');
 ok(box.THEMES.every(t => /^#[0-9A-F]{6}$/.test(t.bg) && /^#[0-9A-F]{6}$/.test(t.pri)),
    '★どれも色が6桁で入っている（先あての script と対になる値）');
-ok(new Set(box.THEMES.map(t => t.id)).size === 3, 'id が重なっていない');
+ok(new Set(box.THEMES.map(t => t.id)).size === box.THEMES.length, 'id が重なっていない');
+ok(box.THEMES.some(t => t.id === 'indigo'), '★藍（お写真に合わせた色）が入っている');
+
+/* ★★ index.html の「配色の先あて」と、THEMES がずれていないか
+ *
+ *   先あては、app.js を読み込む前に data-theme を付けるための短い script です。
+ *   ここに配色を書き忘れると、その色をお選びの方に「一瞬だけワインが見える」
+ *   ことになります。画面は最後には正しくなるので、気づきにくい種類の不具合です。
+ *   人が2か所を見比べるのをやめて、検査で押さえます。 */
+console.log('\n── ★★ index.html の先あてと、THEMES がそろっているか ──');
+const html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+const mTh  = html.match(/var\s+_TH\s*=\s*\{([^}]*)\}/);
+ok(!!mTh, '先あての一覧（var _TH）がある');
+if (mTh) {
+  const pre = {};
+  mTh[1].split(',').forEach(s2 => {
+    const m2 = s2.match(/([A-Za-z0-9_]+)\s*:\s*'(#[0-9A-Fa-f]{6})'/);
+    if (m2) pre[m2[1]] = m2[2].toUpperCase();
+  });
+  const need = box.THEMES.filter(t => t.id !== box.THEMES[0].id);
+  ok(Object.keys(pre).length === need.length,
+     '★既定以外の配色の数が合っている（先あて ' + Object.keys(pre).length +
+     ' 件／THEMES ' + need.length + ' 件）');
+  need.forEach(t => {
+    ok(pre[t.id] === t.bg.toUpperCase(),
+       '★ ' + t.name + '（' + t.id + '）… 先あての色 ' + (pre[t.id] || 'なし') +
+       ' ＝ THEMES の ' + t.bg);
+  });
+  ok(!(box.THEMES[0].id in pre),
+     '★既定のワインは先あてに入れない（入れると data-theme が要らぬ形で付く）');
+}
 
 console.log('\n── 配色を選ぶ（thPick）──');
 eq(box.thPick('wine'), 'wine', 'ワイン');
 eq(box.thPick('midnight'), 'midnight', 'ミッドナイト');
 eq(box.thPick('charcoal'), 'charcoal', 'チャコール');
+eq(box.thPick('indigo'), 'indigo', '藍');
 eq(box.thPick(''), 'wine', '★空なら既定のワイン');
 eq(box.thPick(null), 'wine', '★何も来なくてもワイン');
 eq(box.thPick('sakura'), 'wine', '★一覧に無いものはワイン（当てずっぽうにしない）');
@@ -55,6 +86,8 @@ eq(box.thName('midnight'), 'ミッドナイト', '名前が引ける');
 eq(box.thName('sakura'), '', '★無いものは空');
 eq(box.thOf('sakura').id, 'wine', 'thOf も無いものはワインに戻す');
 eq(box.thOf('charcoal').bg, '#23211F', 'チャコールの地の色');
+eq(box.thOf('indigo').bg, '#1E2243', '藍の地の色');
+eq(box.thName('indigo'), '藍', '藍の名前');
 
 console.log('\n── 全角を直す（myNum）──');
 eq(box.myNum('０９０－１２３４－５６７８'), '090-1234-5678', '★全角の数字とハイフン');
