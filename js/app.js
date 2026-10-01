@@ -1724,11 +1724,49 @@
       });
   }
 
+  /* ★2026/10/1 … 検索のための形そろえ。
+       「ＡＢＣ」と「abc」、「１２３」と「123」を同じに扱うためです。 */
+  function ctFold(s){
+    var v = String(s == null ? '' : s);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    return v.toLowerCase();
+  }
+
+  var CT_Q    = '';     /* 検索の字 */
+  var CT_LAST = null;   /* 直前に受け取った一覧。打つたびに通信しないため */
+
   function paintTalks(list){
-    if(!list.length){
-      $('ct-list').innerHTML = '<div class="empty">お問い合わせの履歴はありません。</div>';
+    CT_LAST = list;
+
+    /* ★検索。ご用件・日付・状態・本文のどれでも引けます。 */
+    var all  = list;
+    var shown = all;
+    if(CT_Q){
+      var k = ctFold(CT_Q);
+      shown = all.filter(function(t){
+        var hay = [t.kind, t.date, t.state, t.id]
+                    .concat((t.msgs || []).map(function(m){ return m.body; }))
+                    .join(' ');
+        return ctFold(hay).indexOf(k) >= 0;
+      });
+    }
+
+    /* 件数は、いつも出します */
+    var cnt = $('ct-cnt');
+    if(cnt){
+      cnt.textContent = !all.length ? '' :
+        (CT_Q ? ('「' + CT_Q + '」に一致： ' + shown.length + ' 件　／　') : '') +
+        '全' + all.length + ' 件';
+    }
+
+    if(!shown.length){
+      $('ct-list').innerHTML = '<div class="empty">' +
+        (CT_Q ? ('「' + esc(CT_Q) + '」に一致するお問い合わせはありません。')
+              : 'お問い合わせの履歴はありません。') + '</div>';
       return;
     }
+
+    list = shown;
     $('ct-list').innerHTML = list.map(function(t, i){
       var done = String(t.state || '') === '回答済み';
       var talk = (t.msgs || []).map(function(m){
@@ -1742,7 +1780,11 @@
       /* ★2026/9/23 まで、やりとりを全部開いたまま並べていました。
        *   件数が増えると画面がとても長くなるため、送金明細と同じ
        *   開閉式にします。いちばん新しい1件だけ開いておきます。 */
-      return '<div class="tk' + (i === 0 ? ' open' : '') + '">' +
+      /* ★検索したときは、見つかったものを全部開きます。
+           探しあてたのに、また押して開くのは手間だからです。
+           ふだんは、いちばん新しい1件だけ開いておきます。 */
+      var op = (i === 0) || !!CT_Q;
+      return '<div class="tk' + (op ? ' open' : '') + '">' +
         '<button type="button" class="tk-h">' +
           '<span class="tk-l">' +
             '<span class="tk-t">' + esc(t.kind) + '</span>' +
@@ -1752,7 +1794,7 @@
             (done ? '回答済み' : '確認中') + '</span>' +
           '<span class="tk-c" aria-hidden="true"></span>' +
         '</button>' +
-        '<div class="tk-b"' + (i === 0 ? '' : ' hidden') + '>' +
+        '<div class="tk-b"' + (op ? '' : ' hidden') + '>' +
           '<div class="talk">' + talk + '</div>' +
           '<details class="ask">' +
             '<summary>このお問い合わせに返信する</summary>' +
@@ -1796,6 +1838,16 @@
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy(btn, false); });
   }
+
+  /* ★打つたびに通信すると重くなるので、いま手元にある一覧を絞るだけにします。 */
+  (function(){
+    var q = $('ct-q');
+    if(!q) return;
+    q.addEventListener('input', function(){
+      CT_Q = String(q.value || '').trim();
+      if(CT_LAST) paintTalks(CT_LAST);
+    });
+  })();
 
   $('f-contact').addEventListener('submit', function(ev){
     ev.preventDefault();

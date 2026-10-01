@@ -32,7 +32,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=38">
+<link rel="stylesheet" href="css/style.css?v=39">
 </head>
 <body>
 
@@ -497,6 +497,13 @@ try{
       </details>
 
       <p class="sect">お問い合わせ履歴</p>
+      <!-- ★2026/10/1 追加。やりとりが増えると、目で探せなくなるためです。
+           ご用件・日付・本文のどれでも引けます。
+           打つたびに通信はしません。いま画面にあるものを絞るだけです。 -->
+      <input type="search" id="ct-q" class="ct-q"
+             aria-label="お問い合わせ履歴の検索"
+             placeholder="ご用件・日付・本文で検索">
+      <p class="ct-cnt" id="ct-cnt"></p>
       <div id="ct-list"></div>
 
       <p class="foot-note">
@@ -621,6 +628,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=37"></script>
+<script src="js/app.js?v=38"></script>
 </body>
 </html>
