@@ -642,14 +642,11 @@ input[type=file]::file-selector-button{
 .letter p{ margin:0; font-size:15px; line-height:1.9; white-space:pre-wrap; }
 .lt-s{ margin-top:16px !important; font-size:13px !important; color:var(--mut-fg); }
 
-/* ── 修繕・お問い合わせ（やりとり） ───────── */
-.work{
-  padding:24px; margin-bottom:12px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
-}
-.wk-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.wk-p{ font-size:14px; font-weight:600; color:var(--mut-fg); }
-.wk-t{ margin:10px 0 0; font-size:16px; line-height:1.75; }
+/* ── お問い合わせ（やりとり） ───────────── */
+/* ★.work .wk-h .wk-p .wk-t（修繕の画面）は 2026/10/1 に消しました。
+     画面ごと取り下げたためです。
+     ★.chip と .kv は残します。.chip はお問い合わせの「確認中／
+       回答済み」、.kv は火災保険（.ins-box .kv）で使っています。 */
 .chip{
   flex:0 0 auto; padding:6px 12px; border-radius:999px;
   font-size:13px; font-weight:500; white-space:nowrap;
