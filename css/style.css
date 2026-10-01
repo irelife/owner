@@ -251,6 +251,13 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
   display:block; margin-bottom:6px; font-size:14px; font-weight:500; color:var(--fg);
 }
 .field .hint{ margin-left:8px; font-size:12px; font-weight:400; color:var(--mut-fg); }
+/* ★2026/10/1 … ラベルの横ではなく、欄の「下」に置く注記。
+     所在地のえらびで、選びかたの例をお出しするために足しました。
+     .field .hint は margin-left:8px で横並び用なので、打ち消します。 */
+.field p.hint{
+  display:block; margin:8px 0 0; margin-left:0;
+  font-size:13px; line-height:1.75; color:var(--mut-fg);
+}
 /* ★入力欄の中は、カードより一段暗くします（--input）。
  *   見本（base44）の画面を線で切って色を測りました。
  *     見本　… 欄 #4C282B ／ まわり #3F1E25   ← はっきり分かれている

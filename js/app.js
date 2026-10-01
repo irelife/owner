@@ -1802,13 +1802,22 @@
     var kind = $('ct-kind').value;
     var body = ($('ct-body').value || '').trim();
     var msg  = $('ct-msg');
+    /* ★2026/10/1 … 物件の所在地。ご相談を担当の支社へ直接お届けするためです。
+     *   ★必ずお選びいただく形にはしていません。
+     *     ご相談を送れないほうが困るためです。
+     *     空のときは、これまでどおり当社で振り分けます。 */
+    var area = (function(){
+      var el = $('ct-area');
+      return el ? String(el.value || '').trim() : '';
+    })();
     if(!body){ say(msg, '内容をご入力ください。'); return; }
     if(body.length > 2000){ say(msg, '文字数が上限を超えています。2,000文字以内でご入力ください。'); return; }
 
     busy($('ct-go'), true);
-    auth('ask', { kind: kind, body: body })
+    auth('ask', { kind: kind, body: body, area: area })
       .then(function(){
         $('ct-body').value = '';
+        if($('ct-area')) $('ct-area').value = '';
         say(msg, '');
         /* ★送れたことが分かるよう、書く欄を閉じて一覧に戻します */
         $('ct-new').open = false;

@@ -32,7 +32,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=37">
 </head>
 <body>
 
@@ -470,6 +470,23 @@ try{
               <option>その他</option>
             </select>
           </div>
+          <!-- ★2026/10/1 追加。物件の所在地をお選びいただきます。
+               ご相談を、担当の支社へ直接お届けするためです。
+               台帳の「支社」が空のときだけ、ここでお選びいただいた
+               所在地を使います（当社で決めてある方は、そのままです）。 -->
+          <div class="field">
+            <label for="ct-area">物件の所在地</label>
+            <select id="ct-area">
+              <option value="">選択してください</option>
+              <option value="福山">福山市</option>
+              <option value="倉敷">倉敷市</option>
+              <option value="岡山">岡山市</option>
+              <option value="その他">上記以外</option>
+            </select>
+            <p class="hint">例）複数棟をお持ちの場合は、いちばん大きな物件の
+              所在地をお選びください。お分かりにならない場合は「上記以外」で
+              構いません。当社で確かめて、担当よりご連絡いたします。</p>
+          </div>
           <div class="field">
             <label for="ct-body">内容</label>
             <textarea id="ct-body" rows="6" placeholder="ご質問・ご要望をご記入ください。"></textarea>
@@ -604,6 +621,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=36"></script>
+<script src="js/app.js?v=37"></script>
 </body>
 </html>
