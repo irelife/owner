@@ -23,6 +23,21 @@
   var MKEY  = 'ire_owner_mail';      /* ログインに使ったアドレス。この端末の中だけ */
   var HKEY  = 'ire_owner_home';      /* 前回のホームの中身。この端末の中だけ */
   var THKEY = 'ire_owner_theme';     /* 配色。この端末の中だけ */
+  var SKEY  = 'ire_owner_seen';      /* 最後に操作した時刻。この端末の中だけ */
+
+  /* ★2026/10/2 … 動きが無ければ自動でログアウトします。
+   *
+   *  ご指示： 「動きがなければ、1時間で自動でログアウトするように
+   *            してください。いつでも見られるのが良いわけですから、
+   *            月一とは限りません」
+   *
+   *  【改良前】 入館証は14日もちました。一度ログインすると、
+   *            2週間ずっと入ったままです。ご家族と同じ端末をお使いの
+   *            方や、外で開いたまま置かれた方を守れません。
+   *  【改良後】 最後に触ってから60分で、ひとりでに降ります。
+   *            ★閉じて開き直しても効きます。時刻を端末に書くので、
+   *              画面を閉じているあいだも時間は進みます。 */
+  var IDLE_MIN = 60;
   var token = '';
   var me    = null;     /* { name, atena } */
   var cache = {};       /* 画面ごとの読み込み結果 */
@@ -212,6 +227,9 @@
                                      : (r.talks.list || []); }
 
         try{ localStorage.setItem(TKEY, token); }catch(e){}
+        /* ★入ったその瞬間を、動きの起点にします。
+             入れないと、前の方の時刻のまま数え始めてしまいます。 */
+        touchNow(true);
         /* ★マイアカウントでお見せするため、アドレスも控えます。
          *   me 窓口はお名前と宛名しか返さないためです。
          *   ログアウトのときに消します。 */
@@ -2406,20 +2424,65 @@
   });
   $('mn-out').addEventListener('click', function(){ logout(); });
 
-  function logout(quiet){
+  /* quiet … クラウドに知らせず、お知らせも出しません（入館証が切れたとき用）
+     msg   … 出すお知らせの文。省くと「ログアウトしました」 */
+  function logout(quiet, msg){
     var t = token;
     token = ''; me = null; cache = {};
     try{ localStorage.removeItem(TKEY); }catch(e){}
     try{ localStorage.removeItem(MKEY); }catch(e){}
     try{ localStorage.removeItem(HKEY); }catch(e){}
+    /* ★最後に触った時刻も消します。残すと、次にログインした方の
+         時計が前の方のもので始まり、すぐ落ちてしまいます。 */
+    try{ localStorage.removeItem(SKEY); }catch(e){}
     $('li-mail').value = ''; $('li-pass').value = '';
     paintName();
     show('login');
     if(!quiet){
       /* 入館証をクラウド側でも無効にします（失敗しても画面は出ています） */
       call('logout', { token: t }).catch(function(){});
-      toast('ログアウトしました');
+      toast(msg || 'ログアウトしました');
     }
+  }
+
+  /* ══════════════════════════════════════════════
+   *  動きが無ければ、ひとりでに降ります（2026/10/2）
+   *
+   *  ★「動き」は、この画面でしか分かりません。ですので時計は
+   *    画面側に置きます。クラウドは控えとして短い期限を持ちます。
+   *  ★時刻を端末に書くので、閉じて開き直しても効きます。
+   *    画面の中だけで数えると、閉じたとたんに忘れてしまいます。
+   *  ★書くのは1分に1回までにします。触るたびに書くと、
+   *    スクロールのあいだじゅう書き続けることになります。
+   * ══════════════════════════════════════════════ */
+  var lastTouch = 0;
+
+  function touchNow(force){
+    var now = Date.now();
+    if(!force && now - lastTouch < 60000) return;   /* 1分に1回まで */
+    lastTouch = now;
+    try{ localStorage.setItem(SKEY, String(now)); }catch(e){}
+  }
+
+  /* 最後に触ってから、何ミリ秒たったか。分からないときは 0（＝切りません） */
+  function idleMs(){
+    var t = 0;
+    try{ t = Number(localStorage.getItem(SKEY) || 0); }catch(e){}
+    if(!isFinite(t) || t <= 0) return 0;
+    var d = Date.now() - t;
+    /* ★端末の時計が戻されたときは、マイナスになります。
+         そのまま使うと永久に切れません。0として扱います。 */
+    return d > 0 ? d : 0;
+  }
+
+  function idleOver(){ return idleMs() > IDLE_MIN * 60000; }
+
+  /* 入っているときだけ見ます。降りているなら何もしません。 */
+  function idleCheck(){
+    if(!token) return false;
+    if(!idleOver()) return false;
+    logout(false, 'しばらく操作がなかったため、安全のため自動でログアウトしました。');
+    return true;
   }
 
   function paintName(){
@@ -2635,8 +2698,42 @@
   });
 
 
+  /* ══════════════════════════════════════════════
+   *  動きを見張ります（2026/10/2）
+   *
+   *  ★押す・打つ・触る・画面に戻る、を「動き」とします。
+   *    スクロールは入れていません。読んでいるだけで動きと数えると、
+   *    席を立って揺れただけでも延びてしまうためです。
+   *  ★1分おきに見ます。1時間を1分すぎた時点で降ります。
+   * ══════════════════════════════════════════════ */
+  ['click','keydown','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, function(){ touchNow(); }, true);
+  });
+  /* ★画面に戻ってきたときは、まず切れていないかを見ます。
+       閉じているあいだも時間は進んでいます。 */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) return;
+    if(!idleCheck()) touchNow(true);
+  });
+  setInterval(idleCheck, 60000);
+
   thApply(thSaved(), false);
   try{ token = localStorage.getItem(TKEY) || ''; }catch(e){ token = ''; }
+
+  /* ★すでにお入りの方を、入れ替えの日に追い出さないための手当て。
+       入館証はあるのに「最後に触った時刻」が無いときは、
+       いまを入れておきます。無いことを「ずっと放置」と読むと、
+       この直しを出した瞬間に全員が降ろされます。 */
+  if(token){
+    var seen = 0;
+    try{ seen = Number(localStorage.getItem(SKEY) || 0); }catch(e){}
+    if(!isFinite(seen) || seen <= 0) touchNow(true);
+  }
+
+  /* ★開いた時点で、もう1時間すぎていたら入れません。 */
+  if(token && idleOver()){
+    logout(false, 'しばらく操作がなかったため、安全のため自動でログアウトしました。');
+  }
 
   if(!token){ show('login'); }
   else{
