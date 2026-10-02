@@ -151,7 +151,7 @@
   /* ★'works'（原状回復・修繕）は 2026/10/1 に取り下げました。
        一覧に残すと、古いリンクや戻る操作で「何も無い画面」が
        出てしまうためです。 */
-  var SCREENS = ['login','forgot','newpass','home','status','papers',
+  var SCREENS = ['login','forgot','reset','newpass','home','status','papers',
                  'insurance','contact','accountant','account'];
   var AFTER_LOGIN = { home:1, status:1, papers:1, insurance:1,
                       contact:1, accountant:1, account:1 };
@@ -270,6 +270,100 @@
       })
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy($('fg-go'), false); });
+  });
+
+  /* ══════════════════════════════════════════════
+   *  メールのリンクからの再設定（2026/10/2 新設）
+   *
+   *  【改良前】
+   *    再設定の画面は Apps Script が出していました。Apps Script の
+   *    画面は Google の枠（iframe）の中でしか動きません。その枠は
+   *    拡張機能・広告ブロッカー・サードパーティCookie の制限で
+   *    塞がれることがあり、実際に
+   *        「script.google.com で接続が拒否されました」
+   *    となって、オーナー様はご自分でパスワードを作り直せません
+   *    でした。管理者が手で打つしか無く、112名では回りません。
+   *
+   *  【改良後】
+   *    リンクの行き先を、このマイページにします。
+   *        https://irelife.github.io/owner/#r=（合言葉）
+   *    枠を一切使いませんので、塞がれません。見た目も自社のままです。
+   *
+   *  ★合言葉は「#」のうしろに置きます。「?」ではありません。
+   *    「#」より後ろは、ブラウザがサーバーへ送りません。つまり
+   *    GitHub 側の記録にも、合言葉が残りません。
+   *    （古い「?r=」のリンクも、念のため読めるようにしてあります）
+   *
+   *  ★読んだ合言葉は、すぐ住所欄から消します。
+   *    残すと、戻る操作や履歴、画面を見せたときに漏れます。
+   * ══════════════════════════════════════════════ */
+  var RTK = '';
+
+  function pickToken(){
+    var pick = function(src, key){
+      var m = String(src || '').match(new RegExp('[#?&]' + key + '=([^&]+)'));
+      return m ? decodeURIComponent(m[1]) : '';
+    };
+    return pick(location.hash, 'r') || pick(location.search, 'r');
+  }
+
+  /* 住所欄から合言葉を消します。再読み込みしても出ないように。 */
+  function dropToken(){
+    try{
+      history.replaceState(null, '', location.pathname);
+    }catch(e){
+      /* 古い端末では replaceState が無いことがあります。
+         そのときは何もしません。画面は動きます。 */
+    }
+  }
+
+  function openReset(tk){
+    RTK = tk || '';
+    $('rs-a').value = ''; $('rs-b').value = '';
+    say($('rs-msg'), '');
+    show('reset');
+  }
+
+  $('f-reset').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var a   = $('rs-a').value || '';
+    var b   = $('rs-b').value || '';
+    var msg = $('rs-msg');
+    if(!RTK){
+      say(msg, 'この再設定のご案内は、ご利用になれません。' +
+               'お手数ですが、［パスワードをお忘れの方］より、' +
+               'もう一度お送りください。');
+      return;
+    }
+    if(a.length < 8){ say(msg, '新しいパスワードは8文字以上でご設定ください。'); return; }
+    if(a !== b){ say(msg, '新しいパスワードが一致しません。ご確認ください。'); return; }
+
+    busy($('rs-go'), true, '設定中…');
+    say(msg, '');
+    call('resetDo', { tk: RTK, pass: a })
+      .then(function(r){
+        /* ★使い終わった合言葉は、画面からも消します */
+        RTK = '';
+        $('rs-a').value = ''; $('rs-b').value = '';
+        /* ★アドレスが返ってきたら、ログイン欄に入れておきます。
+             もう一度打っていただかずに済みます。 */
+        if(r && r.email) $('li-mail').value = r.email;
+        show('login');
+        say($('li-msg'), '');
+        toast('パスワードを設定しました。新しいパスワードでお入りください。');
+      })
+      .catch(function(e){
+        /* ★期限切れ・使用済みは、やり直しの道をいっしょに出します。
+             「できません」だけだと、次に何をすればよいか分かりません。 */
+        if(e && (e.code === 'token' || e.code === 'auth')){
+          say(msg, 'この再設定のご案内は、期限が切れているか、' +
+                   'すでにお使いになっています。お手数ですが、' +
+                   '［パスワードをお忘れの方］より、もう一度お送りください。');
+          return;
+        }
+        say(msg, e.message);
+      })
+      .then(function(){ busy($('rs-go'), false); });
   });
 
   /* ── パスワードの変更 ─────────────────────── */
@@ -2550,9 +2644,11 @@
   var THEMES = [
     { id:'wine',     name:'ワイン',       bg:'#3E1E24', pri:'#C79C6B' },
     { id:'midnight', name:'ミッドナイト', bg:'#141D2E', pri:'#D8AE64' },
-    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' },
-    { id:'indigo',   name:'藍',           bg:'#1E2243', pri:'#D8AE64' }
+    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' }
   ];
+  /* ★2026/10/2 「藍」を取り下げました（ご指示）。
+       すでに藍をお選びだった方は、thPick が一覧に無い id を
+       既定のワインに戻しますので、画面が壊れることはありません。 */
 
   /* 一覧にない・空・こわれている → 既定のワインに戻します */
   function thPick(id){
@@ -2766,7 +2862,17 @@
     logout(false, 'しばらく操作がなかったため、安全のため自動でログアウトしました。');
   }
 
-  if(!token){ show('login'); }
+  /* ★メールのリンクから来た方は、何よりも先に再設定の画面へ。
+       入館証が残っていても、ここが優先です。パスワードを忘れた方が
+       たどり着く道は、これ1本だけだからです。 */
+  var _rtk = pickToken();
+  if(_rtk){
+    dropToken();
+    token = '';
+    try{ localStorage.removeItem(TKEY); }catch(e){}
+    openReset(_rtk);
+  }
+  else if(!token){ show('login'); }
   else{
     auth('me')
       .then(function(r){
