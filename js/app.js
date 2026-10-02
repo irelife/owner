@@ -368,7 +368,11 @@
     $('hm-pdf').hidden = !r.pdfId;
     $('hm-pdf').onclick = function(){ openPdf(r.pdfId, $('hm-pdf')); };
 
-    var props = Array.isArray(r.props) ? r.props : [];
+    /* ★2026/10/2 … 名前の順に並べます（同じ建物を隣り合わせるため） */
+    var props = (Array.isArray(r.props) ? r.props : []).slice()
+                  .sort(function(a, b){
+                    return byProp((a && a.name) || '', (b && b.name) || '');
+                  });
     $('hm-props').innerHTML = props.length
       ? props.map(function(p){
           return '<div class="item"><span class="t">' + esc(p.name) + '</span>' +
@@ -1927,6 +1931,27 @@
     return v.toLowerCase().replace(/\s+/g, '');
   }
 
+  /* ══════════════════════════════════════════════
+   *  物件名を、見やすい順に並べます（2026/10/2）
+   *
+   *  ご指示： 「物件ごとに整理したい。バラバラ。」
+   *
+   *  【改良前】 クラウドが見つけた順のまま出していました。
+   *            マーベラスB棟 → ハイサニー B → マーベラスA棟 …
+   *            同じ建物のA棟とB棟が離れて出ます。
+   *  【改良後】 名前の順に並べます。同じ建物が必ず隣り合います。
+   *            ハイサニー A → ハイサニー B → マーベラスA棟 → マーベラスB棟
+   *
+   *  ★くらべる前に insNorm でそろえます。
+   *    「ハイサニー Ａ」（全角・空白あり）と「ハイサニーA」が
+   *    別のものとして並ぶのを防ぐためです。
+   *  ★localeCompare が使えない場面でも落ちないよう、控えを持ちます。 */
+  function byProp(a, b){
+    var ka = insNorm(a), kb = insNorm(b);
+    try{ return ka.localeCompare(kb, 'ja'); }catch(e){}
+    return ka < kb ? -1 : (ka > kb ? 1 : 0);
+  }
+
   /* 年月日を、1日＝1つの番号に直します（引き算できるようにするため）。 */
   function insDayNo(y, m, d){ return Math.floor(Date.UTC(y, m - 1, d) / 86400000); }
 
@@ -2237,6 +2262,11 @@
       var n = (p && p.name) ? String(p.name).trim() : '';
       if(n && !have[insNorm(n)] && names.indexOf(n) < 0) names.push(n);
     });
+
+    /* ★2026/10/2 … 名前の順に並べます。
+         改良前はクラウドが見つけた順で、同じ建物のA棟とB棟が
+         離れて出ていました。 */
+    names.sort(byProp);
 
     sel.innerHTML =
       '<option value="">選択してください</option>' +
