@@ -22,7 +22,7 @@ if (a < 0 || b < 0 || b < a) {
 }
 const box = new Function(
   src.slice(a, b) +
-  '; return { insNorm, insDayNo, insDue, insDays, insYmd, insTel, insGroup, insRank };'
+  '; return { insNorm, insDayNo, insDue, insDays, insYmd, insTel, insGroup, insRank, byProp };'
 )();
 
 let pass = 0, fail = 0;
@@ -156,6 +156,48 @@ eq(box.insGroup(null, TODAY).length, 0, '一覧が来なくても落ちない');
   const before = JSON.stringify(L);
   box.insGroup(L, TODAY);
   eq(JSON.stringify(L), before, '★元の一覧を書き替えない');
+}
+
+console.log('\n── ★★物件名の並べ替え（byProp）── 2026/10/2 ──');
+/*  ご指示： 「物件ごとに整理したい。バラバラ。」
+ *
+ *  【改良前】 クラウドが見つけた順のまま出していました。実際の画面：
+ *      マーベラスB棟 / ハイサニー B / マーベラスA棟 /
+ *      ルミエール静A棟 / ルミエール静B棟 / ハイサニー A
+ *    同じ建物のA棟とB棟が離れて出ます。
+ *  【改良後】 名前の順。同じ建物が必ず隣り合います。 */
+{
+  const 画面どおり = ['マーベラスB棟','ハイサニー B','マーベラスA棟',
+                      'ルミエール静A棟','ルミエール静B棟','ハイサニー A'];
+  const got = 画面どおり.slice().sort(box.byProp);
+  console.log('    改良前: ' + 画面どおり.join(' / '));
+  console.log('    改良後: ' + got.join(' / '));
+  ok(JSON.stringify(got) === JSON.stringify(
+       ['ハイサニー A','ハイサニー B','マーベラスA棟','マーベラスB棟',
+        'ルミエール静A棟','ルミエール静B棟']),
+     '★★★同じ建物が隣り合う順に並ぶ');
+  ok(got.indexOf('マーベラスA棟') + 1 === got.indexOf('マーベラスB棟'),
+     '★マーベラスA棟のすぐ次がB棟');
+  ok(got.indexOf('ハイサニー A') + 1 === got.indexOf('ハイサニー B'),
+     '★ハイサニーAのすぐ次がB');
+  ok(got.length === 画面どおり.length, '並べ替えで件数が変わらない');
+}
+{
+  /* ★全角・空白のちがいで、同じ建物が離れないこと。
+       「ハイサニー Ａ」（全角A・空白あり）と「ハイサニーB」（空白なし）が
+       別の場所に飛ぶと、見つけられなくなります。 */
+  const got = ['マーベラスB棟','ハイサニーＡ','ハイサニー B','マーベラス A棟']
+                .slice().sort(box.byProp);
+  console.log('    全角まじり: ' + got.join(' / '));
+  ok(got[0] === 'ハイサニーＡ' && got[1] === 'ハイサニー B',
+     '★★全角Ａでも、ハイサニーどうしが隣り合う');
+  ok(got[2].indexOf('マーベラス') === 0 && got[3].indexOf('マーベラス') === 0,
+     '★空白のちがいがあっても、マーベラスどうしが隣り合う');
+}
+{
+  ok(box.byProp('あ','あ') === 0, '同じ名前は0（並びが入れ替わらない）');
+  ok(box.byProp('', '') === 0, '空でも落ちない');
+  ok(typeof box.byProp(null, 'あ') === 'number', '★null が来ても落ちない');
 }
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);

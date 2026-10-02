@@ -23,6 +23,21 @@
   var MKEY  = 'ire_owner_mail';      /* ログインに使ったアドレス。この端末の中だけ */
   var HKEY  = 'ire_owner_home';      /* 前回のホームの中身。この端末の中だけ */
   var THKEY = 'ire_owner_theme';     /* 配色。この端末の中だけ */
+  var SKEY  = 'ire_owner_seen';      /* 最後に操作した時刻。この端末の中だけ */
+
+  /* ★2026/10/2 … 動きが無ければ自動でログアウトします。
+   *
+   *  ご指示： 「動きがなければ、1時間で自動でログアウトするように
+   *            してください。いつでも見られるのが良いわけですから、
+   *            月一とは限りません」
+   *
+   *  【改良前】 入館証は14日もちました。一度ログインすると、
+   *            2週間ずっと入ったままです。ご家族と同じ端末をお使いの
+   *            方や、外で開いたまま置かれた方を守れません。
+   *  【改良後】 最後に触ってから60分で、ひとりでに降ります。
+   *            ★閉じて開き直しても効きます。時刻を端末に書くので、
+   *              画面を閉じているあいだも時間は進みます。 */
+  var IDLE_MIN = 60;
   var token = '';
   var me    = null;     /* { name, atena } */
   var cache = {};       /* 画面ごとの読み込み結果 */
@@ -212,6 +227,9 @@
                                      : (r.talks.list || []); }
 
         try{ localStorage.setItem(TKEY, token); }catch(e){}
+        /* ★入ったその瞬間を、動きの起点にします。
+             入れないと、前の方の時刻のまま数え始めてしまいます。 */
+        touchNow(true);
         /* ★マイアカウントでお見せするため、アドレスも控えます。
          *   me 窓口はお名前と宛名しか返さないためです。
          *   ログアウトのときに消します。 */
@@ -368,7 +386,11 @@
     $('hm-pdf').hidden = !r.pdfId;
     $('hm-pdf').onclick = function(){ openPdf(r.pdfId, $('hm-pdf')); };
 
-    var props = Array.isArray(r.props) ? r.props : [];
+    /* ★2026/10/2 … 名前の順に並べます（同じ建物を隣り合わせるため） */
+    var props = (Array.isArray(r.props) ? r.props : []).slice()
+                  .sort(function(a, b){
+                    return byProp((a && a.name) || '', (b && b.name) || '');
+                  });
     $('hm-props').innerHTML = props.length
       ? props.map(function(p){
           return '<div class="item"><span class="t">' + esc(p.name) + '</span>' +
@@ -1326,17 +1348,42 @@
    *  ★1年ぶんは、12か月を1つのPDFにまとめられないので false になります。
    *    本文に「PDFを添付しております」と書いてあるのに付けられない、
    *    という食い違いを起こさないためです。 */
-  function acMail(info, what, company, hasPdf){
+  function acMail(info, what, company, hasPdf, owner){
     var firm = (info && info.firm) ? String(info.firm).trim() : '';
     var name = (info && info.name) ? String(info.name).trim() : '';
     var co   = company ? String(company) : '当社';
+    /* ★2026/10/2 … 署名をオーナー様のお名前にしました。
+     *
+     *  【改良前】 「IREライフ株式会社 オーナーマイページより」
+     *            送り主は当社のように見えます。けれどもこのメールは
+     *            オーナー様が税理士事務所へお送りになるものです。
+     *            受け取った先生から見ると、誰からの明細か分かりません。
+     *  【改良後】 オーナー様のお名前を署名にします。
+     *            そのうえで「当社のマイページから送っている」ことを
+     *            一言添えます。差出人のアドレスが当社のものなので、
+     *            書いておかないと迷惑メールと間違われます。
+     *  ★お名前が取れないときは、これまでどおり当社名を出します。 */
+    var own  = owner ? String(owner).trim() : '';
     var line = '------------------------------';
 
     var atena = firm ? firm : '税理士事務所';
     var sensei = name ? (name + ' 先生') : 'ご担当者様';
 
     return {
-      subject: '【' + co + '】' + what + ' 送金明細のご送付',
+      /* ★2026/10/2 … 件名の【】も、オーナー様のお名前にしました。
+       *
+       *  【改良前】 【IREライフ株式会社】2026年9月 送金明細のご送付
+       *            税理士事務所は顧問先を何十も抱えています。同じ
+       *            管理会社の顧問先が複数いると、件名が全部同じになり、
+       *            開くまでどなたのものか分かりません。
+       *  【改良後】 【Turnkey合同会社】2026年9月 送金明細のご送付
+       *            受信箱に並んだ時点で、顧問先が分かります。
+       *
+       *  ★当社名は、差出人の表示名と本文の一言に残ります。
+       *    どこから来たメールかは分かります。
+       *  ★お名前が取れないときは、これまでどおり当社名にします。
+       *    件名が「【】」と空になるのを防ぎます。 */
+      subject: '【' + (own || co) + '】' + what + ' 送金明細のご送付',
       body   : atena + '\n' + sensei + '\n\n' +
                'いつもお世話になっております。\n\n' +
                what + 'の送金明細を、お送りいたします。\n' +
@@ -1350,8 +1397,12 @@
                        : '明細データ（CSV）を添付しております。\n\n') +
                'ご確認のほど、よろしくお願い申し上げます。\n\n' +
                line + '\n' +
-               co + ' オーナーマイページより\n' +
-               line
+               (own ? (own + '\n') : (co + ' オーナーマイページより\n')) +
+               line +
+               (own
+                 ? ('\n※ ' + co + 'のオーナーマイページより送信しております。\n' +
+                    '　 ご返信は、このままご返信ください。')
+                 : '')
     };
   }
 
@@ -1484,7 +1535,9 @@
     var g = acPicked();
     /* 明細書（PDF）をお付けいただけるのは、1か月ぶんで原本があるときだけです */
     var hasPdf = (acMode === 'month' && g.list.length > 0 && !!g.list[0].id);
-    var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf);
+    /* ★署名はオーナー様のお名前です（宛名の「御中」は付けません） */
+    var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf,
+                   (me && me.name) ? me.name : '');
     $('ac-subj').value = m.subject;
     $('ac-body').value = m.body;
   }
@@ -1724,11 +1777,49 @@
       });
   }
 
+  /* ★2026/10/1 … 検索のための形そろえ。
+       「ＡＢＣ」と「abc」、「１２３」と「123」を同じに扱うためです。 */
+  function ctFold(s){
+    var v = String(s == null ? '' : s);
+    try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
+    return v.toLowerCase();
+  }
+
+  var CT_Q    = '';     /* 検索の字 */
+  var CT_LAST = null;   /* 直前に受け取った一覧。打つたびに通信しないため */
+
   function paintTalks(list){
-    if(!list.length){
-      $('ct-list').innerHTML = '<div class="empty">お問い合わせの履歴はありません。</div>';
+    CT_LAST = list;
+
+    /* ★検索。ご用件・日付・状態・本文のどれでも引けます。 */
+    var all  = list;
+    var shown = all;
+    if(CT_Q){
+      var k = ctFold(CT_Q);
+      shown = all.filter(function(t){
+        var hay = [t.kind, t.date, t.state, t.id]
+                    .concat((t.msgs || []).map(function(m){ return m.body; }))
+                    .join(' ');
+        return ctFold(hay).indexOf(k) >= 0;
+      });
+    }
+
+    /* 件数は、いつも出します */
+    var cnt = $('ct-cnt');
+    if(cnt){
+      cnt.textContent = !all.length ? '' :
+        (CT_Q ? ('「' + CT_Q + '」に一致： ' + shown.length + ' 件　／　') : '') +
+        '全' + all.length + ' 件';
+    }
+
+    if(!shown.length){
+      $('ct-list').innerHTML = '<div class="empty">' +
+        (CT_Q ? ('「' + esc(CT_Q) + '」に一致するお問い合わせはありません。')
+              : 'お問い合わせの履歴はありません。') + '</div>';
       return;
     }
+
+    list = shown;
     $('ct-list').innerHTML = list.map(function(t, i){
       var done = String(t.state || '') === '回答済み';
       var talk = (t.msgs || []).map(function(m){
@@ -1742,7 +1833,11 @@
       /* ★2026/9/23 まで、やりとりを全部開いたまま並べていました。
        *   件数が増えると画面がとても長くなるため、送金明細と同じ
        *   開閉式にします。いちばん新しい1件だけ開いておきます。 */
-      return '<div class="tk' + (i === 0 ? ' open' : '') + '">' +
+      /* ★検索したときは、見つかったものを全部開きます。
+           探しあてたのに、また押して開くのは手間だからです。
+           ふだんは、いちばん新しい1件だけ開いておきます。 */
+      var op = (i === 0) || !!CT_Q;
+      return '<div class="tk' + (op ? ' open' : '') + '">' +
         '<button type="button" class="tk-h">' +
           '<span class="tk-l">' +
             '<span class="tk-t">' + esc(t.kind) + '</span>' +
@@ -1752,7 +1847,7 @@
             (done ? '回答済み' : '確認中') + '</span>' +
           '<span class="tk-c" aria-hidden="true"></span>' +
         '</button>' +
-        '<div class="tk-b"' + (i === 0 ? '' : ' hidden') + '>' +
+        '<div class="tk-b"' + (op ? '' : ' hidden') + '>' +
           '<div class="talk">' + talk + '</div>' +
           '<details class="ask">' +
             '<summary>このお問い合わせに返信する</summary>' +
@@ -1796,6 +1891,16 @@
       .catch(function(e){ say(msg, e.message); })
       .then(function(){ busy(btn, false); });
   }
+
+  /* ★打つたびに通信すると重くなるので、いま手元にある一覧を絞るだけにします。 */
+  (function(){
+    var q = $('ct-q');
+    if(!q) return;
+    q.addEventListener('input', function(){
+      CT_Q = String(q.value || '').trim();
+      if(CT_LAST) paintTalks(CT_LAST);
+    });
+  })();
 
   $('f-contact').addEventListener('submit', function(ev){
     ev.preventDefault();
@@ -1873,6 +1978,27 @@
     var v = String(s == null ? '' : s);
     try{ if(v.normalize) v = v.normalize('NFKC'); }catch(e){}
     return v.toLowerCase().replace(/\s+/g, '');
+  }
+
+  /* ══════════════════════════════════════════════
+   *  物件名を、見やすい順に並べます（2026/10/2）
+   *
+   *  ご指示： 「物件ごとに整理したい。バラバラ。」
+   *
+   *  【改良前】 クラウドが見つけた順のまま出していました。
+   *            マーベラスB棟 → ハイサニー B → マーベラスA棟 …
+   *            同じ建物のA棟とB棟が離れて出ます。
+   *  【改良後】 名前の順に並べます。同じ建物が必ず隣り合います。
+   *            ハイサニー A → ハイサニー B → マーベラスA棟 → マーベラスB棟
+   *
+   *  ★くらべる前に insNorm でそろえます。
+   *    「ハイサニー Ａ」（全角・空白あり）と「ハイサニーA」が
+   *    別のものとして並ぶのを防ぐためです。
+   *  ★localeCompare が使えない場面でも落ちないよう、控えを持ちます。 */
+  function byProp(a, b){
+    var ka = insNorm(a), kb = insNorm(b);
+    try{ return ka.localeCompare(kb, 'ja'); }catch(e){}
+    return ka < kb ? -1 : (ka > kb ? 1 : 0);
   }
 
   /* 年月日を、1日＝1つの番号に直します（引き算できるようにするため）。 */
@@ -2186,6 +2312,11 @@
       if(n && !have[insNorm(n)] && names.indexOf(n) < 0) names.push(n);
     });
 
+    /* ★2026/10/2 … 名前の順に並べます。
+         改良前はクラウドが見つけた順で、同じ建物のA棟とB棟が
+         離れて出ていました。 */
+    names.sort(byProp);
+
     sel.innerHTML =
       '<option value="">選択してください</option>' +
       names.map(function(n){
@@ -2324,20 +2455,65 @@
   });
   $('mn-out').addEventListener('click', function(){ logout(); });
 
-  function logout(quiet){
+  /* quiet … クラウドに知らせず、お知らせも出しません（入館証が切れたとき用）
+     msg   … 出すお知らせの文。省くと「ログアウトしました」 */
+  function logout(quiet, msg){
     var t = token;
     token = ''; me = null; cache = {};
     try{ localStorage.removeItem(TKEY); }catch(e){}
     try{ localStorage.removeItem(MKEY); }catch(e){}
     try{ localStorage.removeItem(HKEY); }catch(e){}
+    /* ★最後に触った時刻も消します。残すと、次にログインした方の
+         時計が前の方のもので始まり、すぐ落ちてしまいます。 */
+    try{ localStorage.removeItem(SKEY); }catch(e){}
     $('li-mail').value = ''; $('li-pass').value = '';
     paintName();
     show('login');
     if(!quiet){
       /* 入館証をクラウド側でも無効にします（失敗しても画面は出ています） */
       call('logout', { token: t }).catch(function(){});
-      toast('ログアウトしました');
+      toast(msg || 'ログアウトしました');
     }
+  }
+
+  /* ══════════════════════════════════════════════
+   *  動きが無ければ、ひとりでに降ります（2026/10/2）
+   *
+   *  ★「動き」は、この画面でしか分かりません。ですので時計は
+   *    画面側に置きます。クラウドは控えとして短い期限を持ちます。
+   *  ★時刻を端末に書くので、閉じて開き直しても効きます。
+   *    画面の中だけで数えると、閉じたとたんに忘れてしまいます。
+   *  ★書くのは1分に1回までにします。触るたびに書くと、
+   *    スクロールのあいだじゅう書き続けることになります。
+   * ══════════════════════════════════════════════ */
+  var lastTouch = 0;
+
+  function touchNow(force){
+    var now = Date.now();
+    if(!force && now - lastTouch < 60000) return;   /* 1分に1回まで */
+    lastTouch = now;
+    try{ localStorage.setItem(SKEY, String(now)); }catch(e){}
+  }
+
+  /* 最後に触ってから、何ミリ秒たったか。分からないときは 0（＝切りません） */
+  function idleMs(){
+    var t = 0;
+    try{ t = Number(localStorage.getItem(SKEY) || 0); }catch(e){}
+    if(!isFinite(t) || t <= 0) return 0;
+    var d = Date.now() - t;
+    /* ★端末の時計が戻されたときは、マイナスになります。
+         そのまま使うと永久に切れません。0として扱います。 */
+    return d > 0 ? d : 0;
+  }
+
+  function idleOver(){ return idleMs() > IDLE_MIN * 60000; }
+
+  /* 入っているときだけ見ます。降りているなら何もしません。 */
+  function idleCheck(){
+    if(!token) return false;
+    if(!idleOver()) return false;
+    logout(false, 'しばらく操作がなかったため、安全のため自動でログアウトしました。');
+    return true;
   }
 
   function paintName(){
@@ -2553,8 +2729,42 @@
   });
 
 
+  /* ══════════════════════════════════════════════
+   *  動きを見張ります（2026/10/2）
+   *
+   *  ★押す・打つ・触る・画面に戻る、を「動き」とします。
+   *    スクロールは入れていません。読んでいるだけで動きと数えると、
+   *    席を立って揺れただけでも延びてしまうためです。
+   *  ★1分おきに見ます。1時間を1分すぎた時点で降ります。
+   * ══════════════════════════════════════════════ */
+  ['click','keydown','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, function(){ touchNow(); }, true);
+  });
+  /* ★画面に戻ってきたときは、まず切れていないかを見ます。
+       閉じているあいだも時間は進んでいます。 */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) return;
+    if(!idleCheck()) touchNow(true);
+  });
+  setInterval(idleCheck, 60000);
+
   thApply(thSaved(), false);
   try{ token = localStorage.getItem(TKEY) || ''; }catch(e){ token = ''; }
+
+  /* ★すでにお入りの方を、入れ替えの日に追い出さないための手当て。
+       入館証はあるのに「最後に触った時刻」が無いときは、
+       いまを入れておきます。無いことを「ずっと放置」と読むと、
+       この直しを出した瞬間に全員が降ろされます。 */
+  if(token){
+    var seen = 0;
+    try{ seen = Number(localStorage.getItem(SKEY) || 0); }catch(e){}
+    if(!isFinite(seen) || seen <= 0) touchNow(true);
+  }
+
+  /* ★開いた時点で、もう1時間すぎていたら入れません。 */
+  if(token && idleOver()){
+    logout(false, 'しばらく操作がなかったため、安全のため自動でログアウトしました。');
+  }
 
   if(!token){ show('login'); }
   else{

@@ -264,7 +264,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
  *     いま　… 欄 #4C2530 ／ カード #4C2530   ← 同じ色で、欄が見えない
  *   枠の色は、すでに合っていました（見本 #886664／いま #876361）。 */
 input[type=text], input[type=email], input[type=password], input[type=tel],
-input[type=date], select, textarea{
+input[type=date], input[type=search], select, textarea{
   width:100%; padding:12px 16px;
   background:hsl(var(--input)); color:var(--fg);
   border:1px solid var(--bd); border-radius:12px;
@@ -927,6 +927,20 @@ input[type=file]::file-selector-button{
 }
 .tk.open .tk-c{ transform:rotate(225deg) translateY(-3px); }
 .tk-b{ padding:0 20px 20px; }
+
+/* ★2026/10/1 … お問い合わせ履歴の検索欄と、件数。
+     改良前は、やりとりが全部ならぶだけで、探す手だてがありませんでした。
+     ★iOS の Safari は type=search に独自の見た目を当てるので、
+       消してから、ほかの欄と同じ形にそろえます。 */
+.ct-q{
+  margin-top:16px; -webkit-appearance:none; appearance:none;
+}
+.ct-q::-webkit-search-decoration,
+.ct-q::-webkit-search-cancel-button{ -webkit-appearance:none; }
+.ct-cnt{
+  margin:8px 0 0; font-size:12.5px; color:var(--mut-fg); line-height:1.8;
+}
+.ct-cnt:empty{ display:none; }
 
 /* ══════════ 前回の内容を出しているときのお知らせ ══════════ */
 .stale{
