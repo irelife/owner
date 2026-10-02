@@ -1348,10 +1348,22 @@
    *  ★1年ぶんは、12か月を1つのPDFにまとめられないので false になります。
    *    本文に「PDFを添付しております」と書いてあるのに付けられない、
    *    という食い違いを起こさないためです。 */
-  function acMail(info, what, company, hasPdf){
+  function acMail(info, what, company, hasPdf, owner){
     var firm = (info && info.firm) ? String(info.firm).trim() : '';
     var name = (info && info.name) ? String(info.name).trim() : '';
     var co   = company ? String(company) : '当社';
+    /* ★2026/10/2 … 署名をオーナー様のお名前にしました。
+     *
+     *  【改良前】 「IREライフ株式会社 オーナーマイページより」
+     *            送り主は当社のように見えます。けれどもこのメールは
+     *            オーナー様が税理士事務所へお送りになるものです。
+     *            受け取った先生から見ると、誰からの明細か分かりません。
+     *  【改良後】 オーナー様のお名前を署名にします。
+     *            そのうえで「当社のマイページから送っている」ことを
+     *            一言添えます。差出人のアドレスが当社のものなので、
+     *            書いておかないと迷惑メールと間違われます。
+     *  ★お名前が取れないときは、これまでどおり当社名を出します。 */
+    var own  = owner ? String(owner).trim() : '';
     var line = '------------------------------';
 
     var atena = firm ? firm : '税理士事務所';
@@ -1372,8 +1384,12 @@
                        : '明細データ（CSV）を添付しております。\n\n') +
                'ご確認のほど、よろしくお願い申し上げます。\n\n' +
                line + '\n' +
-               co + ' オーナーマイページより\n' +
-               line
+               (own ? (own + '\n') : (co + ' オーナーマイページより\n')) +
+               line +
+               (own
+                 ? ('\n※ ' + co + 'のオーナーマイページより送信しております。\n' +
+                    '　 ご返信は、このままご返信ください。')
+                 : '')
     };
   }
 
@@ -1506,7 +1522,9 @@
     var g = acPicked();
     /* 明細書（PDF）をお付けいただけるのは、1か月ぶんで原本があるときだけです */
     var hasPdf = (acMode === 'month' && g.list.length > 0 && !!g.list[0].id);
-    var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf);
+    /* ★署名はオーナー様のお名前です（宛名の「御中」は付けません） */
+    var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf,
+                   (me && me.name) ? me.name : '');
     $('ac-subj').value = m.subject;
     $('ac-body').value = m.body;
   }
