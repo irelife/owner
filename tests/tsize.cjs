@@ -166,6 +166,37 @@ const SCREENS = ['home','papers','status','insurance','contact','accountant','ac
      '★原本が無い月は「この内容をPDFで保存」が主になる' +
      '（押せるものが1つも目立たない月を作らない）');
 
+  console.log('\n── 手ざわり（押した手ごたえ・焦点・開閉）──');
+  /* ★CSS は、ブラウザからではなくファイルから読みます。
+       file:// の読み込みでは cssRules が別の出どころとして弾かれ、
+       空の文字列が返ります。空だと「端数は無い」と誤って通ります
+       （一度そうなりました）。 */
+  const css = require('fs').readFileSync(
+    path.join(DIR, 'css', 'style.css'), 'utf8');
+  const feel = await p.evaluate(css => {
+    const h = document.querySelector('.pp-h');
+    return {
+      act   : /:active/.test(css),
+      focus : /:focus-visible/.test(css),
+      safe  : /safe-area-inset/.test(css),
+      open  : /@keyframes ppOpen/.test(css),
+      /* 字・角・アイコン・線が、きまりの中におさまっているか */
+      odd17 : /font-size:\s*(17|22|26)px/.test(css),
+      oddR  : /border-radius:\s*(10|14)px/.test(css),
+      oddW  : /stroke-width:\s*(1\.7|2\.2)(?!\d)/.test(css),
+      aria  : h ? h.getAttribute('aria-expanded') : null
+    };
+  }, css);
+  ok(feel.act,   '★押した手ごたえ（:active）がある');
+  ok(feel.focus, '★焦点の輪（:focus-visible）がある');
+  ok(feel.safe,  '★iPhone のノッチ・ホームバーをよけている');
+  ok(feel.open,  '★開くときの動きがある');
+  ok(!feel.odd17, '字の大きさに、端数（17・22・26px）が残っていない');
+  ok(!feel.oddR,  '角の丸みに、端数（10・14px）が残っていない');
+  ok(!feel.oddW,  '線の太さに、端数（1.7・2.2）が残っていない');
+  ok(feel.aria === 'true' || feel.aria === 'false',
+     '★開閉する見出しが、開いているかどうかを読み上げに伝える（aria-expanded）');
+
   console.log('');
   ok(errs.length === 0, 'JavaScript の誤りが出ない' +
        (errs.length ? '（' + errs[0] + '）' : ''));
