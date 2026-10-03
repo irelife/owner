@@ -1004,9 +1004,24 @@
                  '<span>' + (minus ? '−¥' : '¥') +
                  esc(yen(Math.abs(x.amount))) + '</span></div>';
         }).join('') + '</div>' : '') +
+        /* ══════════════════════════════════════════
+         *  3つのボタンに、重さの差をつけます（2026/10/3）
+         *
+         *  【改良前】 3つとも同じ「ghost（枠だけ）」で、縦に並んでいました。
+         *            オーナー様がふだん押すのは「明細書（PDF）」1つだけです。
+         *            CSVは税理士先生へお渡しになる方だけ、3つめは1つめと
+         *            ほとんど同じ結果です。同じ重さで3つ並べると、
+         *            毎月「どれを押すのか」を考えていただくことになります。
+         *
+         *  【改良後】 ふだん押すものを1つだけ塗りつぶし（主）にします。
+         *            ★原本（当社の明細書PDF）が無い月は、
+         *              「この内容をPDFで保存」が唯一の道になりますので、
+         *              そちらを主にします。押せるものが1つも目立たない、
+         *              という月を作らないためです。
+         * ══════════════════════════════════════════ */
         '<div class="pp-acts">' +
           /* ★原本（当社が作った明細書PDF）があるときは、それをお渡しします。 */
-          (it.id ? '<button type="button" class="btn ghost sm" data-pdf="' + esc(it.id) +
+          (it.id ? '<button type="button" class="btn sm" data-pdf="' + esc(it.id) +
                    '">' + IC_DL + '明細書（PDF）</button>' : '') +
           (rows.length ? '<button type="button" class="btn ghost sm" data-csv="' +
                    esc(it.ym) + '">' + IC_SHEET + '明細データ（CSV）</button>' : '') +
@@ -1014,7 +1029,8 @@
            *   ★お使いのブラウザの印刷を通します。jsPDF などの道具は使いません。
            *     あの道具は日本語の字を持っておらず、文字が出ないためです。
            *     印刷を通せば、日本語もそのまま出て、文字も選べます。 */
-          (rows.length ? '<button type="button" class="btn ghost sm" data-print="' +
+          (rows.length ? '<button type="button" class="btn' + (it.id ? ' ghost' : '') +
+                   ' sm" data-print="' +
                    esc(it.ym) + '">' + IC_PRINT + 'この内容をPDFで保存</button>' : '') +
         '</div>' +
         (it.id ? '' :
