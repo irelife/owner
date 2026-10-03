@@ -197,33 +197,57 @@ try{
            最新が届いたら消えます。 -->
       <p class="stale" id="hm-stale" hidden>前回ご覧になった内容を表示しています。最新の内容を読み込んでいます…</p>
 
+      <!-- ══════════ タイルの説明文について（2026/10/3）══════════
+           【改良前】 5枚それぞれに25〜39字の説明文が付いていました。
+
+             送金明細 … 毎月の送金額と収支の内訳を一目で確認できる明細書です。
+             入居状況 … 入居・空室・解約予定をリアルタイムで把握できる管理画面です。
+             火災保険 … 火災保険の証券写しをアップロードし、満期まで一元管理できます。
+             お問い合わせ … 運用に関するご質問・ご要望をお送りいただけます。
+             税理士へ送信 … 月別・年別の送金明細を、定型の文面とともに
+                           税理士事務所へご送付いただけます。
+
+             はじめて開いた日は親切ですが、毎月ご覧になる方には長いだけです。
+             5枚で155字が、金額のすぐ下にぶら下がっていました。
+             「アップロード」「一元管理」「管理画面」「リアルタイム」も、
+             通じない方がおられます。
+
+           【改良後】 13〜20字にしました（155字 → 80字）。
+             ・見出しと同じ言葉のくり返しをやめました
+             ・外来語と社内語を、日常の言葉に置き換えました
+             ・幼稚にはしていません。ていねいな体言止めにそろえています
+
+           ★火災保険に「満期をお知らせします」とは書きません。
+             いまは、満期の近い物件を画面の上に出すだけで、メールは
+             送っていません。できないことを書くわけにはいきません。
+           ══════════════════════════════════════════════════ -->
       <nav class="tiles">
         <button type="button" class="tile" data-go="papers">
           <span class="tile-k">送金明細</span>
           <span class="tile-t">今月のご送金</span>
           <span class="tile-a" id="hm-total">—</span>
-          <span class="tile-d">毎月の送金額と収支の内訳を一目で確認できる明細書です。</span>
+          <span class="tile-d">物件ごとの内訳と、3年分の明細。</span>
         </button>
         <button type="button" class="tile" data-go="status">
           <span class="tile-k">入居状況</span>
           <span class="tile-t">すべての物件の入居状況</span>
-          <span class="tile-d">入居・空室・解約予定をリアルタイムで把握できる管理画面です。</span>
+          <span class="tile-d">入居・空室・解約のご予定。</span>
         </button>
         <button type="button" class="tile" data-go="insurance">
           <span class="tile-k">火災保険</span>
           <span class="tile-t">保険証券の提出と満期管理</span>
-          <span class="tile-d">火災保険の証券写しをアップロードし、満期まで一元管理できます。</span>
+          <span class="tile-d">証券の写しと、満期日のお預かり。</span>
         </button>
         <button type="button" class="tile" id="hm-ct-tile" data-go="contact">
           <span class="tile-n" id="hm-ct-n" hidden></span>
           <span class="tile-k">お問い合わせ</span>
           <span class="tile-t">ご質問・ご要望</span>
-          <span class="tile-d">運用に関するご質問・ご要望をお送りいただけます。</span>
+          <span class="tile-d">当社へ直接お送りいただけます。</span>
         </button>
         <button type="button" class="tile" data-go="accountant">
           <span class="tile-k">税理士へ送信</span>
           <span class="tile-t">送金明細を税理士事務所へ送付</span>
-          <span class="tile-d">月別・年別の送金明細を、定型の文面とともに税理士事務所へご送付いただけます。</span>
+          <span class="tile-d">明細書を添えて、当社からお送りします。</span>
         </button>
       </nav>
 
