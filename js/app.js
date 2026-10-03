@@ -985,7 +985,11 @@
     var rows = Array.isArray(it.rows) ? it.rows : [];
     var naka = rows.length || it.id;               /* 開く中身があるか */
     return '<div class="pp' + (big ? ' big' : '') + '">' +
+      /* ★aria-expanded … 開いているか閉じているかを、読み上げに伝えます。
+           無いと、画面を読み上げてお使いの方には「押せる」ことしか
+           分からず、押した結果が分かりません。 */
       '<button type="button" class="pp-h' + (open ? ' open' : '') + '"' +
+              ' aria-expanded="' + (open ? 'true' : 'false') + '"' +
               (naka ? '' : ' disabled') + '>' +
         '<span class="pp-l">' +
           '<span class="pp-t">' + esc(it.ym) + '</span>' +
@@ -1058,6 +1062,7 @@
         if(!body) return;
         body.hidden = !body.hidden;
         h.classList.toggle('open', !body.hidden);
+        h.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
       });
     });
     Array.prototype.forEach.call(box.querySelectorAll('[data-pdf]'), function(b){

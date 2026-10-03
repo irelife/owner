@@ -101,6 +101,50 @@
           'Yu Gothic', 'Noto Sans JP', sans-serif;
 }
 
+/* ══════════════════════════════════════════════════════════════
+ *  形のきまり（2026/10/3 新設）
+ *
+ *  【なぜ作ったか】
+ *  このファイルの値を数えました。
+ *
+ *      字の大きさ … 19種（11 12 13 14 15 16 17 18 20 22 24 26 28 36 40 48 52 60 64）
+ *      角の丸み　 … 9種（2 4 8 10 12 14 16 24 999）
+ *      アイコン　 … 9種（10 11 15 17 21 22 24 28 34）
+ *      線の太さ　 … 4種（1.7 1.8 2 2.2）
+ *      押した手ごたえ … 0個
+ *
+ *  17px と 18px、21px と 22px、10px と 12px の差は、誰にも
+ *  見分けられません。ですが「そろっていない」ことは伝わります。
+ *  整っていない画面は、作りが雑だと感じられます。
+ *
+ *  【どうしたか】
+ *  ここに1か所だけ決めて、端数をここへ寄せました。
+ *  以後、新しい値を書く前に、ここを見てください。
+ * ══════════════════════════════════════════════════════════════ */
+:root{
+  /* アイコン。3段だけです */
+  --ic-s:18px;   /* 文字のとなり（戻る・小さなボタン） */
+  --ic-m:20px;   /* 単独のアイコン（目・メニュー） */
+  --ic-l:24px;   /* 見出しのとなり */
+  --ic-w:1.8;    /* 線の太さ。層ごとに変えません */
+
+  /* 角の丸み */
+  --r-s:8px;     /* 小さな札 */
+  --r-m:12px;    /* 入力欄・小さな箱 */
+  --r-l:16px;    /* 箱 */
+  --r-x:24px;    /* 大きな箱 */
+  --r-pill:999px;
+
+  /* 動き。距離と役割で変えます。1つの時間を使い回しません */
+  --t-tap:.12s;  /* 押した手ごたえ（80〜150ms） */
+  --t-ui:.2s;    /* 色・濃さが変わる */
+  --t-open:.24s; /* 開く・閉じる */
+  --ease:cubic-bezier(.22,.61,.36,1);   /* 出るとき。終わりがやわらかい */
+
+  /* 押したときの沈み。場所を動かしません（まわりがガタつくため） */
+  --press:.90;
+}
+
 *, *::before, *::after{ box-sizing:border-box; }
 html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
 body{
@@ -110,6 +154,50 @@ body{
   text-rendering:optimizeLegibility;
 }
 [hidden]{ display:none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+ *  押した手ごたえ と 焦点の輪（2026/10/3 新設）
+ *
+ *  【改良前】
+ *  :active が1つもありませんでした。この画面はスマートフォンで
+ *  ご覧になります。スマートフォンに「hover（指を乗せる）」は
+ *  ありません。つまり **押しても、画面が変わるまで何も起きません**。
+ *  押せたのか分からず、もう一度押される。これが、この画面が
+ *  安っぽく感じられる最大の理由でした。
+ *
+ *  焦点の輪も、ロゴのボタンにしか付いていませんでした。
+ *  キーボードでお使いの方には、いまどこにいるのか分かりません。
+ *
+ *  【改良後】
+ *  ・押している間、わずかに沈ませます（80〜150ms）
+ *  ・場所は1pxも動かしません。transform で縮めると、まわりが
+ *    ガタついて見えます。濃さだけを変えます。
+ *  ・焦点の輪は、押せるものすべてに、同じ形で付けます。
+ *
+ *  ★:where() で書いています。強さ（詳細度）が0なので、
+ *    個別の指定があればそちらが勝ちます。あとから書く人が
+ *    ここに邪魔されません。
+ * ══════════════════════════════════════════════════════════════ */
+:where(button, a, select, summary, [tabindex]):focus-visible{
+  outline:2px solid var(--pri);
+  outline-offset:3px;
+  border-radius:inherit;
+}
+
+/* 押している間だけ、少し沈みます */
+:where(button, a[href], summary, label.ac-cc, .tile):active{
+  filter:brightness(var(--press));
+  transition-duration:var(--t-tap);
+}
+/* 押せないものは沈みません（押せたように見せないため） */
+:where(button:disabled, [aria-disabled="true"]):active{ filter:none; }
+
+/* 指で押したときに、青い四角が出ないようにします（iOS・Android） */
+button, a, label, .tile{ -webkit-tap-highlight-color:transparent; }
+
+/* ★押せるものには、必ず指の形を出します */
+button:not(:disabled), a[href], label[for], summary{ cursor:pointer; }
+
 img{ max-width:100%; }
 
 /* ── 画面の枠 ─────────────────────────────── */
@@ -119,16 +207,31 @@ img{ max-width:100%; }
        いちど　　　　 … 760px（目分量。まだ長かった）
        いま　　　　　 … 672px（見本と同じ）
      ★ホームだけは、カードを3枚並べたいので広いままにします。 */
-.scr.pad{ max-width:672px; margin:0 auto; padding:24px 20px 96px; }
+/* ★2026/10/3 … iPhone のノッチ・丸い角・ホームバーをよけます。
+     横向きにすると、丸い角に字が隠れていました。
+     max() なので、よける必要の無い端末では今までどおり 20px です。 */
+.scr.pad{
+  max-width:672px; margin:0 auto;
+  padding:24px max(20px, env(safe-area-inset-right))
+          calc(96px + env(safe-area-inset-bottom))
+          max(20px, env(safe-area-inset-left));
+}
 #s-home.pad{ max-width:1024px; }
 .scr.center{ min-height:100dvh; display:flex; align-items:center;
-  justify-content:center; padding:24px 20px; }
+  justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+          calc(24px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 
 /* ── 上のバー ─────────────────────────────── */
 .bar{
-  position:sticky; top:0; z-index:40; height:56px;
+  position:sticky; top:0; z-index:40;
+  /* ★ノッチのぶんだけ、上に余白を足します（56px の中身は変わりません） */
+  height:calc(56px + env(safe-area-inset-top));
+  padding-top:env(safe-area-inset-top);
   display:flex; align-items:center; gap:8px;
-  max-width:1024px; margin:0 auto; padding:0 20px;
+  max-width:1024px; margin:0 auto;
+  padding-left:max(20px, env(safe-area-inset-left));
+  padding-right:max(20px, env(safe-area-inset-right));
   background:hsl(var(--background) / .8);
   -webkit-backdrop-filter:saturate(180%) blur(16px);
   backdrop-filter:saturate(180%) blur(16px);
@@ -139,7 +242,7 @@ img{ max-width:100%; }
   color:var(--pri);
 }
 .logo-mark span{ font-weight:700; }
-.logo-mark.big{ font-size:26px; margin-bottom:18px; }
+.logo-mark.big{ font-size:28px; margin-bottom:18px; }   /* 26 → 28 */
 /* ★ロゴを押すと、ホームに戻ります（2026-09-23 ご指示）。
    見た目は今までと1ドットも変えません。
    ★font-size と font-weight は .logo-mark のものを使うため、
@@ -183,11 +286,20 @@ img{ max-width:100%; }
 
 /* ── 文字 ─────────────────────────────────── */
 h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
-.h-mincho{ font-size:36px; line-height:1.25; margin:0; }
+/* ★text-wrap:balance … 見出しが2行になるとき、1行目と2行目の長さを
+     そろえます。最後の1文字だけが次の行に落ちる「ぶら下がり」が
+     消えます。対応していないブラウザは、今までどおりの折り返しです。
+   ★max-inline-size で読みやすい字数に区切ります。
+     日本語は 20〜24字が目安です。 */
+.h-mincho{
+  font-size:36px; line-height:1.25; margin:0;
+  text-wrap:balance; max-inline-size:22ch;
+}
 .card .h-mincho{ font-size:28px; }
 .kicker{ margin:0 0 4px; font-size:12px; font-weight:600; letter-spacing:.06em;
   color:var(--pri); text-transform:uppercase; }
-.sub{ margin:12px 0 0; font-size:18px; line-height:1.75; color:var(--mut-fg); }
+.sub{ margin:12px 0 0; font-size:18px; line-height:1.75; color:var(--mut-fg);
+  text-wrap:pretty; max-inline-size:38ch; }
 .card .sub{ font-size:14px; margin:6px 0 20px; }
 .sect{
   margin:40px 0 16px; font-size:20px; font-weight:700; letter-spacing:-.02em;
@@ -220,8 +332,8 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 }
 .back:hover{ background:var(--acc); color:var(--fg); }
 .back svg{
-  width:15px; height:15px; flex:0 0 auto;
-  fill:none; stroke:currentColor; stroke-width:2.2;
+  width:var(--ic-s); height:var(--ic-s); flex:0 0 auto;   /* 15px → 18px */
+  fill:none; stroke:currentColor; stroke-width:var(--ic-w);
   stroke-linecap:round; stroke-linejoin:round;
 }
 
@@ -311,8 +423,8 @@ input[type=file]::file-selector-button{
   border:0; background:transparent; color:var(--mut-fg); cursor:pointer; border-radius:12px;
 }
 .pw-eye:hover{ color:var(--fg); }
-.pw-eye svg{ width:21px; height:21px; fill:none; stroke:currentColor;
-  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.pw-eye svg{ width:var(--ic-m); height:var(--ic-m); fill:none; stroke:currentColor;
+  stroke-width:var(--ic-w);                                 /* 21px → 20px */ stroke-linecap:round; stroke-linejoin:round; }
 .pw-eye .eye-off{ display:none; }
 .pw-eye.on .eye-on{ display:none; }
 .pw-eye.on .eye-off{ display:block; }
@@ -331,13 +443,17 @@ input[type=file]::file-selector-button{
   margin:4px 0 0; font-size:52px; line-height:1.05; font-weight:700;
   letter-spacing:-.03em; font-variant-numeric:tabular-nums;
 }
-.amount i{ margin-left:6px; font-size:22px; font-style:normal; font-weight:600;
+.amount i{ margin-left:6px; font-size:20px; font-style:normal; font-weight:600;
   color:var(--mut-fg); }
 .rows{ margin-top:24px; border-top:1px solid var(--bd-40); }
 .row{
   display:flex; justify-content:space-between; gap:16px;
   padding:12px 0; border-bottom:1px solid var(--bd-40); font-size:15px;
 }
+/* ★2026/10/3 … いちばん下の罫線を消します。
+     一覧の下に、どこにもつながらない線が1本だけ残っていました。
+     「表の終わり」は余白で分かります。線は要りません。 */
+.rows .row:last-child{ border-bottom:0; }
 .row span:first-child{ color:var(--mut-fg); }
 .row span:last-child{ font-variant-numeric:tabular-nums; }
 .row.minus span:last-child{ color:var(--ng); }
@@ -413,7 +529,7 @@ input[type=file]::file-selector-button{
   display:none; position:absolute; left:50%; bottom:100%; z-index:5;
   transform:translateX(-50%); margin-bottom:6px;
   min-width:172px; padding:10px 12px;
-  background:var(--bg); border:1px solid var(--bd); border-radius:10px;
+  background:var(--bg); border:1px solid var(--bd); border-radius:var(--r-m);
   box-shadow:0 10px 30px rgba(0,0,0,.4); text-align:left;
 }
 .c2:hover .c2-tip, .c2:focus-within .c2-tip{ display:block; }
@@ -467,7 +583,7 @@ input[type=file]::file-selector-button{
 .ch-tb thead th{ color:var(--mut-fg); font-weight:600; border-top:0; }
 .ch-tb th[scope=row]{ text-align:left; font-weight:500; color:var(--mut-fg); }
 .ic-up{
-  display:inline-block; width:22px; height:22px; margin-right:8px;
+  display:inline-block; width:var(--ic-l); height:var(--ic-l); margin-right:8px; /* 22px → 24px */
   vertical-align:-3px; background:var(--pri);
   -webkit-mask:var(--ic-up) center / contain no-repeat;
           mask:var(--ic-up) center / contain no-repeat;
@@ -494,7 +610,7 @@ input[type=file]::file-selector-button{
 }
 .tile-n{
   position:absolute; top:20px; right:20px;
-  min-width:28px; height:28px; padding:0 9px; border-radius:14px;
+  min-width:28px; height:28px; padding:0 9px; border-radius:var(--r-pill);
   display:flex; align-items:center; justify-content:center;
   background:var(--pri); color:var(--pri-fg);
   font-size:14px; font-weight:700; line-height:1;
@@ -538,8 +654,20 @@ input[type=file]::file-selector-button{
    いちばん新しい1件は .pp.big（全幅）、
    そのつぎの3か月は .pp-grid の中の .pp（3枚並び）です。 */
 .pp{
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
   overflow:hidden; margin-top:20px;
+  transition:border-color var(--t-ui), box-shadow var(--t-ui);
+}
+/* ★2026/10/3 … 開いているカードを、ひと目で分かるようにします。
+ *
+ *  改良前： 開いていても閉じていても、枠はまったく同じでした。
+ *          4か月ぶんが並ぶと、どれを開けたのか分かりません。
+ *  改良後： 開いている1枚だけ、枠を金色にし、わずかに浮かせます。
+ *          色だけに頼りません。中身が出ていること・山形の向きが
+ *          変わることと合わせて、3つで伝えます。 */
+.pp:has(.pp-h.open){
+  border-color:hsl(var(--primary) / .55);
+  box-shadow:0 1px 2px hsl(0 0% 0% / .18), 0 10px 28px hsl(0 0% 0% / .22);
 }
 /* ★2026/10/1 … 画面の幅ではなく「この枠の幅」で列数を決めます。
  *
@@ -580,6 +708,24 @@ input[type=file]::file-selector-button{
   transform:rotate(45deg) translate(-2px,-2px); transition:transform .15s;
 }
 .pp-h.open .pp-c{ transform:rotate(-135deg) translate(-2px,-2px); }
+
+/* ══════════════════════════════════════════════
+ *  開くときの動き（2026/10/3）
+ *
+ *  【改良前】 hidden を外すだけでした。中身が「パッ」と出ます。
+ *            どこから出たのか分からず、目で追えません。
+ *  【改良後】 上から降りてくるように、0.24秒かけて出します。
+ *
+ *  ★動きを減らす設定の方には出しません（このファイルの最後に
+ *    prefers-reduced-motion の指定があり、animation を止めます）。
+ *  ★閉じるときは animation を使いません。消えるものを待たせても
+ *    意味がなく、次の操作が遅れるだけです（出るときより速く、が原則）。
+ * ══════════════════════════════════════════════ */
+.pp-b:not([hidden]){ animation:ppOpen var(--t-open) var(--ease) both; }
+@keyframes ppOpen{
+  from{ opacity:0; transform:translateY(-6px); }
+  to  { opacity:1; transform:none; }
+}
 .pp-a{
   margin:8px 0 0; padding:0 24px 20px;
   font-size:36px; font-weight:700; line-height:1.15; letter-spacing:-.03em;
@@ -587,7 +733,7 @@ input[type=file]::file-selector-button{
 }
 /* 明細書（PDF）がまだ入っていない月の、ご案内 */
 .pp-n{
-  margin:12px 0 0; padding:10px 12px; border-radius:10px;
+  margin:12px 0 0; padding:10px 12px; border-radius:var(--r-m);
   background:var(--mut); color:var(--fg);
   font-size:14px; line-height:1.8;
 }
@@ -636,8 +782,8 @@ input[type=file]::file-selector-button{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn.sm svg{
-  width:17px; height:17px; flex:0 0 auto;
-  fill:none; stroke:currentColor; stroke-width:1.8;
+  width:var(--ic-s); height:var(--ic-s); flex:0 0 auto;   /* 17px → 18px */
+  fill:none; stroke:currentColor; stroke-width:var(--ic-w);
   stroke-linecap:round; stroke-linejoin:round;
 }
 
@@ -683,7 +829,7 @@ input[type=file]::file-selector-button{
 .st-prop{ margin-bottom:32px; }
 .st-prop:last-child{ margin-bottom:0; }
 .st-pn{
-  margin:0 0 12px; font-size:22px; font-weight:700;
+  margin:0 0 12px; font-size:20px; font-weight:700;
   letter-spacing:-.01em; word-break:keep-all;
 }
 /* ★1部屋の3段（2026-09-23。見本 base44 の Status.jsx と同じ形）
@@ -897,7 +1043,7 @@ input[type=file]::file-selector-button{
 .ac-cf-to{
   margin:10px 0 0; padding:12px 16px; border-radius:12px;
   background:hsl(var(--input)); border:1px solid var(--bd);
-  font-size:17px; font-weight:500; word-break:break-all;
+  font-size:18px; font-weight:500; word-break:break-all;
 }
 .ac-cf-n{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
 
@@ -922,7 +1068,7 @@ input[type=file]::file-selector-button{
 
 #ac-prev .rows{ margin-top:14px; }
 .row.acc-sum{
-  margin-top:0; border-top:1px solid var(--bd); font-weight:700; font-size:17px;
+  margin-top:0; border-top:1px solid var(--bd); font-weight:700; font-size:18px;
 }
 .row.acc-sum span:first-child{ color:var(--fg); }
 
@@ -966,7 +1112,7 @@ input[type=file]::file-selector-button{
 
 /* ══════════ 前回の内容を出しているときのお知らせ ══════════ */
 .stale{
-  margin:16px 0 0; padding:10px 14px; border-radius:10px;
+  margin:16px 0 0; padding:10px 14px; border-radius:var(--r-m);
   background:var(--mut); color:var(--fg);
   font-size:12.5px; line-height:1.8;
 }
