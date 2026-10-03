@@ -207,11 +207,15 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
   background:var(--pri); margin-top:12px; }
 
 /* ── 戻る ─────────────────────────────────── */
+/* ★2026/10/3 … 高さを 36px → 44px にしました。
+ *   実測で 137×36px でした。指でふれる的の目安は 44px です（Apple・WCAG）。
+ *   これは6つの画面すべてに出ていて、いちばん押される部品です。
+ *   いちばん小さいものが、いちばん押されていました。 */
 .back{
   display:inline-flex; align-items:center; gap:6px;
-  margin:0 0 20px; padding:6px 16px; border:0; border-radius:999px;
+  margin:0 0 20px; min-height:44px; padding:0 18px; border:0; border-radius:999px;
   background:var(--mut); color:var(--mut-fg);
-  font:inherit; font-size:14px; font-weight:500; cursor:pointer;
+  font:inherit; font-size:15px; font-weight:500; cursor:pointer;
   transition:background .15s, color .15s;
 }
 .back:hover{ background:var(--acc); color:var(--fg); }
@@ -285,14 +289,17 @@ select{
   background-repeat:no-repeat; background-position:right 14px center;
   background-size:18px; padding-right:42px;
 }
+/* ★2026/10/3 … 高さを 36px → 44px にしました（実測 300×36px）。
+     証券の写しをお預けいただく、最初の一歩です。 */
 input[type=file]{
+  display:flex; align-items:center; min-height:44px;
   width:100%; font-size:14px; color:var(--mut-fg);
   border:0; background:transparent; padding:0;
 }
 input[type=file]::file-selector-button{
-  margin-right:12px; padding:10px 16px; border:0; border-radius:12px;
+  margin-right:12px; min-height:44px; padding:0 18px; border:0; border-radius:12px;
   background:var(--acc); color:var(--fg);
-  font:inherit; font-size:14px; font-weight:500; cursor:pointer;
+  font:inherit; font-size:15px; font-weight:500; cursor:pointer;
 }
 
 /* パスワードの目 */
@@ -618,7 +625,10 @@ input[type=file]::file-selector-button{
      672px の画面では、ボタンが2つの月は「横に2つ」、
      3つの月は「横に2つ＋下に1つ（全幅）」になります。
      150px にすると3つが1行に詰め込まれ、字が窮屈でした。 */
-.pp-acts .btn{ flex:1 1 220px; min-width:0; }
+/* ★margin-top は 0 にそろえます。.btn は 16px、.btn.ghost は 12px を
+     持っており、主と控えめを混ぜると 4px ずれて並ぶためです。
+     縦の間は gap に任せます。 */
+.pp-acts .btn{ flex:1 1 220px; min-width:0; margin-top:0; }
 
 /* 小さめのボタン（PDF・CSV） */
 .btn.sm{
@@ -756,8 +766,16 @@ input[type=file]::file-selector-button{
   font-size:14px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
-.foot-note{ margin-top:24px; text-align:center; font-size:12px; color:var(--mut-fg); }
-.foot-note a{ color:var(--fg); }
+.foot-note{ margin-top:24px; text-align:center; font-size:13px; color:var(--mut-fg); }
+/* ★2026/10/3 … 押せる高さを 14px → 38px にしました。
+ *   文の中のメールアドレスで、実測 90×14px。指ではまず当たりません。
+ *   外側の余白を打ち消す（負の margin）ので、見た目の行間は変わりません。
+ *   44px にすると上下の行と的が重なるため、ここは 38px にとどめます。 */
+.foot-note a{
+  display:inline-block; color:var(--fg);
+  padding:12px 6px; margin:-12px -6px;
+  text-decoration:underline; text-underline-offset:3px;
+}
 
 /* ── 火災保険（1物件＝1つの箱／2026-09-22 作り替え）──────
  *  改良前： 1証券＝1行のべた並び。CSS が1行も当たっていませんでした。
@@ -855,12 +873,16 @@ input[type=file]::file-selector-button{
 .acc-acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px; }
 
 /* ★控えを自分にも送るか（2026-09-23） */
+/* ★2026/10/3 … 四角を 20px → 24px に、札ぜんたいも 44px 以上にしました。
+     札（label）ごと押せますが、高さが1行ぶんしかなく、
+     文が1行におさまる画面では 26px しかありませんでした。 */
 .ac-cc{
-  display:flex; align-items:flex-start; gap:10px; margin-top:16px;
+  display:flex; align-items:flex-start; gap:12px; margin-top:12px;
+  min-height:44px; padding:10px 0;
   font-size:15px; line-height:1.7; color:var(--fg); cursor:pointer;
 }
 .ac-cc input{
-  flex:0 0 auto; width:20px; height:20px; margin:2px 0 0;
+  flex:0 0 auto; width:24px; height:24px; margin:0;
   accent-color:hsl(var(--primary));
 }
 
