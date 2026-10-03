@@ -34,12 +34,13 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
 const eq = (got, want, m) => ok(got === want, m + '（' + JSON.stringify(got) + '）');
 
 console.log('\n── 配色の一覧（THEMES）──');
-eq(box.THEMES.length, 4, '4つ');
+eq(box.THEMES.length, 3, '3つ');
 eq(box.THEMES[0].id, 'wine', '1つめは既定のワイン');
 ok(box.THEMES.every(t => /^#[0-9A-F]{6}$/.test(t.bg) && /^#[0-9A-F]{6}$/.test(t.pri)),
    '★どれも色が6桁で入っている（先あての script と対になる値）');
 ok(new Set(box.THEMES.map(t => t.id)).size === box.THEMES.length, 'id が重なっていない');
-ok(box.THEMES.some(t => t.id === 'indigo'), '★藍（お写真に合わせた色）が入っている');
+ok(!box.THEMES.some(t => t.id === 'indigo'),
+   '★藍は取り下げ済み（2026/10/2 ご指示）。一覧に残っていない');
 
 /* ★★ index.html の「配色の先あて」と、THEMES がずれていないか
  *
@@ -74,7 +75,8 @@ console.log('\n── 配色を選ぶ（thPick）──');
 eq(box.thPick('wine'), 'wine', 'ワイン');
 eq(box.thPick('midnight'), 'midnight', 'ミッドナイト');
 eq(box.thPick('charcoal'), 'charcoal', 'チャコール');
-eq(box.thPick('indigo'), 'indigo', '藍');
+eq(box.thPick('indigo'), 'wine',
+   '★藍を選んでいた方は、既定のワインに戻る（画面が壊れない）');
 eq(box.thPick(''), 'wine', '★空なら既定のワイン');
 eq(box.thPick(null), 'wine', '★何も来なくてもワイン');
 eq(box.thPick('sakura'), 'wine', '★一覧に無いものはワイン（当てずっぽうにしない）');
@@ -86,8 +88,10 @@ eq(box.thName('midnight'), 'ミッドナイト', '名前が引ける');
 eq(box.thName('sakura'), '', '★無いものは空');
 eq(box.thOf('sakura').id, 'wine', 'thOf も無いものはワインに戻す');
 eq(box.thOf('charcoal').bg, '#23211F', 'チャコールの地の色');
-eq(box.thOf('indigo').bg, '#1E2243', '藍の地の色');
-eq(box.thName('indigo'), '藍', '藍の名前');
+eq(box.thOf('indigo').bg, '#3E1E24',
+   '★取り下げた藍は、既定のワインの色を返す');
+eq(box.thName('indigo'), '',
+   '★取り下げた藍は、名前を返さない（画面に出さない）');
 
 console.log('\n── 全角を直す（myNum）──');
 eq(box.myNum('０９０－１２３４－５６７８'), '090-1234-5678', '★全角の数字とハイフン');

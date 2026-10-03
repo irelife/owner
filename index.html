@@ -23,7 +23,7 @@
        ★ずれていないかは tests/tmy.cjs が見張ります。 -->
 <script>
 try{
-  var _TH = { midnight:'#141D2E', charcoal:'#23211F', indigo:'#1E2243' };
+  var _TH = { midnight:'#141D2E', charcoal:'#23211F' };
   var _t = localStorage.getItem('ire_owner_theme');
   if(_t && _TH[_t]){
     document.documentElement.setAttribute('data-theme', _t);
@@ -32,7 +32,7 @@ try{
   }
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=39">
+<link rel="stylesheet" href="css/style.css?v=40">
 </head>
 <body>
 
@@ -88,6 +88,41 @@ try{
       </div>
       <p id="fg-msg" class="msg" role="status" aria-live="polite"></p>
       <button type="submit" id="fg-go" class="btn">送信する</button>
+    </form>
+    <button type="button" class="btn link" data-go="login">ログイン画面へ戻る</button>
+  </div>
+</section>
+
+<!-- ══════════ 再設定（メールのリンクから） ══════════
+     ★2026/10/2 新設。
+       これまで再設定は Apps Script が出す画面でした。あの画面は
+       Google の枠（iframe）の中でしか動かず、拡張機能・ブロッカー・
+       サードパーティCookie の制限で「接続が拒否されました」になり、
+       オーナー様がご自分で作り直せませんでした。
+       枠を使わない、この画面に移します。                      -->
+<section id="s-reset" class="scr center" hidden>
+  <div class="card narrow">
+    <h1 class="h-mincho">パスワードの再設定</h1>
+    <p class="sub">新しいパスワードをご設定ください。</p>
+    <form id="f-reset" novalidate>
+      <div class="field">
+        <label for="rs-a">新しいパスワード<span class="hint">8文字以上</span></label>
+        <div class="pw">
+          <input type="password" id="rs-a" autocomplete="new-password">
+          <button type="button" class="pw-eye" data-eye="rs-a"
+                  aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rs-b">新しいパスワード（確認）</label>
+        <div class="pw">
+          <input type="password" id="rs-b" autocomplete="new-password">
+          <button type="button" class="pw-eye" data-eye="rs-b"
+                  aria-label="パスワードを表示"><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7c1.7 0 3.2.5 4.5 1.2M22 12s-3.6 7-10 7c-1.7 0-3.2-.5-4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button>
+        </div>
+      </div>
+      <p id="rs-msg" class="msg" role="status" aria-live="polite"></p>
+      <button type="submit" id="rs-go" class="btn">設定する</button>
     </form>
     <button type="button" class="btn link" data-go="login">ログイン画面へ戻る</button>
   </div>
@@ -628,6 +663,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=42"></script>
+<script src="js/app.js?v=43"></script>
 </body>
 </html>
