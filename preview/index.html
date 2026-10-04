@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>デザイン案｜オーナーマイページ</title>
+<!-- ══════════════════════════════════════════════════════════════
+     これは「見本」です。本番の画面ではありません。
+     ・オーナー様のお名前・金額は1件も入っていません。すべて架空です
+     ・ログインの欄は置いていません（ここから入ることはできません）
+     ・どこからもリンクしていません
+     ・本番は https://irelife.github.io/owner/ のままです
+
+     考えかた：Editorial（印刷物の組みかた）× 暗い配色
+       紙の明細書に慣れたオーナー様に、いちばん自然な形です。
+       「表計算ソフト」ではなく「送られてきた一枚の書面」に見せます。
+
+     いまの画面との、いちばん大きな違いは3つです。
+       ① 枠線をやめ、面の明暗で分ける
+       ② 金額を明朝にする
+       ③ 余白を増やし、置くものを減らす
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+/* ── 色。差し色の金（#C79C6B）はご指定のまま、使う場所だけ減らします ── */
+:root{
+  --bg:#34191E;          /* 地 */
+  --bg2:#2C1419;         /* 地（下へ向かってわずかに沈む） */
+  --sf:#42232A;          /* 面。枠線のかわりに、これで分けます */
+  --sf2:#4B2930;         /* 面（ひとつ上） */
+  --fg:#F6EDEA;          /* 文字 */
+  --mut:#C0ADA8;         /* 控えめな文字 */
+  --dim:#9C8A86;         /* さらに控えめ */
+  --gold:#C79C6B;        /* 差し色。ほんとうに要るところだけ */
+  --gold-d:#A87F4F;
+  --hair:rgba(255,255,255,.07);   /* 髪の毛ほどの線 */
+  --ng:#E38A8A;
+
+  --mincho:'Hiragino Mincho ProN','Yu Mincho',YuMincho,'Noto Serif JP',serif;
+  --gothic:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Noto Sans JP',sans-serif;
+
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px;
+  --r:14px;
+  --t:.2s; --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0; min-height:100dvh;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%) var(--bg);
+  color:var(--fg);
+  font-family:var(--gothic); font-size:16px; line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+}
+[hidden]{ display:none !important; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+:where(button,a):focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+:where(button,a):active{ filter:brightness(.9); transition-duration:.12s; }
+
+/* ── 見本であることの帯。本番には出しません ── */
+.flag{
+  position:sticky; top:0; z-index:90;
+  padding:10px max(16px,env(safe-area-inset-left));
+  background:#1E0E12; border-bottom:1px solid var(--hair);
+  font-size:12px; line-height:1.6; color:var(--dim); text-align:center;
+}
+.flag b{ color:var(--gold); font-weight:600; }
+
+/* ── 上のバー ── */
+.bar{
+  position:sticky; top:41px; z-index:80;
+  display:flex; align-items:center; gap:var(--s2);
+  height:calc(58px + env(safe-area-inset-top));
+  padding:env(safe-area-inset-top) max(20px,env(safe-area-inset-left)) 0
+          max(20px,env(safe-area-inset-right));
+  background:rgba(52,25,30,.86);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+  backdrop-filter:blur(14px) saturate(160%);
+  border-bottom:1px solid var(--hair);
+}
+/* ★ロゴを明朝にし、字間を開けます。ゴシックの太字より、ずっと静かです */
+.logo{
+  font-family:var(--mincho); font-size:19px; font-weight:600;
+  letter-spacing:.14em; color:var(--fg);
+}
+.logo em{ font-style:normal; color:var(--gold); }
+.bar .who{ margin-left:auto; font-size:13px; color:var(--mut); }
+.dots{ width:44px; height:44px; display:grid; place-items:center; margin-right:-10px; }
+.dots i{ display:block; width:3px; height:3px; border-radius:50%;
+  background:var(--mut); box-shadow:0 -6px var(--mut),0 6px var(--mut); }
+
+main{ max-width:560px; margin:0 auto;
+  padding:var(--s4) max(20px,env(safe-area-inset-left))
+          calc(var(--s5) + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-right)); }
+
+/* ══════════ 今月の一枚 ══════════
+   ★カードに入れません。いちばん大事なものを箱で囲うと、
+     ほかの箱と同じ重さになります。地の上に直に置きます。 */
+.month{ font-size:13px; letter-spacing:.14em; color:var(--gold); }
+.hero-l{ margin:var(--s1) 0 0; font-family:var(--mincho);
+  font-size:17px; font-weight:400; color:var(--mut); letter-spacing:.04em; }
+/* ★金額を明朝に。送金明細書は、もともと明朝で組まれています。
+     太さは 400 のままで、大きさだけで見せます。太字にすると紙らしさが消えます。 */
+.hero-a{
+  margin:6px 0 0; font-family:var(--mincho);
+  font-size:52px; font-weight:400; line-height:1.1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+}
+.hero-a span{ font-size:28px; margin-right:2px; color:var(--mut); }
+.hero-d{ margin:var(--s2) 0 0; font-size:14px; color:var(--dim); }
+.rule{ height:1px; margin:var(--s4) 0; background:var(--hair); border:0; }
+.rule.gold{ width:44px; height:2px; margin:var(--s2) 0 0;
+  background:var(--gold); border-radius:2px; }
+
+/* ══════════ 送られてきた書面（内訳）══════════ */
+.sheet{ background:var(--sf); border-radius:var(--r); padding:var(--s3) var(--s3) var(--s2);
+  box-shadow:0 1px 1px rgba(0,0,0,.2),0 14px 34px rgba(0,0,0,.22); }
+.sheet h2{ margin:0 0 var(--s2); font-family:var(--mincho);
+  font-size:15px; font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.row{ display:flex; justify-content:space-between; gap:var(--s2);
+  padding:13px 0; border-bottom:1px solid var(--hair); font-size:15px; }
+.row:last-of-type{ border-bottom:0; }
+.row b{ font-weight:400; color:var(--mut); }
+.row span{ font-variant-numeric:tabular-nums; letter-spacing:.01em; }
+.row.out span{ color:var(--ng); }
+.row.sum{ margin-top:var(--s1); padding-top:var(--s2);
+  border-top:1px solid rgba(199,156,107,.4); border-bottom:0; }
+.row.sum b{ color:var(--fg); }
+.row.sum span{ font-family:var(--mincho); font-size:21px; }
+
+/* ══════════ 行の一覧（箱で囲わない）══════════
+   ★いまは5枚とも枠で囲まれています。枠が5つ並ぶと、
+     どれも同じ重さに見えます。髪の毛ほどの線で区切るだけにします。 */
+.list{ margin:0; }
+.item{
+  display:flex; align-items:center; gap:var(--s2); width:100%;
+  min-height:68px; padding:var(--s2) 2px;
+  border-bottom:1px solid var(--hair); text-align:left;
+  transition:background var(--t);
+}
+.item:first-child{ border-top:1px solid var(--hair); }
+.item:hover{ background:rgba(255,255,255,.03); }
+.item-t{ flex:1 1 auto; min-width:0; }
+.item-t strong{ display:block; font-family:var(--mincho);
+  font-size:17px; font-weight:600; letter-spacing:.03em; }
+.item-t em{ display:block; margin-top:2px; font-style:normal;
+  font-size:13px; color:var(--dim); }
+.item-v{ flex:0 0 auto; font-size:14px; color:var(--mut);
+  font-variant-numeric:tabular-nums; }
+.item-v.badge{ min-width:26px; height:26px; padding:0 9px; border-radius:999px;
+  display:grid; place-items:center; background:var(--gold); color:#2C1419;
+  font-size:13px; font-weight:700; }
+.chev{ flex:0 0 auto; width:18px; height:18px; color:var(--dim);
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round; }
+
+/* ══════════ 主なボタン ══════════ */
+.cta{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:52px; margin-top:var(--s3);
+  border-radius:999px; background:var(--gold); color:#2C1419;
+  font-size:16px; font-weight:600; letter-spacing:.04em;
+}
+.ghost{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:48px; margin-top:12px;
+  border-radius:999px; color:var(--mut);
+  box-shadow:inset 0 0 0 1px var(--hair);
+  font-size:15px;
+}
+.cta svg,.ghost svg{ width:18px; height:18px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ══════════ 推移（棒を細く、凡例をやめる）══════════
+   ★指針：4点未満なら数字だけ。凡例よりも、棒のそばに書くほうが読めます */
+.trend{ margin-top:var(--s2); }
+.trend-h{ display:flex; align-items:baseline; justify-content:space-between; }
+.trend-h p{ margin:0; font-family:var(--mincho); font-size:15px;
+  font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.trend-h small{ font-size:12px; color:var(--dim); }
+/* ★棒は細く。太い棒が6本並ぶと「塊」に見え、増減が読めません。
+     数字は最後の月にだけ置きます。6つ並べると、どれも読まれません。 */
+.bars{ display:flex; align-items:flex-end; gap:0; height:110px;
+  margin-top:var(--s4); padding-bottom:24px; position:relative; }
+.bars::after{ content:''; position:absolute; left:0; right:0; bottom:24px;
+  height:1px; background:var(--hair); }
+.bw{ flex:1 1 0; display:flex; align-items:flex-end; justify-content:center;
+  height:100%; position:relative; }
+.b{ width:10px; border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,var(--gold) 0%,var(--gold-d) 100%); }
+.bw.past .b{ background:rgba(199,156,107,.38); }
+.bw em{ position:absolute; bottom:-24px; left:0; right:0; text-align:center;
+  font-style:normal; font-size:11px; color:var(--dim); }
+.bw i{ position:absolute; top:-22px; left:0; right:0; text-align:center;
+  font-style:normal; font-size:12px; color:var(--fg); font-weight:600;
+  font-variant-numeric:tabular-nums; }
+
+/* ══════════ 画面の切り替え（見本のためだけ）══════════ */
+.tabs{ display:flex; gap:var(--s1); max-width:560px; margin:0 auto;
+  padding:var(--s2) max(20px,env(safe-area-inset-left)) 0; }
+.tab{ flex:1 1 0; min-height:44px; border-radius:999px; font-size:14px;
+  color:var(--mut); box-shadow:inset 0 0 0 1px var(--hair); }
+.tab[aria-selected=true]{ background:var(--sf2); color:var(--fg);
+  box-shadow:inset 0 0 0 1px rgba(199,156,107,.45); }
+
+.back{ display:inline-flex; align-items:center; gap:6px; min-height:44px;
+  padding:0 16px 0 10px; margin:0 0 var(--s3) -10px;
+  border-radius:999px; color:var(--mut); font-size:15px; }
+.back svg{ width:18px; height:18px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+h1{ margin:0; font-family:var(--mincho); font-size:30px; font-weight:600;
+  letter-spacing:.06em; line-height:1.3; text-wrap:balance; }
+.lead{ margin:var(--s3) 0 0; font-size:15px; line-height:1.9; color:var(--mut);
+  max-inline-size:34ch; text-wrap:pretty; }
+.note{ margin:var(--s3) 0 0; font-size:12px; color:var(--dim); }
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+</style>
+</head>
+<body>
+
+<p class="flag">
+  <b>デザイン案</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
+  本番は <b>irelife.github.io/owner/</b> のままです。
+</p>
+
+<header class="bar">
+  <span class="logo">Owner's<em> Salon</em></span>
+  <span class="who">山田 太郎 様</span>
+  <span class="dots" aria-hidden="true"><i></i></span>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true"  data-go="home">ホーム</button>
+  <button class="tab" role="tab" aria-selected="false" data-go="paper">送金明細</button>
+</div>
+
+<!-- ══════════════════ ホーム ══════════════════ -->
+<main id="s-home">
+
+  <!-- ★スローガンをやめ、いちばん知りたいことを1行目に置きます -->
+  <p class="month">2026年9月分</p>
+  <p class="hero-l">今月のご送金</p>
+  <p class="hero-a"><span>¥</span>2,773,303</p>
+  <p class="hero-d">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+
+  <button class="cta" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    明細書（PDF）をひらく
+  </button>
+
+  <hr class="rule">
+
+  <!-- ★箱で囲わず、髪の毛ほどの線で区切ります -->
+  <nav class="list">
+    <button class="item" type="button">
+      <span class="item-t"><strong>入居状況</strong><em>入居・空室・解約のご予定</em></span>
+      <span class="item-v">6棟</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item" type="button">
+      <span class="item-t"><strong>過去の明細</strong><em>3年分、いつでも</em></span>
+      <span class="item-v">36か月</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item" type="button">
+      <span class="item-t"><strong>火災保険</strong><em>証券の写しと、満期日</em></span>
+      <span class="item-v">2件</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item" type="button">
+      <span class="item-t"><strong>お問い合わせ</strong><em>当社へ直接</em></span>
+      <span class="item-v badge">1</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item" type="button">
+      <span class="item-t"><strong>税理士へ送信</strong><em>明細書を添えて、当社から</em></span>
+      <span class="item-v"></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+  </nav>
+
+  <hr class="rule">
+
+  <!-- ★棒を細く、凡例をやめ、数字を棒のそばに置きます -->
+  <section class="trend">
+    <div class="trend-h">
+      <p>ご送金の推移</p>
+      <small>直近6か月</small>
+    </div>
+    <div class="bars" role="img"
+         aria-label="ご送金の推移。4月から9月まで、おおむね横ばいです。">
+      <div class="bw past"><div class="b" style="height:64%"></div><em>4月</em></div>
+      <div class="bw past"><div class="b" style="height:70%"></div><em>5月</em></div>
+      <div class="bw past"><div class="b" style="height:67%"></div><em>6月</em></div>
+      <div class="bw past"><div class="b" style="height:73%"></div><em>7月</em></div>
+      <div class="bw past"><div class="b" style="height:77%"></div><em>8月</em></div>
+      <div class="bw"><i>277万</i><div class="b" style="height:84%"></div><em>9月</em></div>
+    </div>
+    <p class="note">数字が読みづらいときは、表でもご覧いただけます。</p>
+  </section>
+
+</main>
+
+<!-- ══════════════════ 送金明細 ══════════════════ -->
+<main id="s-paper" hidden>
+
+  <button class="back" type="button" data-go="home">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    ホームに戻る
+  </button>
+
+  <h1>2026年9月分<br>ご送金明細</h1>
+  <span class="rule gold"></span>
+  <p class="lead">9月30日に、ご指定の口座へお振り込みいたしました。
+    内訳は下記のとおりでございます。</p>
+
+  <div class="sheet" style="margin-top:var(--s4)">
+    <h2>物件ごとの収支</h2>
+
+    <div class="row"><b>サンプルA棟</b><span>¥472,320</span></div>
+    <div class="row"><b>サンプルB棟</b><span>¥494,200</span></div>
+    <div class="row"><b>サンプルC棟</b><span>¥468,063</span></div>
+    <div class="row"><b>サンプルD棟</b><span>¥484,900</span></div>
+    <div class="row"><b>サンプルE棟</b><span>¥467,820</span></div>
+    <div class="row"><b>サンプルF棟</b><span>¥386,000</span></div>
+
+    <div class="row sum"><b>ご送金額</b><span>¥2,773,303</span></div>
+  </div>
+
+  <!-- ★「支出」を出すなら、この形になります（明細PDFの文字をいただいてから） -->
+  <div class="sheet" style="margin-top:var(--s3)">
+    <h2>サンプルA棟の内訳</h2>
+    <div class="row"><b>賃料・駐車場収入</b><span>¥620,000</span></div>
+    <div class="row out"><b>管理料</b><span>−¥31,000</span></div>
+    <div class="row out"><b>修繕費（203号 給湯器）</b><span>−¥116,680</span></div>
+    <div class="row sum"><b>差引 ご送金額</b><span>¥472,320</span></div>
+  </div>
+
+  <button class="cta" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    明細書（PDF）をひらく
+  </button>
+  <button class="ghost" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+    明細データ（CSV）
+  </button>
+  <button class="ghost" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>
+    この内容をPDFで保存
+  </button>
+
+  <p class="note">3年分を保存しております。いつでも、何度でもご覧いただけます。</p>
+
+</main>
+
+<script>
+/* 見本の画面を入れ替えるだけです。本番の動きとは関係ありません。 */
+document.addEventListener('click', function(ev){
+  var b = ev.target.closest('[data-go]');
+  if(!b) return;
+  var to = b.getAttribute('data-go');
+  document.getElementById('s-home').hidden  = (to !== 'home');
+  document.getElementById('s-paper').hidden = (to !== 'paper');
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+    t.setAttribute('aria-selected', t.getAttribute('data-go') === to ? 'true' : 'false');
+  });
+  window.scrollTo(0, 0);
+});
+</script>
+</body>
+</html>
