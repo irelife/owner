@@ -270,18 +270,24 @@
     </div>
   </div>
 
+  <!-- ★2026/10/4 ご指示「1→2で」
+         改良前： 「203号室が埋まった」のような **部屋ごとの理由** を出していました。
+                 見た目は親切ですが、その理由は いまのデータからは作れません。
+                 推測で書けば、お金の画面に嘘が混ざります。
+         改良後： **棟ごとの差** にしました。これは先月と今月の送金明細の
+                 引き算だけで出せます。推測は1つも入っていません。
+                 （数字は、案E 台帳の「前月比」と同じものです） -->
   <div class="pane" id="k-why" hidden style="margin-top:var(--s2)">
-    <h2>先月（8月）とくらべて</h2>
-    <div class="row rise"><b>サンプルA棟 203号室が埋まった</b><span class="up">＋64,000</span></div>
-    <div class="row rise"><b>サンプルD棟 給湯器の修繕が終了</b><span class="up">＋41,300</span></div>
-    <div class="row rise"><b>サンプルE棟 駐車場1台 新規</b><span class="up">＋5,500</span></div>
-    <div class="row rise out"><b>サンプルB棟 105号室が空いた</b><span>−62,000</span></div>
-    <div class="row rise out"><b>サンプルF棟 共用灯の交換</b><span>−18,000</span></div>
-    <div class="row rise out"><b>その他（日割り・消費税の端数）</b><span>−2,497</span></div>
+    <h2>棟ごとの、先月（8月）との差</h2>
+    <div class="row rise"><b>サンプルD棟</b><span class="up">＋41,300</span></div>
+    <div class="row rise"><b>サンプルF棟</b><span class="up">＋20,000</span></div>
+    <div class="row rise"><b>サンプルA棟</b><span class="up">＋12,000</span></div>
+    <div class="row rise"><b>サンプルE棟</b><span class="up">＋5,340</span></div>
+    <div class="row rise"><b>サンプルC棟</b><span class="up">＋3,063</span></div>
+    <div class="row rise out"><b>サンプルB棟</b><span>−8,400</span></div>
     <div class="row sum"><b>合計</b><span class="up">＋73,303</span></div>
     <p class="note" style="margin-top:var(--s2)">
-      ふえた理由と、へった理由を、金額の大きい順に並べています。
-      くわしい中身は、送金明細からご覧いただけます。</p>
+      差の大きい棟から並べています。各棟の中身は、送金明細からご覧いただけます。</p>
   </div>
 
   <button class="cta" type="button" data-go="papers">
@@ -781,6 +787,6 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>そのほか</button>
 </nav>
 
-<script src="demo.js?v=7"></script>
+<script src="demo.js?v=8"></script>
 </body>
 </html>
