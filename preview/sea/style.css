@@ -1,0 +1,373 @@
+/* ══════════════════════════════════════════════════════════════════════
+ *  オーナーマイページ｜デザイン案B（海）
+ *
+ *  これは「見本」です。本番の css/style.css ではありません。
+ *
+ *  【入れた改良（2026/10/4 ご指示「おすすめ全部」）】
+ *    1  待たずにスムーズ … 骨組み（skeleton）／全部控える／先読み
+ *    2  端末の戻るを効かせる
+ *    3  文字を大きく（17px）／端末の文字設定に従う（rem）
+ *    4  金は1画面に1か所／紙の粒子
+ *    5  一覧のずらし（0.03秒）／動きを250ms以下に・消えるときは速く
+ *
+ *    ★2-d（金額の数え上がり）は入れていません。
+ *      読み取ろうとしている0.6秒のあいだ、数字が嘘をつきます。
+ *      お金の画面でやることではありません（私の反対を、そのまま残します）。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 色 ───────────────────────────────────────────── */
+:root{
+  /* ★2026/10/4 … 海の「いちばん明るい画素」を撮って決めた色です。
+       そこに乗せても 4.5:1 を超えるように選んでいます。
+       改良前： --dim は 1.80 しかなく、海の明るいところでは読めません
+                でした。--dim は廃止し、--mut にまとめました（色を減らす）。 */
+  --fg:#F7EFEC;
+  --mut:#CDBCB6;
+  --dim:#CDBCB6;          /* 旧 #A3918C。いちばん薄い字を廃止しました */
+  --gold:#D4A96F;         /* 塗りつぶし用（この上には濃い字が乗ります） */
+  --gold-t:#E6C08C;       /* 文字用の金。海の上でも読めます */
+  --gold-d:#A87F4F;
+  /* ★赤は「お金が減った」ときだけ。警告には使いません（5-a）。
+       赤が2つの意味を持つと、どちらも効かなくなります。 */
+  --minus:#F3AEAE;
+  /* 注意・警告は、赤ではなく「金のくすんだ色」で出します */
+  --warn:#E0B778;
+  --hair:rgba(255,255,255,.10);
+  --hair2:rgba(255,255,255,.06);
+  --glass:rgba(38,18,22,.52);
+  --ink:#201014;
+
+  --mincho:'Hiragino Mincho ProN','Yu Mincho',YuMincho,'Noto Serif JP',serif;
+  --gothic:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Noto Sans JP',sans-serif;
+
+  /* 余白。4の倍数でそろえます */
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px;
+  --r-s:10px; --r:16px; --r-l:22px;
+
+  /* 動き。すべて 250ms 以下。消えるときは、出るときより速く（5-b） */
+  --t-in:.22s; --t-out:.14s; --t-tap:.12s;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+/* ★3-b 端末の文字サイズ設定に従う。
+     html の font-size を指定しません。指定すると、ブラウザの
+     「文字の大きさ」設定が効かなくなります。
+     以後の大きさは rem（＝端末の設定の倍数）で書きます。
+   ★お断り：iPhone の「文字を大きく」は、Safari のWebページには
+     効きません（Appleの作りです）。Android とパソコンでは効きます。
+     iPhone の方は、画面を広げる操作（ピンチ）が使えます。
+     だから、拡大を禁止していません。 */
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0; min-height:100dvh; background:var(--ink); color:var(--fg);
+  font-family:var(--gothic);
+  /* ★3-a 16px → 17px。指針の最低は16pxですが、最低＝ちょうど良い、
+       ではありません。オーナー様は高齢の方が多くおられます。 */
+  font-size:1.0625rem; line-height:1.9;
+  -webkit-font-smoothing:antialiased;
+}
+[hidden]{ display:none !important; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+input,select,textarea{ font:inherit; }
+
+/* ══════════ 海（下の層）══════════ */
+.sea{ position:fixed; inset:0; z-index:-3; overflow:hidden; background:var(--ink); }
+.sea svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.veil{
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(26,12,16,.44)  0%, rgba(26,12,16,.58) 22%,
+    rgba(26,12,16,.66) 46%, rgba(26,12,16,.74) 100%);
+}
+/* ★4-b 紙の粒子。真っ平らな面は「画面」に見えます。
+     粒子が入ると「刷られたもの」に見えます。2KB ほどです。 */
+.grain{
+  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.30;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  mix-blend-mode:overlay;
+}
+
+/* ══════════ 押す・合わせる ══════════ */
+:where(button,a,input,select,textarea):focus-visible{
+  outline:2px solid var(--gold); outline-offset:3px; border-radius:inherit;
+}
+.cta,.ghost,.tab,.back,.item,.dots,.chip{
+  transition:transform var(--t-in) var(--ease), box-shadow var(--t-in) var(--ease),
+             background var(--t-in), filter var(--t-tap), color var(--t-in);
+}
+.chev{ transition:transform var(--t-in) var(--ease), color var(--t-in); }
+
+@media (hover:hover) and (pointer:fine){
+  .cta:hover{ transform:translateY(-3px); filter:brightness(1.04);
+    box-shadow:0 16px 36px rgba(0,0,0,.46); }
+  .ghost:hover,.tab:hover,.back:hover,.chip:hover{
+    transform:translateY(-2px); background:rgba(255,255,255,.07); color:var(--fg);
+    box-shadow:inset 0 0 0 1px rgba(212,169,111,.42), 0 10px 24px rgba(0,0,0,.34); }
+  .item:hover{ transform:translateY(-1px); background:rgba(255,255,255,.055);
+    box-shadow:0 8px 20px rgba(0,0,0,.26); }
+  .item:hover .chev{ transform:translateX(3px); color:var(--gold); }
+  .dots:hover{ transform:translateY(-1px); }
+}
+.cta:active,.ghost:active,.tab:active,.back:active,.item:active,.dots:active,.chip:active{
+  transform:translateY(0); filter:brightness(.90); transition-duration:var(--t-tap);
+}
+
+/* ══════════ 枠組み ══════════ */
+.flag{
+  position:relative; z-index:90; padding:10px max(16px,env(safe-area-inset-left));
+  background:rgba(14,6,8,.94); border-bottom:1px solid var(--hair);
+  font-size:.75rem; line-height:1.6; color:var(--dim); text-align:center;
+}
+.flag b{ color:var(--gold-t); font-weight:600; }
+
+.bar{
+  position:sticky; top:0; z-index:80;
+  display:flex; align-items:center; gap:var(--s2);
+  height:calc(58px + env(safe-area-inset-top));
+  padding:env(safe-area-inset-top) max(20px,env(safe-area-inset-right)) 0
+          max(20px,env(safe-area-inset-left));
+  background:rgba(26,12,16,.90);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  backdrop-filter:blur(18px) saturate(150%);
+  border-bottom:1px solid var(--hair);
+}
+/* ★押せる的を 44px に（実測 36px でした）。ロゴはホームへ戻るボタンです。 */
+.logo{ display:inline-flex; align-items:center; min-height:44px;
+  font-family:var(--mincho); font-size:1.19rem; font-weight:600;
+  letter-spacing:.14em; }
+.logo em{ font-style:normal; color:var(--gold-t); }
+.bar .who{ margin-left:auto; font-size:.81rem; color:var(--mut); }
+.dots{ width:44px; height:44px; display:grid; place-items:center; margin-right:-10px;
+  border-radius:50%; }
+.dots i{ display:block; width:3px; height:3px; border-radius:50%;
+  background:var(--mut); box-shadow:0 -6px var(--mut),0 6px var(--mut); }
+
+.menu{ position:fixed; right:max(16px,env(safe-area-inset-right)); top:70px; z-index:85;
+  min-width:220px; padding:var(--s1); border-radius:var(--r);
+  background:rgba(32,16,20,.96); box-shadow:inset 0 0 0 1px var(--hair),0 20px 48px rgba(0,0,0,.5);
+  -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+.menu button{ display:block; width:100%; min-height:48px; padding:0 var(--s2);
+  border-radius:var(--r-s); text-align:left; font-size:.94rem; color:var(--fg); }
+.menu button:hover{ background:rgba(255,255,255,.07); }
+
+main{ max-width:560px; margin:0 auto;
+  padding:var(--s5) max(20px,env(safe-area-inset-right))
+          calc(var(--s5) + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); }
+main.center{ min-height:calc(100dvh - 120px); display:flex; flex-direction:column;
+  justify-content:center; padding-top:var(--s4); padding-bottom:var(--s4); }
+
+/* ══════════ 見出し・文字 ══════════ */
+/* ★4-c いまどこにいるか。見出しの上に小さく出します */
+.kicker{ margin:0 0 var(--s1); font-size:.75rem; letter-spacing:.16em; color:var(--gold-t); }
+h1{ margin:0; font-family:var(--mincho); font-size:1.88rem; font-weight:600;
+  letter-spacing:.06em; line-height:1.35; text-wrap:balance; max-inline-size:20ch;
+  text-shadow:0 2px 20px rgba(0,0,0,.5); }
+h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
+  font-size:.94rem; font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.rule{ height:1px; margin:var(--s4) 0; background:var(--hair); border:0; }
+.rule.gold{ display:block; width:44px; height:2px; margin:var(--s2) 0 0;
+  background:var(--gold); border-radius:2px; }
+.lead{ margin:var(--s3) 0 0; font-size:.94rem; line-height:1.9; color:var(--mut);
+  max-inline-size:34ch; text-wrap:pretty; }
+.note{ margin:var(--s3) 0 0; font-size:.75rem; line-height:1.8; color:var(--mut); }
+.back{ display:inline-flex; align-items:center; gap:6px; min-height:44px;
+  padding:0 16px 0 10px; margin:0 0 var(--s3) -10px;
+  border-radius:999px; color:var(--mut); font-size:.94rem; }
+.back svg{ width:18px; height:18px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ══════════ 今月の一枚 ══════════ */
+.month{ font-size:.81rem; letter-spacing:.14em; color:var(--gold-t); }
+.hero-l{ margin:var(--s1) 0 0; font-family:var(--mincho);
+  font-size:1.06rem; font-weight:400; color:var(--mut); letter-spacing:.04em; }
+.hero-a{ margin:6px 0 0; font-family:var(--mincho);
+  font-size:3.25rem; font-weight:400; line-height:1.1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 24px rgba(0,0,0,.55); }
+.hero-a span{ font-size:1.75rem; margin-right:2px; color:var(--mut); }
+.hero-d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }
+
+/* ══════════ 書面（透ける層）══════════ */
+.pane{
+  border-radius:var(--r); padding:var(--s3) var(--s3) var(--s2);
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  backdrop-filter:blur(20px) saturate(140%);
+  box-shadow:inset 0 0 0 1px var(--hair), 0 18px 40px rgba(0,0,0,.30);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .pane,.bar,.tab,.menu,.ghost{ background:#2F171C; }
+}
+.pane h2{ margin:0 0 var(--s2); font-family:var(--mincho);
+  font-size:.88rem; font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.row{ display:flex; justify-content:space-between; gap:var(--s2);
+  padding:13px 0; border-bottom:1px solid var(--hair2); font-size:.94rem; }
+.row:last-of-type{ border-bottom:0; }
+.row b{ font-weight:400; color:var(--mut); }
+.row span{ font-variant-numeric:tabular-nums; }
+.row.out span{ color:var(--minus); }
+.row.sum{ margin-top:var(--s1); padding-top:var(--s2);
+  border-top:1px solid rgba(212,169,111,.42); border-bottom:0; }
+.row.sum b{ color:var(--fg); }
+.row.sum span{ font-family:var(--mincho); font-size:1.31rem; }
+
+/* ══════════ 一覧 ══════════ */
+.list{ margin:0; }
+.item{ display:flex; align-items:center; gap:var(--s2); width:100%;
+  min-height:68px; padding:var(--s2) 2px;
+  border-bottom:1px solid var(--hair2); text-align:left; }
+.item:first-child{ border-top:1px solid var(--hair2); }
+.item-t{ flex:1 1 auto; min-width:0; }
+.item-t strong{ display:block; font-family:var(--mincho);
+  font-size:1.06rem; font-weight:600; letter-spacing:.03em; }
+.item-t em{ display:block; margin-top:2px; font-style:normal;
+  font-size:.81rem; color:var(--mut); }
+.item-v{ flex:0 0 auto; font-size:.88rem; color:var(--mut);
+  font-variant-numeric:tabular-nums; }
+/* ★5-c 「1」の札は、開いたら消えます（demo.js）。
+     消えない数字は急かします。毎月見る画面に、急かすものは要りません。 */
+.item-v.badge{ min-width:26px; height:26px; padding:0 9px; border-radius:999px;
+  display:grid; place-items:center; background:var(--gold); color:var(--ink);
+  font-size:.81rem; font-weight:700; }
+.chev{ flex:0 0 auto; width:18px; height:18px; color:var(--mut);
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round; }
+
+/* ══════════ ボタン ══════════
+   ★4-a 金は1画面に1か所。主なボタンだけが金です。 */
+.cta{ display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:52px; margin-top:var(--s3);
+  border-radius:999px; background:var(--gold); color:var(--ink);
+  font-size:1rem; font-weight:600; letter-spacing:.04em;
+  box-shadow:0 10px 26px rgba(0,0,0,.34); }
+.cta:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.ghost{ display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:48px; margin-top:12px;
+  border-radius:999px; color:var(--mut);
+  background:rgba(26,12,16,.44);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  box-shadow:inset 0 0 0 1px var(--hair); font-size:.94rem; }
+.link{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px;
+  color:var(--mut); font-size:.88rem; text-decoration:underline;
+  text-underline-offset:3px; }
+.cta svg,.ghost svg{ width:18px; height:18px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ══════════ 入力 ══════════ */
+.field{ margin-top:var(--s3); }
+.field > label{ display:block; margin-bottom:8px; font-size:.81rem;
+  font-weight:600; letter-spacing:.04em; color:var(--mut); }
+.field .hint{ margin-left:8px; font-weight:400; color:var(--dim); }
+input[type=text],input[type=email],input[type=password],input[type=tel],
+input[type=date],select,textarea{
+  width:100%; min-height:52px; padding:12px 16px;
+  background:rgba(14,6,8,.55); color:var(--fg);
+  border:0; box-shadow:inset 0 0 0 1px var(--hair);
+  border-radius:var(--r-s); font-size:1rem; line-height:1.6;
+  appearance:none; -webkit-appearance:none;
+  transition:box-shadow var(--t-in); }
+textarea{ min-height:140px; resize:vertical; line-height:1.9; }
+input:focus,select:focus,textarea:focus{
+  outline:none; box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 3px rgba(212,169,111,.22); }
+::placeholder{ color:var(--dim); }
+select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CDBCB6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  background-size:18px; padding-right:44px; }
+.msg{ margin:12px 0 0; min-height:22px; font-size:.81rem; color:var(--warn); }
+.msg.ok{ color:var(--gold-t); }
+
+/* ══════════ 札（チップ）══════════ */
+.chips{ display:flex; flex-wrap:wrap; gap:var(--s1); margin-top:var(--s2); }
+.chip{ min-height:44px; padding:0 16px; border-radius:999px; font-size:.88rem;
+  color:var(--mut); box-shadow:inset 0 0 0 1px var(--hair);
+  background:rgba(26,12,16,.44); }
+.chip[aria-pressed=true]{ color:var(--fg);
+  box-shadow:inset 0 0 0 1px rgba(212,169,111,.5); background:rgba(212,169,111,.14); }
+.tag{ display:inline-block; padding:3px 10px; border-radius:999px;
+  font-size:.75rem; letter-spacing:.04em;
+  box-shadow:inset 0 0 0 1px var(--hair); color:var(--mut); }
+.tag.now{ color:var(--warn); box-shadow:inset 0 0 0 1px rgba(224,183,120,.45); }
+
+/* ══════════ 骨組み（1-a）══════════
+   ★出来上がりと同じ形・同じ高さにします。1行の「読み込んでいます…」から
+     一覧がドサッと出ると、画面が飛びます（指針では重大度 High）。 */
+.sk{ border-radius:6px; background:linear-gradient(90deg,
+     rgba(255,255,255,.05) 25%, rgba(255,255,255,.10) 37%, rgba(255,255,255,.05) 63%);
+  background-size:400% 100%; animation:skw 1.4s ease-in-out infinite; }
+@keyframes skw{ 0%{ background-position:100% 0; } 100%{ background-position:0 0; } }
+.sk-item{ display:flex; align-items:center; gap:var(--s2);
+  min-height:68px; padding:var(--s2) 2px; border-bottom:1px solid var(--hair2); }
+.sk-item .a{ flex:1 1 auto; }
+.sk-item .a i{ display:block; height:17px; width:42%; }
+.sk-item .a u{ display:block; height:13px; width:62%; margin-top:8px;
+  text-decoration:none; }
+.sk-item .b{ width:54px; height:15px; }
+.sk-row{ display:flex; justify-content:space-between; gap:var(--s2); padding:13px 0;
+  border-bottom:1px solid var(--hair2); }
+.sk-row i{ height:15px; width:38%; display:block; }
+.sk-row b{ height:15px; width:26%; display:block; }
+
+/* ══════════ 現れかた（6-a・5-b）══════════
+   ★0.03秒ずつずらします（指針の値）。10件を超えても
+     合計0.3秒で出そろいます。長い一覧でも、もたつきません。 */
+.rise{ animation:rise var(--t-in) var(--ease) both; }
+.rise:nth-child(1){ animation-delay:.00s } .rise:nth-child(2){ animation-delay:.03s }
+.rise:nth-child(3){ animation-delay:.06s } .rise:nth-child(4){ animation-delay:.09s }
+.rise:nth-child(5){ animation-delay:.12s } .rise:nth-child(6){ animation-delay:.15s }
+.rise:nth-child(7){ animation-delay:.18s } .rise:nth-child(8){ animation-delay:.21s }
+.rise:nth-child(n+9){ animation-delay:.24s }
+@keyframes rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+/* ══════════ 推移 ══════════ */
+.trend-h{ display:flex; align-items:baseline; justify-content:space-between; }
+.trend-h p{ margin:0; font-family:var(--mincho); font-size:.94rem;
+  font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.trend-h small{ font-size:.75rem; color:var(--mut); }
+.bars{ display:flex; align-items:flex-end; height:110px;
+  margin-top:var(--s4); padding-bottom:24px; position:relative; }
+.bars::after{ content:''; position:absolute; left:0; right:0; bottom:24px;
+  height:1px; background:var(--hair); }
+.bw{ flex:1 1 0; display:flex; align-items:flex-end; justify-content:center;
+  height:100%; position:relative; }
+.b{ width:10px; border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,var(--gold) 0%,var(--gold-d) 100%); }
+.bw.past .b{ background:rgba(212,169,111,.42); }
+.bw em{ position:absolute; bottom:-24px; left:0; right:0; text-align:center;
+  font-style:normal; font-size:.69rem; color:var(--mut); }
+.bw i{ position:absolute; top:-22px; left:0; right:0; text-align:center;
+  font-style:normal; font-size:.75rem; color:var(--fg); font-weight:600;
+  font-variant-numeric:tabular-nums; }
+
+/* ══════════ やりとり（吹き出し）══════════ */
+.talk{ margin-top:var(--s2); }
+.bub{ max-width:84%; padding:12px 16px; border-radius:var(--r);
+  font-size:.94rem; line-height:1.85; }
+.bub.me{ margin-left:auto; background:rgba(212,169,111,.16);
+  box-shadow:inset 0 0 0 1px rgba(212,169,111,.3); border-bottom-right-radius:6px; }
+.bub.you{ background:rgba(255,255,255,.06);
+  box-shadow:inset 0 0 0 1px var(--hair); border-bottom-left-radius:6px; }
+.bub + .bub{ margin-top:12px; }
+.bub-at{ display:block; margin-top:6px; font-size:.69rem; color:var(--dim); }
+
+/* ══════════ 完了のしるし（6-c）══════════ */
+.done{ display:grid; place-items:center; width:64px; height:64px; margin:0 auto var(--s2);
+  border-radius:50%; box-shadow:inset 0 0 0 2px var(--gold); }
+.done svg{ width:30px; height:30px; fill:none; stroke:var(--gold); stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:32; stroke-dashoffset:32; animation:tick .4s var(--ease) .1s forwards; }
+@keyframes tick{ to{ stroke-dashoffset:0; } }
+
+/* ══════════ 動きを減らす設定の方へ ══════════ */
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; animation:none !important; }
+  .sk{ background:rgba(255,255,255,.07); }
+  .done svg{ stroke-dashoffset:0; }
+}
