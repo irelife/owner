@@ -72,13 +72,15 @@
 <header class="bar" id="bar">
   <button type="button" class="logo" data-go="home" style="padding:0">Owner's<em> Salon</em></button>
   <span class="who">山田 太郎 様</span>
-  <button type="button" class="dots" id="mn" aria-label="メニュー" aria-expanded="false"><i></i></button>
 </header>
-
-<nav class="menu" id="menu" hidden>
-  <button type="button" data-go="account">マイアカウント</button>
-  <button type="button" data-go="login">ログアウト</button>
-</nav>
+<!-- ★2026/10/4 … 右上の「⋮」メニューを無くしました。
+     中身は「マイアカウント」と「ログアウト」の2つだけ。
+     ・マイアカウント … ホームの一覧に並べました。隠すほどのものでは
+       ありません。隠れていると、ご高齢の方は見つけられません。
+     ・ログアウト … マイアカウントの画面のいちばん下へ移しました。
+       ご自分の端末でご覧になる方が大半で、毎日押すものではありません。
+       （60分で自動ログアウトする仕組みも、別に入っています）
+     部品が1つ減り、押す場所も1つ減りました。 -->
 
 <!-- 見本のためだけの、画面えらび。
      ★上のバーより下に置きます。アプリの顔（バー）より先に
@@ -126,8 +128,8 @@
 <main id="s-reset" class="center" hidden>
   <h1>パスワードの再設定</h1>
   <span class="rule gold"></span>
-  <p class="lead">新しいパスワードを、8文字以上でご設定ください。
-    ご設定になりますと、ほかの端末からは一度ログアウトされます。</p>
+  <p class="lead">新しいパスワードを8文字以上でご設定ください。
+    ご設定後は、ほかの端末からは一度ログアウトされます。</p>
 
   <div class="field">
     <label for="rs-a">新しいパスワード<span class="hint">8文字以上</span></label>
@@ -147,7 +149,10 @@
 <!-- ════════════════ ③ ホーム ════════════════ -->
 <main id="s-home" hidden>
   <p class="month">2026年9月分</p>
-  <p class="hero-l">今月のご送金</p>
+  <!-- ★ホームにも見出し（h1）を置きます。改良前は見出しが1つも無く、
+       読み上げでお使いの方は「このページは何か」を掴めませんでした。
+       見た目は変わりません（.hero-l の指定が勝ちます）。 -->
+  <h1 class="hero-l">今月のご送金</h1>
   <p class="hero-a"><span>¥</span>2,773,303</p>
   <p class="hero-d">9月30日に、ご指定の口座へお振り込みいたしました。</p>
 
@@ -175,12 +180,17 @@
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button class="item rise" type="button" data-go="contact">
-      <span class="item-t"><strong>お問い合わせ</strong><em>当社へ直接</em></span>
+      <span class="item-t"><strong>お問い合わせ</strong><em>ご質問・ご要望</em></span>
       <span class="item-v badge" id="ct-badge">1</span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button class="item rise" type="button" data-go="accountant">
-      <span class="item-t"><strong>税理士へ送信</strong><em>明細書を添えて、当社から</em></span>
+      <span class="item-t"><strong>税理士へ送信</strong><em>送金明細を、税理士事務所へ</em></span>
+      <span class="item-v"></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item rise" type="button" data-go="account">
+      <span class="item-t"><strong>マイアカウント</strong><em>ご登録の内容と、パスワード</em></span>
       <span class="item-v"></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -211,7 +221,7 @@
   <p class="lead">9月30日に、ご指定の口座へお振り込みいたしました。内訳は下記のとおりでございます。</p>
 
   <div class="pane" style="margin-top:var(--s4)">
-    <h2>物件ごとの収支</h2>
+    <h2>物件ごとのご送金額</h2>
     <div class="row rise"><b>サンプルA棟</b><span>¥472,320</span></div>
     <div class="row rise"><b>サンプルB棟</b><span>¥494,200</span></div>
     <div class="row rise"><b>サンプルC棟</b><span>¥468,063</span></div>
@@ -304,7 +314,7 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
   <h1>火災保険</h1>
   <span class="rule gold"></span>
-  <p class="lead">証券の写しをお預かりし、満期日まで控えております。
+  <p class="lead">証券の写しと、満期日をお預かりしております。
     満期日の近い物件から順に並びます。
     更新のお手続きは、これまでどおりオーナー様にてお願いいたします。</p>
 
@@ -396,7 +406,7 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
   <h1>税理士へ送信</h1>
   <span class="rule gold"></span>
-  <p class="lead">送金明細（PDF）を添えて、当社からお送りいたします。
+  <p class="lead">明細書（PDF）を添えて、当社からお送りいたします。
     差出人は当社ですが、税理士事務所からのご返信はオーナー様に届きます。
     1日5通までとさせていただいております。</p>
 
@@ -469,6 +479,10 @@
     </div>
   </div>
   <button class="cta" type="button" data-done>変更をお知らせする</button>
+
+  <hr class="rule">
+  <button class="ghost" type="button" data-go="login" style="margin-top:0">ログアウト</button>
+  <p class="note">60分のあいだ操作がないときは、安全のため自動でログアウトいたします。</p>
 </main>
 
 <!-- ════════════════ 完了のしるし ════════════════ -->
