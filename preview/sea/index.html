@@ -28,46 +28,73 @@
      ★日本語の字は大きいので、Google は使う文字だけを切り分けて
        送ります。1ページで要るのは、その一部だけです（実測は下）。
      ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════
+     選んでいただいた見た目を、**絵を描く前に** 当てます（2026/10/4）
+
+     ★ここを <body> より後に置くと、いちど元の色で描いてから
+       切り替わります。画面が1回パッとまたたきます。
+       それを起こさないため、いちばん先に置いています。
+     ★見た目のえらびは、この端末の中だけに控えています。
+       本番では、オーナー様の控えに入れて、どの端末でも同じにします。
+     ══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  try{
+    var d = document.documentElement;
+    var g = function(k, ok){
+      var v = localStorage.getItem('look.' + k);
+      return (ok.indexOf(v) >= 0) ? v : ok[0];
+    };
+    d.setAttribute('data-theme', g('theme', ['umi','ai','kami']));
+    d.setAttribute('data-size',  g('size',  ['m','l','xl']));
+    d.setAttribute('data-list',  g('list',  ['card','table']));
+  }catch(e){}   /* 控えが使えない端末でも、既定の見た目で動きます */
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
-<!-- ══════════ 海 ══════════ -->
+<!-- ══════════ 海 ══════════
+     ★2026/10/4 … 色を stop-color で直に書くのをやめ、CSS の変数から
+       差すようにしました。これで、配色を選んでいただいても、
+       この絵まで一緒に変わります（かたちは1つのままです）。 -->
 <div class="sea" aria-hidden="true">
   <svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
     <defs>
       <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"    stop-color="#2A1218"/>
-        <stop offset=".44"  stop-color="#4A2229"/>
-        <stop offset=".68"  stop-color="#6B3B2C"/>
-        <stop offset=".86"  stop-color="#85502F"/>
-        <stop offset="1"    stop-color="#946C45"/>
+        <stop class="k1" offset="0"/><stop class="k2" offset=".44"/>
+        <stop class="k3" offset=".68"/><stop class="k4" offset=".86"/>
+        <stop class="k5" offset="1"/>
       </linearGradient>
       <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#573527"/>
-        <stop offset=".18" stop-color="#4E2A28"/>
-        <stop offset=".55" stop-color="#2C1419"/>
-        <stop offset="1"   stop-color="#180A0E"/>
+        <stop class="w1" offset="0"/><stop class="w2" offset=".18"/>
+        <stop class="w3" offset=".55"/><stop class="w4" offset="1"/>
       </linearGradient>
       <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#F0C98E" stop-opacity=".55"/>
-        <stop offset=".45" stop-color="#D4A96F" stop-opacity=".16"/>
-        <stop offset="1"   stop-color="#D4A96F" stop-opacity="0"/>
+        <stop class="g1" offset="0"/><stop class="g2" offset=".45"/>
+        <stop class="g3" offset="1"/>
       </linearGradient>
       <radialGradient id="sun" cx=".5" cy=".5" r=".5">
-        <stop offset="0"   stop-color="#FFE3B4" stop-opacity=".30"/>
-        <stop offset=".55" stop-color="#E8B778" stop-opacity=".09"/>
-        <stop offset="1"   stop-color="#D4A96F" stop-opacity="0"/>
+        <stop class="u1" offset="0"/><stop class="u2" offset=".55"/>
+        <stop class="u3" offset="1"/>
+      </radialGradient>
+      <radialGradient id="moon" cx=".5" cy=".5" r=".5">
+        <stop class="m1" offset="0"/><stop class="m2" offset=".62"/>
+        <stop class="m3" offset="1"/>
       </radialGradient>
     </defs>
     <rect width="390" height="252" fill="url(#sky)"/>
     <ellipse cx="248" cy="252" rx="138" ry="52" fill="url(#sun)"/>
+    <!-- 月。藍の配色のときだけ出ます（ほかでは濃さが0です） -->
+    <circle class="moon"      cx="248" cy="138" r="30" fill="url(#moon)"/>
+    <circle class="moon-core" cx="248" cy="138" r="11"/>
     <rect y="246" width="390" height="598" fill="url(#water)"/>
-    <path d="M248 246 L284 620 L212 620 Z" fill="url(#glow)" opacity=".30"/>
-    <g fill="none" stroke="#E8C79A" stroke-linecap="round">
+    <path class="beam" d="M248 246 L284 620 L212 620 Z" fill="url(#glow)" opacity=".30"/>
+    <g class="waves" fill="none" stroke-linecap="round">
       <path d="M58 260 h44"   stroke-opacity=".30" stroke-width="1"/>
       <path d="M272 266 h58"  stroke-opacity=".34" stroke-width="1"/>
       <path d="M118 274 h72"  stroke-opacity=".26" stroke-width="1.1"/>
@@ -94,9 +121,10 @@
                 本番の画面の中には、もう何も足していません。
      ══════════════════════════════════════════════════════════════ -->
 <div class="flag">
-  <p><b>デザイン案B（海）</b>　本番の画面ではありません。お名前・金額はすべて架空です。
+  <p><b>デザイン案B</b>　本番の画面ではありません。お名前・金額はすべて架空です。
      本番は <b>irelife.github.io/owner/</b> のままです。
-     <a href="../sea2/">配色ちがい（案C 藍）を見る</a></p>
+     色は「見た目をえらぶ」から、海・藍・紙の3つをお選びいただけます。
+     <a href="../all/">ほかの案を見る</a></p>
   <nav class="flag-nav" aria-label="見本の画面">
     <button type="button" data-go="login">ログイン</button>
     <button type="button" data-go="reset">再設定</button>
@@ -107,6 +135,7 @@
     <button type="button" data-go="contact">問い合わせ</button>
     <button type="button" data-go="accountant">税理士へ</button>
     <button type="button" data-go="account">アカウント</button>
+    <button type="button" data-go="look">見た目</button>
   </nav>
 </div>
 
@@ -246,6 +275,11 @@
     </button>
     <button class="item rise" type="button" data-go="account">
       <span class="item-t"><strong>マイアカウント</strong><em>ご登録の内容と、パスワード</em></span>
+      <span class="item-v"></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="item rise" type="button" data-go="look">
+      <span class="item-t"><strong>見た目をえらぶ</strong><em>色・文字の大きさ・一覧の出しかた</em></span>
       <span class="item-v"></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -526,6 +560,72 @@
   <p class="note">送信の控えを、ご自身のメールアドレスにもお送りします。</p>
 </main>
 
+<!-- ════════════════ ⑩ 見た目をえらぶ ════════════════
+     2026/10/4 ご指示「この仕様はユーザーが決められるように選択できる？」
+
+     ★押したその場で変わります。［保存する］は要りません。
+       選んだ結果が目の前にあるのに、もう一度押させるのは余計な手です。
+     ★選びは、この端末の中に控えます（本番では、オーナー様の控えに
+       入れて、どの端末でも同じ見えかたにします）。
+     ★ラジオ（丸い選び）です。見た目が同時に2つになることはありません。
+     ════════════════════════════════════════════════════ -->
+<main id="s-look" hidden>
+  <button class="back" type="button" data-back>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
+  <h1>見た目をえらぶ</h1>
+  <span class="rule gold"></span>
+  <p class="lead">お選びになると、その場で変わります。
+    いつでも、何度でもお変えいただけます。</p>
+
+  <fieldset class="pick">
+    <legend>色</legend>
+    <label class="opt" for="lk-theme-umi"><input type="radio" id="lk-theme-umi" name="theme" value="umi" checked>
+      <span class="sw" aria-hidden="true"><i style="background:#201014"></i><i style="background:#D4A96F"></i><i style="background:#85502F"></i></span>
+      <span class="opt-t"><strong>海（夕景）</strong><em>落ち着いた暗い地に、金</em></span></label>
+    <label class="opt" for="lk-theme-ai"><input type="radio" id="lk-theme-ai" name="theme" value="ai">
+      <span class="sw" aria-hidden="true"><i style="background:#0B1220"></i><i style="background:#C3D2E8"></i><i style="background:#2E4167"></i></span>
+      <span class="opt-t"><strong>藍（月あかり）</strong><em>暗い地に、月白（銀）</em></span></label>
+    <label class="opt" for="lk-theme-kami"><input type="radio" id="lk-theme-kami" name="theme" value="kami">
+      <span class="sw" aria-hidden="true"><i style="background:#FAF7F1"></i><i style="background:#17140F"></i><i style="background:#7A5A28"></i></span>
+      <span class="opt-t"><strong>紙（あかるい）</strong><em>白い地に、墨。印刷した明細に近い見えかたです</em></span></label>
+  </fieldset>
+
+  <fieldset class="pick">
+    <legend>文字の大きさ</legend>
+    <label class="opt" for="lk-size-m"><input type="radio" id="lk-size-m" name="size" value="m" checked>
+      <span class="opt-t"><strong>ふつう</strong><em>あ</em></span></label>
+    <label class="opt" for="lk-size-l"><input type="radio" id="lk-size-l" name="size" value="l">
+      <span class="opt-t"><strong>大きい</strong><em style="font-size:1.12em">あ</em></span></label>
+    <label class="opt" for="lk-size-xl"><input type="radio" id="lk-size-xl" name="size" value="xl">
+      <span class="opt-t"><strong>特大</strong><em style="font-size:1.25em">あ</em></span></label>
+  </fieldset>
+
+  <fieldset class="pick">
+    <legend>一覧の出しかた</legend>
+    <label class="opt" for="lk-list-card"><input type="radio" id="lk-list-card" name="list" value="card" checked>
+      <span class="opt-t"><strong>ふつう</strong><em>1行を大きく。押しやすさを優先します</em></span></label>
+    <label class="opt" for="lk-list-table"><input type="radio" id="lk-list-table" name="list" value="table">
+      <span class="opt-t"><strong>表</strong><em>1行を小さく。一度に見える数が、およそ倍になります</em></span></label>
+  </fieldset>
+
+  <h2 class="sect">ためしに見る</h2>
+  <nav class="list">
+    <button class="item" type="button" data-go="papers">
+      <span class="item-t"><strong>サンプルA棟</strong><em>送金日 9月30日</em></span>
+      <span class="item-v">¥472,320</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item" type="button" data-go="papers">
+      <span class="item-t"><strong>サンプルB棟</strong><em>送金日 9月30日</em></span>
+      <span class="item-v">¥494,200</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </nav>
+
+  <button class="ghost" type="button" id="look-reset" style="margin-top:var(--s3)">
+    はじめの見た目に戻す</button>
+  <p class="note">お選びになった見た目は、この端末に控えております。
+    ほかの端末や、別のブラウザでは、はじめの見た目から始まります。</p>
+</main>
+
 <!-- ════════════════ ⑨ マイアカウント ════════════════ -->
 <main id="s-account" hidden>
   <button class="back" type="button" data-back>
@@ -545,6 +645,13 @@
   <nav class="list">
     <button class="item" type="button" data-go="reset">
       <span class="item-t"><strong>パスワードを変更する</strong><em>8文字以上でご設定ください</em></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </nav>
+
+  <h2 class="sect">画面の見えかた</h2>
+  <nav class="list">
+    <button class="item" type="button" data-go="look">
+      <span class="item-t"><strong>見た目をえらぶ</strong><em>色・文字の大きさ・一覧の出しかた</em></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </nav>
 
@@ -585,6 +692,6 @@
 </main>
 
 
-<script src="demo.js?v=3"></script>
+<script src="demo.js?v=4"></script>
 </body>
 </html>
