@@ -57,7 +57,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -242,6 +242,47 @@
   <h1 class="hero-l">今月のご送金</h1>
   <p class="hero-a"><span>¥</span>2,773,303</p>
   <p class="hero-d">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       前月比と入居率（2026/10/4 ご指示）
+
+       ★前月比は **押せます**。押すと「何が増えて、何が減ったか」が
+         そのまま下に開きます。数字だけ出して理由を出さないのは、
+         いちばん落ち着かない見せかたです。
+       ★増えた・減ったは、色だけでなく ＋ − の字でも分かるようにします
+         （色の見分けがつきにくい方のためです）。
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="kpi3">
+    <div class="k">
+      <span class="k-t">ご送金額</span>
+      <span class="k-v">¥2,773,303</span>
+    </div>
+    <button class="k k-btn" type="button" id="k-why-b"
+            aria-expanded="false" aria-controls="k-why">
+      <span class="k-t">前月比<span class="k-c" aria-hidden="true"></span></span>
+      <span class="k-v up">＋73,303</span>
+      <span class="k-s">＋2.7％　<u>内訳</u></span>
+    </button>
+    <div class="k">
+      <span class="k-t">入居率</span>
+      <span class="k-v">94.4％</span>
+      <span class="k-s">34／36室</span>
+    </div>
+  </div>
+
+  <div class="pane" id="k-why" hidden style="margin-top:var(--s2)">
+    <h2>先月（8月）とくらべて</h2>
+    <div class="row rise"><b>サンプルA棟 203号室が埋まった</b><span class="up">＋64,000</span></div>
+    <div class="row rise"><b>サンプルD棟 給湯器の修繕が終了</b><span class="up">＋41,300</span></div>
+    <div class="row rise"><b>サンプルE棟 駐車場1台 新規</b><span class="up">＋5,500</span></div>
+    <div class="row rise out"><b>サンプルB棟 105号室が空いた</b><span>−62,000</span></div>
+    <div class="row rise out"><b>サンプルF棟 共用灯の交換</b><span>−18,000</span></div>
+    <div class="row rise out"><b>その他（日割り・消費税の端数）</b><span>−2,497</span></div>
+    <div class="row sum"><b>合計</b><span class="up">＋73,303</span></div>
+    <p class="note" style="margin-top:var(--s2)">
+      ふえた理由と、へった理由を、金額の大きい順に並べています。
+      くわしい中身は、送金明細からご覧いただけます。</p>
+  </div>
 
   <button class="cta" type="button" data-go="papers">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
@@ -618,11 +659,14 @@
   <fieldset class="pick">
     <legend>文字の大きさ</legend>
     <label class="opt" for="lk-size-m"><input type="radio" id="lk-size-m" name="size" value="m" checked>
-      <span class="opt-t"><strong>ふつう</strong><em>あ</em></span></label>
+      <span class="opt-t"><strong>ふつう</strong></span>
+      <span class="sz" aria-hidden="true">Aa</span></label>
     <label class="opt" for="lk-size-l"><input type="radio" id="lk-size-l" name="size" value="l">
-      <span class="opt-t"><strong>大きい</strong><em style="font-size:1.12em">あ</em></span></label>
+      <span class="opt-t"><strong>大きい</strong></span>
+      <span class="sz" aria-hidden="true" style="font-size:1.4rem">Aa</span></label>
     <label class="opt" for="lk-size-xl"><input type="radio" id="lk-size-xl" name="size" value="xl">
-      <span class="opt-t"><strong>特大</strong><em style="font-size:1.25em">あ</em></span></label>
+      <span class="opt-t"><strong>特大</strong></span>
+      <span class="sz" aria-hidden="true" style="font-size:1.75rem">Aa</span></label>
   </fieldset>
 
   <fieldset class="pick">
@@ -737,6 +781,6 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>そのほか</button>
 </nav>
 
-<script src="demo.js?v=6"></script>
+<script src="demo.js?v=7"></script>
 </body>
 </html>
