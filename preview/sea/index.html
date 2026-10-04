@@ -45,16 +45,18 @@
       var v = localStorage.getItem('look.' + k);
       return (ok.indexOf(v) >= 0) ? v : ok[0];
     };
-    d.setAttribute('data-theme', g('theme', ['umi','ai','kami']));
+    d.setAttribute('data-theme', g('theme', ['umi','ai','kami','cho','sumi']));
     d.setAttribute('data-size',  g('size',  ['m','l','xl']));
     d.setAttribute('data-list',  g('list',  ['card','table']));
+    d.setAttribute('data-font',  g('font',  ['mincho','gothic']));
+    d.setAttribute('data-nav',   g('nav',   ['bar','dock']));
   }catch(e){}   /* 控えが使えない端末でも、既定の見た目で動きます */
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -123,7 +125,7 @@
 <div class="flag">
   <p><b>デザイン案B</b>　本番の画面ではありません。お名前・金額はすべて架空です。
      本番は <b>irelife.github.io/owner/</b> のままです。
-     色は「見た目をえらぶ」から、海・藍・紙の3つをお選びいただけます。
+     「テーマ」から、色5つ・字2つ・大きさ3つ・並べかた2つ・行き先2つをお選びいただけます。
      <a href="../all/">ほかの案を見る</a></p>
   <nav class="flag-nav" aria-label="見本の画面">
     <button type="button" data-go="login">ログイン</button>
@@ -135,7 +137,7 @@
     <button type="button" data-go="contact">問い合わせ</button>
     <button type="button" data-go="accountant">税理士へ</button>
     <button type="button" data-go="account">アカウント</button>
-    <button type="button" data-go="look">見た目</button>
+    <button type="button" data-go="look">テーマ</button>
   </nav>
 </div>
 
@@ -279,7 +281,7 @@
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button class="item rise" type="button" data-go="look">
-      <span class="item-t"><strong>見た目をえらぶ</strong><em>色・文字の大きさ・一覧の出しかた</em></span>
+      <span class="item-t"><strong>テーマ</strong><em>色・字・大きさ・並べかた・行き先の出しかた</em></span>
       <span class="item-v"></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -560,7 +562,7 @@
   <p class="note">送信の控えを、ご自身のメールアドレスにもお送りします。</p>
 </main>
 
-<!-- ════════════════ ⑩ 見た目をえらぶ ════════════════
+<!-- ════════════════ ⑩ テーマ ════════════════
      2026/10/4 ご指示「この仕様はユーザーが決められるように選択できる？」
 
      ★押したその場で変わります。［保存する］は要りません。
@@ -572,7 +574,7 @@
 <main id="s-look" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <h1>見た目をえらぶ</h1>
+  <h1>テーマ</h1>
   <span class="rule gold"></span>
   <p class="lead">お選びになると、その場で変わります。
     いつでも、何度でもお変えいただけます。</p>
@@ -588,6 +590,20 @@
     <label class="opt" for="lk-theme-kami"><input type="radio" id="lk-theme-kami" name="theme" value="kami">
       <span class="sw" aria-hidden="true"><i style="background:#FAF7F1"></i><i style="background:#17140F"></i><i style="background:#7A5A28"></i></span>
       <span class="opt-t"><strong>紙（あかるい）</strong><em>白い地に、墨。印刷した明細に近い見えかたです</em></span></label>
+    <label class="opt" for="lk-theme-cho"><input type="radio" id="lk-theme-cho" name="theme" value="cho">
+      <span class="sw" aria-hidden="true"><i style="background:#F2F3F5"></i><i style="background:#153A75"></i><i style="background:#131722"></i></span>
+      <span class="opt-t"><strong>台帳（だいちょう）</strong><em>白い地に、濃紺。案Eの見た目です</em></span></label>
+    <label class="opt" for="lk-theme-sumi"><input type="radio" id="lk-theme-sumi" name="theme" value="sumi">
+      <span class="sw" aria-hidden="true"><i style="background:#121214"></i><i style="background:#FFFFFF"></i><i style="background:#26262B"></i></span>
+      <span class="opt-t"><strong>墨（すみ）</strong><em>色を持たない暗い地に、白。案Fの見た目です</em></span></label>
+  </fieldset>
+
+  <fieldset class="pick">
+    <legend>字</legend>
+    <label class="opt" for="lk-font-mincho"><input type="radio" id="lk-font-mincho" name="font" value="mincho" checked>
+      <span class="opt-t"><strong>明朝（めいちょう）</strong><em style="font-family:var(--mincho)">見出しと金額に、筆の運びが残ります</em></span></label>
+    <label class="opt" for="lk-font-gothic"><input type="radio" id="lk-font-gothic" name="font" value="gothic">
+      <span class="opt-t"><strong>角ゴシック</strong><em style="font-family:var(--gothic)">全部そろえます。小さな字でもつぶれません</em></span></label>
   </fieldset>
 
   <fieldset class="pick">
@@ -608,6 +624,14 @@
       <span class="opt-t"><strong>表</strong><em>1行を小さく。一度に見える数が、およそ倍になります</em></span></label>
   </fieldset>
 
+  <fieldset class="pick">
+    <legend>行き先の出しかた</legend>
+    <label class="opt" for="lk-nav-bar"><input type="radio" id="lk-nav-bar" name="nav" value="bar" checked>
+      <span class="opt-t"><strong>ホームの一覧から</strong><em>いまの形です。画面が広く使えます</em></span></label>
+    <label class="opt" for="lk-nav-dock"><input type="radio" id="lk-nav-dock" name="nav" value="dock">
+      <span class="opt-t"><strong>画面の下の札から</strong><em>片手で、親指だけで行き来できます。案D・案Fの形です</em></span></label>
+  </fieldset>
+
   <h2 class="sect">ためしに見る</h2>
   <nav class="list">
     <button class="item" type="button" data-go="papers">
@@ -621,8 +645,8 @@
   </nav>
 
   <button class="ghost" type="button" id="look-reset" style="margin-top:var(--s3)">
-    はじめの見た目に戻す</button>
-  <p class="note">お選びになった見た目は、この端末に控えております。
+    はじめのテーマに戻す</button>
+  <p class="note">お選びになったテーマは、この端末に控えております。
     ほかの端末や、別のブラウザでは、はじめの見た目から始まります。</p>
 </main>
 
@@ -648,10 +672,10 @@
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </nav>
 
-  <h2 class="sect">画面の見えかた</h2>
+  <h2 class="sect">テーマ</h2>
   <nav class="list">
     <button class="item" type="button" data-go="look">
-      <span class="item-t"><strong>見た目をえらぶ</strong><em>色・文字の大きさ・一覧の出しかた</em></span>
+      <span class="item-t"><strong>テーマをえらぶ</strong><em>色・字・大きさ・並べかた・行き先の出しかた</em></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </nav>
 
@@ -692,6 +716,18 @@
 </main>
 
 
-<script src="demo.js?v=4"></script>
+<!-- ════ 画面の下の札（テーマで「下の札」をお選びのときだけ出ます）════ -->
+<nav class="dock" id="dock" hidden aria-label="おもな行き先">
+  <button type="button" data-go="home">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>ホーム</button>
+  <button type="button" data-go="papers">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>明細</button>
+  <button type="button" data-go="status">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/></svg>入居</button>
+  <button type="button" data-go="account">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>そのほか</button>
+</nav>
+
+<script src="demo.js?v=5"></script>
 </body>
 </html>

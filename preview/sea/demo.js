@@ -39,12 +39,16 @@
     var inside = (name !== 'login' && name !== 'reset');
     $('bar').hidden = !inside;
 
-    /* 上の帯の目次で、いまの画面に印をつけます（ご指示②） */
-    var ns = document.querySelectorAll('.flag-nav button');
+    /* 上の帯の目次と、下の札に、いまの画面の印をつけます */
+    var ns = document.querySelectorAll('.flag-nav button, .dock button');
     for(var i = 0; i < ns.length; i++){
       if(ns[i].getAttribute('data-go') === name) ns[i].setAttribute('aria-current','page');
       else ns[i].removeAttribute('aria-current');
     }
+
+    /* 下の札は、ログインと再設定では出しません（上のバーと同じ扱い） */
+    var dk = $('dock');
+    if(dk) dk.hidden = !(name !== 'login' && name !== 'reset');
 
     /* ★パスワードは、画面を出すたびに「隠れた状態」から始めます。
          見えたまま置き忘れる事故を防ぎます（ご指示①③）。 */
@@ -421,7 +425,13 @@
    *    同じ見えかたにします（表に1列足すだけで済みます）。
    * ══════════════════════════════════════════════════════════════ */
   (function(){
-    var KEYS = { theme:['umi','ai','kami'], size:['m','l','xl'], list:['card','table'] };
+    var KEYS = {
+      theme : ['umi','ai','kami','cho','sumi'],
+      font  : ['mincho','gothic'],
+      size  : ['m','l','xl'],
+      list  : ['card','table'],
+      nav   : ['bar','dock']
+    };
     var d = document.documentElement;
 
     function put(k, v){
