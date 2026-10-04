@@ -2749,6 +2749,66 @@
     }).join('');
   }
 
+  /* ══════════════════════════════════════════════
+   *  雰囲気（2026/10/4 追加）
+   *
+   *  改良前： 角 24px／ボタンはまる型。1とおりだけでした。
+   *  改良後： 2つからお選びいただけます。
+   *            まる（既定）… いままでと1ドットも同じ
+   *            板　　　　 … 角をひかえめに（箱 12px・ボタン 10px・札 8px）
+   *  ★変わるのは形だけです。配色・文字の大きさには触りません。
+   *  ★css は html[data-skin="flat"] に角の丸み6つを書き直すだけで
+   *    画面じゅうに効きます（丸みを css の 1か所にまとめたためです）。
+   *    ほかに書いたのは、上のバーのぼかしを消す指定などわずかです。
+   * ══════════════════════════════════════════════ */
+  /* r は、えらびの画面に出す「見本の角」です。
+     札（--r-tag）の値を使います。まる型 999px と 8px がいちばん
+     見分けやすいためです（ボタンの 10px だと差が小さすぎました）。 */
+  var SKINS = [
+    { id:'maru', name:'まる', note:'いまの形',   r:'999px' },
+    { id:'flat', name:'板',   note:'角ひかえめ', r:'8px'   }
+  ];
+  var SKKEY = 'ire_owner_skin';
+
+  function skPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].id === v) return v; }
+    return SKINS[0].id;
+  }
+  function skName(id){
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].id === id) return SKINS[i].name; }
+    return '';
+  }
+  function skSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(SKKEY) || ''; }catch(e){}
+    return skPick(v);
+  }
+  function skApply(id){
+    var v = skPick(id);
+    var h = document.documentElement;
+    /* 「まる」のときは印を外します（css の既定が、そのまま効きます） */
+    if(v === 'maru') h.removeAttribute('data-skin');
+    else h.setAttribute('data-skin', v);
+    try{ localStorage.setItem(SKKEY, v); }catch(e){}
+    skPaint();
+  }
+  function skPaint(){
+    var host = $('my-skins');
+    if(!host) return;
+    var now = skSaved();
+    host.innerHTML = SKINS.map(function(k){
+      /* 見本は、角の丸みそのものです。字で説明するより早く伝わります */
+      return '<button type="button" class="th-i" data-sk="' + k.id + '"' +
+             ' aria-pressed="' + (k.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-sh" aria-hidden="true" style="border-radius:' +
+               k.r + '"></span>' +
+             '<span class="th-n">' + esc(k.name) +
+               '<span class="th-px"> ' + esc(k.note) + '</span></span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
+  }
+
   /* 全角の数字・記号を半角に直し、空白を取ります */
   function myNum(v){
     var s = String(v == null ? '' : v);
@@ -2864,6 +2924,7 @@
     say($('my-pw-msg'), '');
     say($('my-info-msg'), '');
     thPaint();
+    skPaint();
     szPaint();
   }
 
@@ -2874,6 +2935,15 @@
     if(id === thSaved()) return;
     thApply(id, true);
     toast('配色を「' + thName(id) + '」に変更しました');
+  });
+
+  $('my-skins').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-sk]');
+    if(!b) return;
+    var id = skPick(b.getAttribute('data-sk'));
+    if(id === skSaved()) return;
+    skApply(id);
+    toast('雰囲気を「' + skName(id) + '」に変更しました');
   });
 
   $('my-sizes').addEventListener('click', function(ev){

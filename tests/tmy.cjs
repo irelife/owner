@@ -26,6 +26,7 @@ if (!my) {
 }
 const box = new Function(
   my + '; return { THEMES, thPick, thName, thOf, SIZES, szPick, szName, SZKEY,'
+      + ' SKINS, skPick, skName, SKKEY,'
       + ' myNum, myTel, myZip, myMail, myCheck, myBody };'
 )();
 
@@ -64,6 +65,32 @@ eq(box.SIZES.length, 3, '3段');
 eq(box.SIZES[0].id, 'm', '1つめは「ふつう」');
 ok(box.SIZES.map(z => z.id).join(',') === 'm,l,xl', '並びは ふつう → 大きい → 特大');
 ok(new Set(box.SIZES.map(z => z.id)).size === box.SIZES.length, 'id が重なっていない');
+
+/* ★★ 雰囲気（2026/10/4 追加）
+ *
+ *   ご指示「色合いはそれぞれのテーマでよいけれど、雰囲気が」から
+ *   入れたものです。変わるのは角の丸みだけで、色には触りません。 */
+console.log('\n── ★★ 雰囲気（SKINS）──');
+eq(box.SKINS.length, 2, '2つ（まる・板）');
+eq(box.SKINS[0].id, 'maru', '★1つめは既定の「まる」（いままでと同じ形）');
+ok(box.SKINS.map(k => k.id).join(',') === 'maru,flat', '並びは まる → 板');
+ok(new Set(box.SKINS.map(k => k.id)).size === box.SKINS.length, 'id が重なっていない');
+ok(box.SKINS.every(k => /^\d+px$|^999px$/.test(k.r)),
+   '★どちらも見本の丸みが入っている（画面に出す値）');
+ok(box.SKINS[0].r === '999px' && box.SKINS[1].r !== '999px',
+   '★見本の丸みが、まる型 → ひかえめ になっている');
+
+console.log('\n── 雰囲気を選ぶ（skPick）──');
+eq(box.skPick('maru'), 'maru', 'まる');
+eq(box.skPick('flat'), 'flat', '板');
+eq(box.skPick(''), 'maru', '★空なら既定のまる');
+eq(box.skPick(null), 'maru', '★何も来なくてもまる');
+eq(box.skPick('sea'), 'maru',
+   '★見本にしかない「海」を選んでいても、まるに戻る（画面が壊れない）');
+eq(box.skPick(' flat '), 'flat', '前後の空白は取る');
+eq(box.skPick('FLAT'), 'maru', '★大文字は別物として扱う');
+eq(box.skName('flat'), '板', '名前が引ける');
+eq(box.skName('sea'), '', '★無いものは空');
 
 console.log('\n── ★★ index.html の先あてと、THEMES がそろっているか ──');
 const html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
@@ -232,6 +259,76 @@ console.log('\n── ★★ 文字の大きさ・明るい配色が、本当に
     ok(css.indexOf('html[data-theme="' + id + '"]') >= 0,
        '★ css に受け口がある: data-theme="' + id + '"');
   });
+}
+
+/* ★★ 雰囲気（板）が「本当に効く」か
+ *
+ *   この仕組みは、角の丸みが css の 1か所（:root の --r-…）に
+ *   まとまっていることだけが支えです。どこかに「border-radius:24px」と
+ *   直接書かれていると、その部品だけ「板」にならず取り残されます。
+ *   人が目で見つけるのは無理なので、検査で押さえます。 */
+console.log('\n── ★★ 雰囲気（板）が、本当に効くか ──');
+{
+  const css   = fs.readFileSync(path.join(DIR, 'css/style.css'), 'utf8');
+  const html2 = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+  const R = ['--r-s', '--r-m', '--r-l', '--r-x', '--r-btn', '--r-tag'];
+
+  /* ① 既定の6つが決まっているか */
+  const def = {};
+  R.forEach(function(k){
+    const m = css.match(new RegExp('\\' + 'n\\s*' + k + ':\\s*([\\d]+)px'));
+    ok(!!m, '① 既定が決まっている: ' + k);
+    if (m) def[k] = parseInt(m[1], 10);
+  });
+
+  /* ② 板の受け口があり、6つぜんぶを上書きしているか */
+  const fl = css.match(/html\[data-skin="flat"\]\{([\s\S]*?)\}/);
+  ok(!!fl, '② css に受け口がある: html[data-skin="flat"]');
+  const flat = {};
+  if (fl) {
+    R.forEach(function(k){
+      const m = fl[1].match(new RegExp(k + ':\\s*([\\d]+)px'));
+      ok(!!m, '② 板でも決めている: ' + k);
+      if (m) flat[k] = parseInt(m[1], 10);
+    });
+    ok(R.every(k => flat[k] !== undefined && def[k] !== undefined && flat[k] <= def[k]),
+       '★ 板は、どれも既定と同じか、より小さい丸み（' + JSON.stringify(flat) + '）');
+    ok(flat['--r-btn'] !== undefined && flat['--r-btn'] < 999,
+       '★ ボタンのまる型をやめている（' + flat['--r-btn'] + 'px）');
+    ok(flat['--r-tag'] !== undefined && flat['--r-tag'] < 999,
+       '★ 札のまる型をやめている（' + flat['--r-tag'] + 'px）');
+  }
+
+  /* ③ 角の丸みの直書きが残っていないか（これが取り残しの元です）
+       ★のこしてよいもの … 棒の上だけ丸める／11px の見本の四角／丸 */
+  const KEEP = ['4px 4px 0 0', '2px', '50%', 'inherit'];
+  const bad = [];
+  css.split('\n').forEach(function(line, i){
+    const m = line.match(/border-radius:\s*([^;}]+)/);
+    if (!m) return;
+    const v = m[1].trim();
+    if (v.indexOf('var(--r') === 0) return;
+    if (KEEP.indexOf(v) >= 0) return;
+    bad.push((i + 1) + '行: ' + v);
+  });
+  ok(bad.length === 0,
+     '★★ ③ 角の丸みの直書きが残っていない（残り ' + bad.length + ' 件'
+     + (bad.length ? '：' + bad.join(' / ') : '') + '）');
+
+  /* ④ 上のバーのぼかしを、板ではやめているか */
+  ok(/html\[data-skin="flat"\]\s*\.bar\{[^}]*backdrop-filter:\s*none/.test(css),
+     '④ 板では、上のバーのすりガラスをやめている');
+
+  /* ⑤ 先あてが読む鍵と、app.js が書く鍵が同じか */
+  const kk = box.SKKEY || '';
+  ok(!!kk, 'app.js に、雰囲気を保存する鍵の名前がある');
+  ok(kk && html2.indexOf("localStorage.getItem('" + kk + "')") >= 0,
+     '★★ ⑤ 先あてが読む鍵と、app.js が書く鍵が同じ（' + JSON.stringify(kk) + '）');
+  ok(html2.indexOf("setAttribute('data-skin'") >= 0,
+     '★ 先あてが data-skin を付けている（まる型が一瞬見えるのを防ぐ）');
+
+  /* ⑥ えらびの受け皿が index.html にあるか */
+  ok(html2.indexOf('id="my-skins"') >= 0, '⑥ マイアカウントに、えらびの受け皿がある');
 }
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);

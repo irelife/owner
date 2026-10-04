@@ -204,6 +204,94 @@ const SCREENS = ['home','papers','status','insurance','contact','accountant','ac
   ok(feel.aria === 'true' || feel.aria === 'false',
      '★開閉する見出しが、開いているかどうかを読み上げに伝える（aria-expanded）');
 
+  /* ══════════════════════════════════════════════════════════════
+   *  ホームが横にはみ出さないか（2026/10/4 追加）
+   *
+   *  【なぜ入れたか】
+   *  この検査は、これまで 幅390px・文字「ふつう」の1とおりだけを
+   *  見ていました。そのため、次のはみ出しを見逃していました。
+   *      320px ふつう ／ 360px 特大 ／ 390px 特大 ／ 640px 大きい・特大
+   *  端末の幅と文字の大きさを、組み合わせて見ます（7幅 × 3段）。
+   *
+   *  ついでに「1字落ち」も見ます。
+   *  「満期管／理」のように最後の1字だけが次の行へ落ちる折り返しは、
+   *  読みにくく、作りが雑に見えます（ご指示「改行気を付けてね」）。
+   * ══════════════════════════════════════════════════════════════ */
+  console.log('\n── ホームが横にはみ出さないか（幅 × 文字の大きさ）──');
+  await p.evaluate(() => {
+    document.querySelectorAll('section.scr').forEach(e => { e.hidden = true; });
+    document.getElementById('s-home').hidden = false;
+  });
+  {
+    const WIDTHS = [320, 360, 390, 414, 640, 768, 1024];
+    const SIZES  = ['m', 'l', 'xl'];
+    const orphans = [], spills = [], bars = [];
+    for(const w of WIDTHS){
+      await p.setViewportSize({ width:w, height:900 });
+      const bad = [];
+      for(const sz of SIZES){
+        await p.evaluate(z => {
+          const h = document.documentElement;
+          if(z === 'm') h.removeAttribute('data-size');
+          else          h.setAttribute('data-size', z);
+        }, sz);
+        await p.waitForTimeout(40);
+        const r = await p.evaluate(() => {
+          const C = document.documentElement.clientWidth;
+          /* 題の折り返しを、1文字ずつ上から拾って行に分けます */
+          const orp = [];
+          document.querySelectorAll('#s-home .tile-t').forEach(e => {
+            if(!e.firstChild || e.firstChild.nodeType !== 3) return;
+            const t = e.textContent, rg = document.createRange();
+            let lines = [], cur = '', prev = null;
+            for(let i = 0; i < t.length; i++){
+              rg.setStart(e.firstChild, i); rg.setEnd(e.firstChild, i + 1);
+              const y = Math.round(rg.getBoundingClientRect().top);
+              if(prev !== null && y !== prev){ lines.push(cur); cur = ''; }
+              cur += t[i]; prev = y;
+            }
+            lines.push(cur);
+            if(lines.length > 1 && lines.some(x => x.length <= 1)) orp.push(lines.join('／'));
+          });
+          /* 金額が、タイルの枠から出ていないか */
+          const sp = [];
+          document.querySelectorAll('#s-home .tile').forEach(t => {
+            const a = t.querySelector('.tile-a'); if(!a) return;
+            const g = t.getBoundingClientRect(), h = a.getBoundingClientRect();
+            const right = h.left + a.scrollWidth;
+            if(right > g.right - 1) sp.push(Math.round(right - g.right) + 'px');
+          });
+          /* 上のバーの社名が、2行になったり、切れたりしていないか */
+          const bar = document.querySelector('.bar');
+          const lg  = bar ? bar.querySelector('.logo-mark') : null;
+          let bad = '';
+          if(bar && lg){
+            const bb = bar.getBoundingClientRect(), lb = lg.getBoundingClientRect();
+            const lines = Math.round(lb.height / parseFloat(getComputedStyle(lg).lineHeight));
+            if(lines > 1)            bad = '社名が ' + lines + '行';
+            else if(lb.bottom > bb.bottom) bad = '社名が ' + Math.round(lb.bottom - bb.bottom) + 'px 切れる';
+          }
+          return { over:Math.max(0, document.documentElement.scrollWidth - C), orp, sp, bar:bad };
+        });
+        if(r.over > 0) bad.push(sz + ' ＋' + r.over + 'px');
+        r.orp.forEach(x => orphans.push(w + 'px/' + sz + ' ' + x));
+        r.sp.forEach(x  => spills.push(w + 'px/' + sz + ' ' + x));
+        if(r.bar) bars.push(w + 'px/' + sz + ' ' + r.bar);
+      }
+      ok(bad.length === 0, '幅 ' + w + 'px … 3段どれもはみ出さない' +
+         (bad.length ? '（' + bad.join(' ／ ') + '）' : ''));
+    }
+    ok(orphans.length === 0, '★ タイルの題に「1字落ち」が無い（21とおり）' +
+       (orphans.length ? '（' + orphans.slice(0, 3).join(' ／ ') + '）' : ''));
+    ok(spills.length === 0, '★ 金額がタイルの枠から出ない' +
+       (spills.length ? '（' + spills.slice(0, 3).join(' ／ ') + '）' : ''));
+    ok(bars.length === 0, '★ 上のバーの社名が、1行におさまり切れない' +
+       (bars.length ? '（' + bars.slice(0, 4).join(' ／ ') + '）' : ''));
+    /* あと片づけ。あとの検査が「ふつう・390px」で動くようにします */
+    await p.evaluate(() => document.documentElement.removeAttribute('data-size'));
+    await p.setViewportSize({ width:390, height:844 });
+  }
+
   console.log('');
   ok(errs.length === 0, 'JavaScript の誤りが出ない' +
        (errs.length ? '（' + errs[0] + '）' : ''));

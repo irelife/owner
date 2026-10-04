@@ -128,12 +128,18 @@
   --ic-l:24px;   /* 見出しのとなり */
   --ic-w:1.8;    /* 線の太さ。層ごとに変えません */
 
-  /* 角の丸み */
+  /* 角の丸み
+   *  ★2026/10/4 … ここに5つ決めてありましたが、css の中には 38か所
+   *    「16px」「24px」などの直書きが残っていました。それを全部この
+   *    5つ（＋下の2つ）に寄せました。以後、角の丸みはここだけで決まります。
+   *    これで「雰囲気」のえらび（下）が、7行で効くようになります。 */
   --r-s:8px;     /* 小さな札 */
   --r-m:12px;    /* 入力欄・小さな箱 */
   --r-l:16px;    /* 箱 */
   --r-x:24px;    /* 大きな箱 */
-  --r-pill:999px;
+  --r-pill:999px;/* 線の端（金の短い線・凡例の線）。ここは丸いままです */
+  --r-btn:999px; /* ボタン（変更する・戻る・枠だけのボタン） */
+  --r-tag:999px; /* 札（満室・回答済み・保険の期限・帯の知らせ） */
 
   /* 動き。距離と役割で変えます。1つの時間を使い回しません */
   --t-tap:.12s;  /* 押した手ごたえ（80〜150ms） */
@@ -262,11 +268,34 @@ img{ max-width:100%; }
   -webkit-backdrop-filter:saturate(180%) blur(16px);
   backdrop-filter:saturate(180%) blur(16px);
   border-bottom:1px solid var(--bd-60);
+  /* ★中の社名が「このバーの幅」を見られるようにします（下の cqi） */
+  container-type:inline-size;
 }
 .logo-mark{
   margin:0; font-size:1.25rem; font-weight:700; letter-spacing:-.02em;
   color:var(--pri);
 }
+/* ══════════════════════════════════════════════════════════════
+ *  上のバーの社名（2026/10/4 修正）
+ *
+ *  【改良前】 文字を大きくすると、社名が2行になり、
+ *            高さ 56px のバーから はみ出して切れていました。
+ *              320px ×「大きい」… 12px 切れる
+ *              320px ×「特大」　… 16px 切れる
+ *              360px ×「特大」　… 16px 切れる
+ *            ★2026/10/4 に「文字の大きさ」を入れたときの見落としです。
+ *              そのときは 幅390px だけで見ていました。
+ *  【改良後】 ① 社名は、けっして2行にしません
+ *            ② 入らないときは、バーの幅に合わせて縮めます
+ *            ③ それでも足りないときは、先に右のお名前が「…」になります
+ *              （お名前の欄は、もともと縮む作りです）
+ *  ★7.5cqi は実測です。社名「Owner's Salon」の幅は、字の大きさの
+ *    6.45倍です。バーの内のりは 幅320px で 280px、そのうち社名に
+ *    使えるのは 137px（お名前とメニューを引いたぶん）。
+ *    280 × 0.075 ＝ 21px、21 × 6.45 ＝ 135px で、ちょうど入ります。
+ *  ★ふつうの大きさでは、これまでと同じ 21.25px のままです。
+ * ══════════════════════════════════════════════════════════════ */
+.bar .logo-mark{ white-space:nowrap; font-size:min(1.25rem, 7.5cqi); }
 .logo-mark span{ font-weight:700; }
 .logo-mark.big{ font-size:1.75rem; margin-bottom:18px; }   /* 26 → 28 */
 /* ★ロゴを押すと、ホームに戻ります（2026-09-23 ご指示）。
@@ -277,14 +306,14 @@ img{ max-width:100%; }
 .logo-btn{
   padding:0; border:0; background:transparent;
   font-family:inherit; line-height:inherit; text-align:left;
-  color:var(--pri); cursor:pointer; border-radius:8px;
+  color:var(--pri); cursor:pointer; border-radius:var(--r-s);
 }
 .logo-btn:hover{ opacity:.78; }
 .logo-btn:focus-visible{ outline:2px solid var(--pri); outline-offset:3px; }
 .hd-name{ margin-left:auto; font-size:.875rem; color:var(--mut-fg);
   max-width:40vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .icon-btn{
-  margin-left:4px; margin-right:-8px; padding:8px; border:0; border-radius:8px;
+  margin-left:4px; margin-right:-8px; padding:8px; border:0; border-radius:var(--r-s);
   background:transparent; color:var(--fg); cursor:pointer;
   display:inline-flex; align-items:center; transition:background .15s;
 }
@@ -292,7 +321,7 @@ img{ max-width:100%; }
 
 .menu{
   position:fixed; top:56px; right:16px; z-index:50; width:208px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
   box-shadow:0 10px 30px rgba(0,0,0,.35); padding:6px 0; overflow:hidden;
 }
 .menu-i{
@@ -306,7 +335,7 @@ img{ max-width:100%; }
 /* ── ログインなどの箱 ─────────────────────── */
 .card{
   width:100%; background:var(--card-bg); border:1px solid var(--bd);
-  border-radius:24px; padding:32px 28px;
+  border-radius:var(--r-x); padding:32px 28px;
 }
 .card.narrow{ max-width:440px; }
 
@@ -346,7 +375,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 
 /* 小見出しの下の金の線（SubPageHeader の w-12 h-1） */
 .scr.pad > .h-mincho + .bar-line,
-.h-mincho + .bar-line{ display:block; width:48px; height:4px; border-radius:999px;
+.h-mincho + .bar-line{ display:block; width:48px; height:4px; border-radius:var(--r-pill);
   background:var(--pri); margin-top:12px; }
 
 /* ── 戻る ─────────────────────────────────── */
@@ -356,7 +385,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
  *   いちばん小さいものが、いちばん押されていました。 */
 .back{
   display:inline-flex; align-items:center; gap:6px;
-  margin:0 0 20px; min-height:44px; padding:0 18px; border:0; border-radius:999px;
+  margin:0 0 20px; min-height:44px; padding:0 18px; border:0; border-radius:var(--r-btn);
   background:var(--mut); color:var(--mut-fg);
   font:inherit; font-size:.9375rem; font-weight:500; cursor:pointer;
   transition:background .15s, color .15s;
@@ -372,7 +401,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 .btn{
   display:flex; align-items:center; justify-content:center; gap:8px;
   width:100%; margin-top:16px; padding:12px 24px;
-  border:0; border-radius:999px; cursor:pointer;
+  border:0; border-radius:var(--r-btn); cursor:pointer;
   background:var(--pri); color:var(--pri-fg);
   font:inherit; font-size:1rem; font-weight:500;
   transition:opacity .15s;
@@ -385,7 +414,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 }
 .btn.link:hover{ color:var(--fg); }
 .btn.ghost{
-  margin-top:12px; padding:12px 24px; width:auto; border-radius:999px;
+  margin-top:12px; padding:12px 24px; width:auto; border-radius:var(--r-btn);
   background:transparent; color:var(--fg);
   border:1px solid var(--bd);
 }
@@ -414,7 +443,7 @@ input[type=text], input[type=email], input[type=password], input[type=tel],
 input[type=date], input[type=search], select, textarea{
   width:100%; padding:12px 16px;
   background:hsl(var(--input)); color:var(--fg);
-  border:1px solid var(--bd); border-radius:12px;
+  border:1px solid var(--bd); border-radius:var(--r-m);
   font:inherit; font-size:1rem; line-height:1.5;
   appearance:none; -webkit-appearance:none;
   transition:box-shadow .15s, border-color .15s;
@@ -464,7 +493,7 @@ input[type=file]{
   border:0; background:transparent; padding:0;
 }
 input[type=file]::file-selector-button{
-  margin-right:12px; min-height:44px; padding:0 18px; border:0; border-radius:12px;
+  margin-right:12px; min-height:44px; padding:0 18px; border:0; border-radius:var(--r-m);
   background:var(--acc); color:var(--fg);
   font:inherit; font-size:.9375rem; font-weight:500; cursor:pointer;
 }
@@ -475,7 +504,7 @@ input[type=file]::file-selector-button{
 .pw-eye{
   position:absolute; right:4px; top:50%; transform:translateY(-50%);
   width:44px; height:44px; display:flex; align-items:center; justify-content:center;
-  border:0; background:transparent; color:var(--mut-fg); cursor:pointer; border-radius:12px;
+  border:0; background:transparent; color:var(--mut-fg); cursor:pointer; border-radius:var(--r-m);
 }
 .pw-eye:hover{ color:var(--fg); }
 .pw-eye svg{ width:var(--ic-m); height:var(--ic-m); fill:none; stroke:currentColor;
@@ -491,7 +520,7 @@ input[type=file]::file-selector-button{
 /* ── ホーム：今月のご送金 ─────────────────── */
 .hero{
   margin-top:20px; padding:32px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
 }
 .hero-k{ margin:0; font-size:.875rem; color:var(--mut-fg); }
 .amount{
@@ -515,7 +544,7 @@ input[type=file]::file-selector-button{
 
 /* ── 今月の動き（一覧の形） ───────────────── */
 .moves{
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
   overflow:hidden;
 }
 .moves .empty{ padding:28px 20px; }
@@ -538,7 +567,7 @@ input[type=file]::file-selector-button{
    月の並びは上下でそろえてあります。 */
 .chart-box{
   padding:24px 16px 16px; background:var(--card-bg);
-  border:1px solid var(--bd); border-radius:16px;
+  border:1px solid var(--bd); border-radius:var(--r-l);
 }
 .ch2{ display:flex; align-items:stretch; gap:4px; height:190px; }
 .c2{ position:relative; flex:1 1 0; min-width:0; display:flex; flex-direction:column; }
@@ -622,7 +651,7 @@ input[type=file]::file-selector-button{
 .sw.inc{ background:var(--inc); }
 .sw.out{ background:var(--out); }
 .sw.run{ background:var(--fg); }
-.sw.run.line{ width:16px; height:2px; border-radius:999px; }
+.sw.run.line{ width:16px; height:2px; border-radius:var(--r-pill); }
 
 /* 数字で見る（色だけに頼らないための表） */
 .ch-tb{ margin-top:16px; }
@@ -644,16 +673,47 @@ input[type=file]::file-selector-button{
           mask:var(--ic-up) center / contain no-repeat;
 }
 
-/* ── タイル（ホームのカード） ─────────────── */
+/* ── タイル（ホームのカード） ───────────────
+ * ★2026/10/4 … 横にはみ出す不具合を直しました。
+ *
+ *  【改良前】 ホームが横にはみ出し、画面が横にずれていました。
+ *      320px の端末 … 文字「ふつう」でも はみ出す
+ *      360px の端末 … 「特大」で はみ出す
+ *      390px の端末 … 「特大」で はみ出す
+ *      640px の端末 … 「大きい」「特大」で はみ出す
+ *      1024px 以上　 … 「特大」で、金額がタイルの枠から 6px 出ていた
+ *
+ *  【原因】 実測しました（幅390px）。列の幅を決めていたのは、
+ *    タイルの中で「これ以上縮まない幅」がいちばん大きいものです。
+ *
+ *      タイルの題（.tile-t）　　 ふつう 311px ／ 特大 381px  ← これ
+ *      金額（.tile-a）　　　　　 ふつう 230px ／ 特大 272px
+ *
+ *    題に word-break:keep-all（けっして折らない）と書いてありました。
+ *    「送金明細を税理士事務所へ送付」が1行のまま、どこまでも横に
+ *    伸びます。そして列の幅を 1fr と書いていたため、列はその幅まで
+ *    広がりました（1fr は「中身がこれ以上縮まない幅」より狭くなりません）。
+ *    入れ物は 幅390px なら 350px しかないので、はみ出します。
+ *
+ *  【改良後】
+ *      ① 列を minmax(0, 1fr) に … 列は、入れ物より広くなりません
+ *      ② 題は、入りきらないときだけ折ります（ふだんは折りません）
+ *      ③ 金額は、折らずに「縮め」ます（1024px 以上の「特大」のため）
+ *    ★「ふつう」の見た目は、1ドットも変わりません（数値は下）。 */
 .tiles{
-  display:grid; grid-template-columns:1fr; gap:20px; margin-top:48px;
+  /* ★1fr ではなく minmax(0, 1fr)。0 まで縮める許しを与えます */
+  display:grid; grid-template-columns:minmax(0, 1fr); gap:20px; margin-top:48px;
 }
 .tile{
   position:relative;
   display:flex; flex-direction:column; text-align:left;
-  padding:24px; border:1px solid var(--bd); border-radius:16px;
+  padding:24px; border:1px solid var(--bd); border-radius:var(--r-l);
   background:var(--card-bg); color:var(--fg); cursor:pointer;
   font:inherit; transition:border-color .15s, box-shadow .15s;
+  /* ★中の金額が「このタイルの幅」を見られるようにします（cqi の土台）。
+       列の幅が中身で決まらなくなった（minmax(0,…)）ので、
+       中身が幅を見ても、にわとりと卵になりません。 */
+  container-type:inline-size;
 }
 .tile:hover{ border-color:hsl(var(--primary) / .6); }
 
@@ -683,9 +743,46 @@ input[type=file]::file-selector-button{
 }
 /* 見本（FeatureCard）の text-lg lg:text-xl に合わせています */
 .tile-t{ margin-top:8px; font-size:1.125rem; font-weight:700; letter-spacing:-.02em;
-  line-height:1.45; word-break:keep-all; }
-.tile-a{ margin-top:4px; font-size:2.25rem; font-weight:700; line-height:1.15;
-  letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+  line-height:1.45;
+  /* ★折り返しの指定を3行に分けています。わざとです。
+   *
+   *  keep-all は「けっして折らない」です。これ1つだけ書いてあったため、
+   *  「送金明細を税理士事務所へ送付」が1行のまま横に伸び、列を
+   *  381px まで広げて、画面をはみ出させていました。
+   *
+   *    ① word-break:keep-all　　 … 古いブラウザ向けの保険（これまでと同じ）
+   *    ② overflow-wrap:break-word … 入りきらないときだけ折る（はみ出し止め）
+   *    ③ word-break:auto-phrase　 … 文節の切れめで折る（③が勝ちます）
+   *
+   *  ②だけだと、どこでも折れるので「満期管／理」「へ送／付」のように
+   *  1字だけ落ちます。ご指示の「改行気を付けてね」に反します。
+   *  ③にすると「送金明細を／税理士事務所へ送付」と文節で折れます。
+   *  5つの題 × 5つの画面幅 × 3つの大きさ＝75とおりを実測し、
+   *  1字落ちは 0件でした（②だけだと 8件）。
+   *  ★③を読めないブラウザは ①②で動きます。はみ出しません。 */
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  word-break:auto-phrase; }
+.tile-a{ margin-top:4px; font-weight:700; line-height:1.15;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+  /* 金額は、折ってはいけません（「¥2,773,」「303」になります）。
+     折らずに、入る大きさまで縮めます。
+       cqi … このタイルの内のりの 1％
+       min(…) … ふだんは 2.25rem。入らないときだけ縮みます
+     ★21.25cqi は目分量ではありません。
+       「¥2,773,303」の幅は、字の大きさの 4.70倍です（実測。
+       38.25px→180px、47.25px→222px、63px→296px の3点で同じ値）。
+       1 ÷ 4.70 ＝ 0.2128 なので、21.25cqi が内のり一杯です。
+     ★数値（この指定で、実際にどう出るか）
+         幅390px ふつう 38.25px（2.25rem が勝つ＝いままでと同じ）
+         幅390px 特大　 47.25px（同じ。はみ出しの原因は題のほうでした）
+         幅320px 特大　 47.25px（内のり230px に 222px。入ります）
+         1024px 特大　 56.31px（3rem×1.3125＝63px だと枠から 6px 出る）
+     ★8桁（¥12,345,678）でも入ります（幅390px ふつうで 198px）。
+     ★cqi を読めないブラウザは、上の 2.25rem／3rem で出ます。
+       そのときだけ、1024px 以上の「特大」で 6px 出ます（前からの形）。 */
+  font-size:2.25rem;
+  font-size:min(2.25rem, 21.25cqi); }
 /* ★2026/10/1 … 説明文を「下ぞろえ」にしました。
  *
  *  改良前は margin-top:12px でした。すると「今月のご送金」の
@@ -848,7 +945,7 @@ input[type=file]::file-selector-button{
   width:100%; max-width:420px; box-sizing:border-box;
   min-height:52px; padding:0 40px 0 16px;
   font:inherit; font-size:1rem; color:var(--fg);
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:12px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-m);
   -webkit-appearance:none; appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A87A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 14px center; background-size:18px;
@@ -859,12 +956,12 @@ input[type=file]::file-selector-button{
 /* ── 入居状況 ─────────────────────────────── */
 .stat{
   padding:20px; margin-bottom:12px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
 }
 .st-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .st-t{ font-size:1.25rem; font-weight:700; }
 .st-tag{
-  flex:0 0 auto; padding:6px 12px; border-radius:999px;
+  flex:0 0 auto; padding:6px 12px; border-radius:var(--r-tag);
   font-size:.875rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
@@ -877,7 +974,7 @@ input[type=file]::file-selector-button{
 /* ★物件ごとのまとめ（2026-09-22。いただいた React 版から抜き取った仕様）
    改良前： 状態ごとに縦に並び、物件を横断して混ざっていました。 */
 .st-sum{
-  margin:0 0 24px; padding:14px 18px; border-radius:16px;
+  margin:0 0 24px; padding:14px 18px; border-radius:var(--r-l);
   font-size:.9375rem; line-height:1.7;
   background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
 }
@@ -900,7 +997,7 @@ input[type=file]::file-selector-button{
 
 .letter{
   margin-top:32px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
 }
 .lt-h{ margin:0 0 8px; font-size:.75rem; font-weight:600; letter-spacing:.06em;
   color:var(--pri); text-transform:uppercase; }
@@ -913,7 +1010,7 @@ input[type=file]::file-selector-button{
      ★.chip と .kv は残します。.chip はお問い合わせの「確認中／
        回答済み」、.kv は火災保険（.ins-box .kv）で使っています。 */
 .chip{
-  flex:0 0 auto; padding:6px 12px; border-radius:999px;
+  flex:0 0 auto; padding:6px 12px; border-radius:var(--r-tag);
   font-size:.8125rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
@@ -933,7 +1030,7 @@ input[type=file]::file-selector-button{
 .bub-w{ margin-bottom:4px; font-size:.6875rem; color:hsl(var(--muted-foreground) / .8); }
 .bub-b{
   max-width:85%; padding:10px 14px; font-size:.875rem; line-height:1.8;
-  white-space:pre-wrap; border-radius:16px;
+  white-space:pre-wrap; border-radius:var(--r-l);
   background:var(--pri); color:var(--pri-fg); border-top-right-radius:4px;
 }
 .bub.mine .bub-b{
@@ -952,7 +1049,7 @@ input[type=file]::file-selector-button{
 .ask textarea{ margin-top:12px; }
 .ask .msg{ display:block; margin-top:8px; }
 #ct-new{ margin:0 0 40px; padding:24px; border-top:0;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px; }
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l); }
 
 /* ── 読み込み中 ───────────────────────────── */
 .boot{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
@@ -962,7 +1059,7 @@ input[type=file]::file-selector-button{
 /* ── 帯の知らせ ───────────────────────────── */
 .toast{
   position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:80;
-  max-width:calc(100% - 40px); padding:14px 20px; border-radius:999px;
+  max-width:calc(100% - 40px); padding:14px 20px; border-radius:var(--r-tag);
   background:var(--pri); color:var(--pri-fg);
   font-size:.875rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
@@ -982,7 +1079,7 @@ input[type=file]::file-selector-button{
  *  改良前： 1証券＝1行のべた並び。CSS が1行も当たっていませんでした。
  *  改良後： 物件ごとの箱にまとめ、満期の近さを札で出します。 */
 .ins-due{
-  margin:20px 0 0; padding:14px 18px; border-radius:16px;
+  margin:20px 0 0; padding:14px 18px; border-radius:var(--r-l);
   font-size:.9375rem; line-height:1.7;
   background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
 }
@@ -994,7 +1091,7 @@ input[type=file]::file-selector-button{
 
 .ins-box{
   padding:20px; margin-bottom:12px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
 }
 .ins-box.soon{ border-color:hsl(var(--primary) / .75); }
 .ins-box.over{ border-color:hsl(var(--destructive) / .75); }
@@ -1003,7 +1100,7 @@ input[type=file]::file-selector-button{
 .ins-n{ font-size:1.25rem; font-weight:700; letter-spacing:-.01em; min-width:0;
   line-height:1.4; }
 .ins-tag{
-  flex:0 0 auto; margin-top:3px; padding:6px 12px; border-radius:999px;
+  flex:0 0 auto; margin-top:3px; padding:6px 12px; border-radius:var(--r-tag);
   font-size:.8125rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
@@ -1017,7 +1114,7 @@ input[type=file]::file-selector-button{
 .ins-box .kv a{ color:var(--pri); }
 /* 電話は「電話をかける」だけを押せるようにします */
 .ins-call{
-  display:inline-block; margin-left:10px; padding:3px 10px; border-radius:999px;
+  display:inline-block; margin-left:10px; padding:3px 10px; border-radius:var(--r-tag);
   font-size:.7812rem; font-weight:600; text-decoration:none; white-space:nowrap;
   border:1px solid hsl(var(--primary) / .5); background:hsl(var(--primary) / .14);
 }
@@ -1028,14 +1125,14 @@ input[type=file]::file-selector-button{
 .ins-open{
   flex:1 1 auto; min-width:0; text-align:left;
   padding:14px 4px; border:0; background:transparent; color:var(--fg);
-  font:inherit; cursor:pointer; border-radius:12px;
+  font:inherit; cursor:pointer; border-radius:var(--r-m);
 }
 .ins-open:hover{ background:var(--acc); }
 .ins-rt{ display:block; font-size:.9375rem; font-weight:600;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ins-rs{ display:block; margin-top:2px; font-size:.8125rem; color:var(--mut-fg); }
 .ins-x{
-  flex:0 0 auto; width:44px; height:44px; border-radius:12px;
+  flex:0 0 auto; width:44px; height:44px; border-radius:var(--r-m);
   border:1px solid var(--bd-60); background:transparent; color:var(--mut-fg);
   font:inherit; font-size:.9375rem; cursor:pointer;
 }
@@ -1046,7 +1143,7 @@ input[type=file]::file-selector-button{
 
 .ins-form{
   margin-top:40px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
 }
 .ins-for{ margin:0 0 20px; font-size:1rem; font-weight:700; color:var(--pri); }
 .ins-acts{ display:flex; gap:12px; align-items:center; margin-top:4px; }
@@ -1066,7 +1163,7 @@ input[type=file]::file-selector-button{
 /* ── 税理士へ送信（2026-09-22）───────────── */
 .acc{
   margin-top:40px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
 }
 .acc-h{ margin:0 0 16px; font-size:1.25rem; font-weight:700; }
 .acc-note{ margin:10px 0 0; font-size:.875rem; line-height:1.8; color:var(--mut-fg); }
@@ -1091,12 +1188,12 @@ input[type=file]::file-selector-button{
    明細書にはご送金額が載っております。打ち間違いのまま
    よその方へ届くことを防ぎます。 */
 .ac-cf{
-  margin-top:16px; padding:20px; border-radius:16px;
+  margin-top:16px; padding:20px; border-radius:var(--r-l);
   background:var(--mut); border:1px solid hsl(var(--primary) / .45);
 }
 .ac-cf-h{ margin:0; font-size:1rem; font-weight:700; }
 .ac-cf-to{
-  margin:10px 0 0; padding:12px 16px; border-radius:12px;
+  margin:10px 0 0; padding:12px 16px; border-radius:var(--r-m);
   background:hsl(var(--input)); border:1px solid var(--bd);
   font-size:1.125rem; font-weight:500; word-break:break-all;
 }
@@ -1111,7 +1208,7 @@ input[type=file]::file-selector-button{
 /* 1か月ぶん／1年ぶん */
 .acc-tabs{ display:flex; gap:10px; margin-bottom:18px; }
 .acc-tab{
-  flex:1 1 0; min-height:46px; padding:0 12px; border-radius:12px;
+  flex:1 1 0; min-height:46px; padding:0 12px; border-radius:var(--r-m);
   border:1px solid var(--bd); background:transparent; color:var(--fg);
   font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer;
   transition:background .15s, border-color .15s;
@@ -1131,7 +1228,7 @@ input[type=file]::file-selector-button{
    ★2026/9/23 まで、やりとりを全部開いたまま並べていました。
      件数が増えると画面がとても長くなるため、送金明細と同じ形にします。 */
 .tk{
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
   overflow:hidden; margin-top:16px;
 }
 .tk-h{
@@ -1368,6 +1465,54 @@ html[data-size="xl"]{ font-size:131.25%; }   /* 21px 相当 */
 .th-sz{ flex:0 0 auto; min-width:52px; text-align:right;
   color:var(--mut-fg); font-weight:600; line-height:1; letter-spacing:.02em; }
 
+/* ══════════════════════════════════════════════════════════════════════
+ *  雰囲気のえらび（まる ／ 板）  2026/10/4 追加
+ *
+ *  【なぜ】
+ *  ご指示「マイページのUIこういうのが良いな。色合いはそれぞれのテーマで
+ *  よいけれど、雰囲気が」。いただいた見本（Serper の登録画面・設定画面）
+ *  から、特徴を4つ取り出しました。
+ *      ① 背景に絵も写真も置かない、平らな1色
+ *         → この画面は、もともとそうです。直すところはありません。
+ *      ② 中身を、細い枠のカードに収める
+ *         → これも、もともとそうです（.hero .stat .mya などすべて
+ *           1px の枠つきです）。直すところはありません。
+ *      ③ 角を丸めすぎない。まる型のボタンをやめる
+ *         → ここが唯一の違いでした。この画面は 24px／999px（まる型）です。
+ *      ④ すりガラス（ぼかし）を使わない
+ *         → 上のバーの1か所だけ、ぼかしていました。
+ *
+ *  【改良前】 角 8／12／16／24／999px、上のバーはすりガラス。1とおりだけ。
+ *  【改良後】 お選びいただけます。
+ *      まる（既定）… いままでと1ドットも同じです
+ *      板　　　　 … 角 8／10／12／12px、ボタン 10px、札 8px、ぼかしなし
+ *
+ *  ★色は、お選びの配色のままです。変わるのは「形」だけです。
+ *  ★字の大きさ・配色とは別に保存します。組み合わせは 5×3×2＝30とおり。
+ *  ★「まる」のときは <html> に印を付けません。既定が、そのまま効きます。
+ * ══════════════════════════════════════════════════════════════════════ */
+html[data-skin="flat"]{
+  --r-s:8px;      /* 小さな札 … 変えません */
+  --r-m:10px;     /* 入力欄　 12 → 10 */
+  --r-l:12px;     /* 箱　　　 16 → 12 */
+  --r-x:12px;     /* 大きな箱 24 → 12（箱の大小で丸みを変えません） */
+  --r-btn:10px;   /* ボタン　 まる型 → 10 */
+  --r-tag:8px;    /* 札　　　 まる型 → 8 */
+}
+/* 上のバーは、ぼかさず平らにします。
+   ★ぼかしをやめると、下の字が透けます。地の色を透かさず置きます。 */
+html[data-skin="flat"] .bar{
+  background:var(--bg);
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+/* 配色の見本の丸は、角を丸めた四角にします（形をそろえるため） */
+html[data-skin="flat"] .th-sw{ border-radius:var(--r-s); }
+
+/* たてのあいだを、少し詰めます（見本の設定画面に合わせて 40 → 32px）。
+   ★字の大きさには触りません。詰めるのは節と節のあいだだけです。 */
+html[data-skin="flat"] .sect{ margin-top:32px; }
+html[data-skin="flat"] .mya{ margin-top:32px; }
+
 /* 切り替えたときだけ、色をなめらかに移します。
    ★ふだんは transition を付けません。画面を描き直すたびに
      全体がにじんで見えるのを防ぐためです。 */
@@ -1378,7 +1523,7 @@ html.th-move, html.th-move *{
 /* ══════════ マイアカウント ══════════ */
 .mya{
   margin-top:40px; padding:24px;
-  background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
 }
 .mya-h{
   margin:0 0 16px; font-size:1.25rem; font-weight:700;
@@ -1402,7 +1547,7 @@ html.th-move, html.th-move *{
 .th-list{ display:grid; gap:12px; }
 .th-i{
   display:flex; align-items:center; gap:14px;
-  min-height:62px; padding:16px; border-radius:16px;
+  min-height:62px; padding:16px; border-radius:var(--r-l);
   border:2px solid var(--bd-60); background:transparent; color:var(--fg);
   font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer;
   transition:background .15s, border-color .15s;
@@ -1412,6 +1557,12 @@ html.th-move, html.th-move *{
 .th-sw{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%;
   border:1px solid var(--bd-40);
+}
+/* 雰囲気のえらびの見本。字で説明せず、角の丸みそのものをお見せします。
+   丸み（border-radius）だけは app.js が直に書きます（まる型 ／ 10px）。 */
+.th-sh{
+  flex:0 0 auto; width:46px; height:30px;
+  border:2px solid var(--mut-fg); background:transparent;
 }
 .th-i .th-n{ flex:1 1 auto; }
 .th-i .th-px{ color:var(--mut-fg); font-weight:400; font-size:.8125rem; }
@@ -1424,7 +1575,9 @@ html.th-move, html.th-move *{
 
 /* ── 画面が広いとき ───────────────────────── */
 @media (min-width:640px){
-  .tiles{ grid-template-columns:1fr 1fr; }
+  /* ★2026/10/4 … 1fr 1fr → minmax(0,1fr) ×2（上と同じ理由）。
+       640px の端末で「大きい」＋21px、「特大」＋95px はみ出していました。 */
+  .tiles{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .card{ padding:40px 36px; }
 }
 @media (min-width:1024px){
@@ -1436,7 +1589,7 @@ html.th-move, html.th-move *{
   .h-mincho{ font-size:2.5rem; }
   .amount{ font-size:4rem; }
   .tile-t{ font-size:1.25rem; }
-  .tile-a{ font-size:3rem; }
+  .tile-a{ font-size:3rem; font-size:min(3rem, 21.25cqi); }
   .lead{ padding-top:48px; font-size:1.5rem; }
   /* ★.pp-grid の3列は 2026/10/1 にやめました（上の auto-fit に任せます）。
        画面の幅で決めると、枠の幅（672px）と合わずに金額が切れます。 */

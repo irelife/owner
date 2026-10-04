@@ -35,9 +35,13 @@ try{
        あとから当てると、画面がいちど小さい字で出てから変わります。 */
   var _s = localStorage.getItem('ire_owner_size');
   if(_s === 'l' || _s === 'xl') document.documentElement.setAttribute('data-size', _s);
+  /* ★雰囲気（角の丸み）も、絵を描く前に当てます。
+       あとから当てると、まる型のボタンが一瞬見えてから四角くなります。 */
+  var _k = localStorage.getItem('ire_owner_skin');
+  if(_k === 'flat') document.documentElement.setAttribute('data-skin', _k);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=46">
+<link rel="stylesheet" href="css/style.css?v=47">
 </head>
 <body>
 
@@ -587,7 +591,7 @@ try{
       <button type="button" class="back" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
       <h1 class="h-mincho">マイアカウント</h1>
       <span class="bar-line"></span>
-      <p class="sub">ご登録情報のご確認と、パスワード・配色の変更ができます。</p>
+      <p class="sub">ご登録情報のご確認と、パスワード・画面の見た目の変更ができます。</p>
 
       <!-- ① ご登録情報 -->
       <section class="mya">
@@ -644,11 +648,17 @@ try{
         <div class="th-list" id="my-themes" role="group" aria-label="配色をお選びください"></div>
       </section>
 
-      <!-- ③-2 文字の大きさ -->
+      <!-- ③-2 雰囲気 -->
+      <section class="mya">
+        <p class="mya-h">雰囲気</p>
+        <p class="mya-note">角の丸みが変わります。配色はそのままです。お使いの端末にのみ保存されます。</p>
+        <div class="th-list" id="my-skins" role="group" aria-label="雰囲気をお選びください"></div>
+      </section>
+
+      <!-- ③-3 文字の大きさ -->
       <section class="mya">
         <p class="mya-h">文字の大きさ</p>
-        <p class="mya-note">お選びになると、その場で画面全体が変わります。
-          お使いの端末にのみ保存されます。</p>
+        <p class="mya-note">お選びになると、その場で画面全体が変わります。お使いの端末にのみ保存されます。</p>
         <div class="th-list" id="my-sizes" role="group" aria-label="文字の大きさをお選びください"></div>
       </section>
 
@@ -700,6 +710,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=46"></script>
+<script src="js/app.js?v=47"></script>
 </body>
 </html>
