@@ -69,7 +69,20 @@
   見たい画面は、下の選びから。本番は <b>irelife.github.io/owner/</b> のままです。
 </p>
 
-<!-- 見本のためだけの、画面えらび -->
+<header class="bar" id="bar">
+  <button type="button" class="logo" data-go="home" style="padding:0">Owner's<em> Salon</em></button>
+  <span class="who">山田 太郎 様</span>
+  <button type="button" class="dots" id="mn" aria-label="メニュー" aria-expanded="false"><i></i></button>
+</header>
+
+<nav class="menu" id="menu" hidden>
+  <button type="button" data-go="account">マイアカウント</button>
+  <button type="button" data-go="login">ログアウト</button>
+</nav>
+
+<!-- 見本のためだけの、画面えらび。
+     ★上のバーより下に置きます。アプリの顔（バー）より先に
+       見本の道具が出るのは、順番が逆です。 -->
 <div style="max-width:560px;margin:0 auto;padding:12px 20px 0">
   <label for="pick" style="display:block;font-size:.75rem;color:#A3918C;margin-bottom:6px">見本：画面をえらぶ</label>
   <select id="pick">
@@ -85,16 +98,7 @@
   </select>
 </div>
 
-<header class="bar" id="bar">
-  <button type="button" class="logo" data-go="home" style="padding:0">Owner's<em> Salon</em></button>
-  <span class="who">山田 太郎 様</span>
-  <button type="button" class="dots" id="mn" aria-label="メニュー" aria-expanded="false"><i></i></button>
-</header>
 
-<nav class="menu" id="menu" hidden>
-  <button type="button" data-go="account">マイアカウント</button>
-  <button type="button" data-go="login">ログアウト</button>
-</nav>
 
 <!-- ════════════════ ① ログイン ════════════════ -->
 <main id="s-login" class="center" hidden>
