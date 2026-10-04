@@ -38,8 +38,11 @@
   --ink:#201014;
   --inp:#1C0D11;        /* 入力欄の地。自動入力でも、この色にそろえます */
 
-  --mincho:'Hiragino Mincho ProN','Yu Mincho',YuMincho,'Noto Serif JP',serif;
-  --gothic:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Noto Sans JP',sans-serif;
+  /* ★端末の字をそのまま使うのをやめました。どのアプリとも同じ字で、
+       これが「どこかで見た画面」に見える、いちばん大きな理由でした。
+       届くまでは端末の字で出ます（display=swap）。 */
+  --mincho:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',YuMincho,serif;
+  --gothic:'Zen Kaku Gothic New',-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;
 
   /* 余白。4の倍数でそろえます */
   --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px;
@@ -159,7 +162,7 @@ input,select,textarea{ font:inherit; }
 /* ★押せる的を 44px に（実測 36px でした）。ロゴはホームへ戻るボタンです。 */
 .logo{ display:inline-flex; align-items:center; min-height:44px;
   font-family:var(--mincho); font-size:1.19rem; font-weight:600;
-  letter-spacing:.14em; }
+  letter-spacing:.16em; }
 .logo em{ font-style:normal; color:var(--gold-t); }
 .bar .who{ margin-left:auto; font-size:.81rem; color:var(--mut); }
 .dots{ width:44px; height:44px; display:grid; place-items:center; margin-right:-10px;
@@ -213,9 +216,9 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 .month{ font-size:.81rem; letter-spacing:.14em; color:var(--gold-t); }
 .hero-l{ margin:var(--s1) 0 0; font-family:var(--mincho);
   font-size:1.06rem; font-weight:400; color:var(--mut); letter-spacing:.04em; }
-.hero-a{ margin:6px 0 0; font-family:var(--mincho);
-  font-size:3.25rem; font-weight:400; line-height:1.1;
-  letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+.hero-a{ margin:10px 0 0; font-family:var(--mincho);
+  font-size:3.6rem; font-weight:500; line-height:1.05;
+  letter-spacing:-.035em; font-variant-numeric:tabular-nums;
   text-shadow:0 2px 24px rgba(0,0,0,.55); }
 .hero-a span{ font-size:1.75rem; margin-right:2px; color:var(--mut); }
 .hero-d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }

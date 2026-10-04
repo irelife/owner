@@ -13,7 +13,25 @@
        ・どこからもリンクしていません
        ・本番は https://irelife.github.io/owner/ のままです
      ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="style.css?v=1">
+<!-- ══════════════════════════════════════════════════════════════
+     字（2026/10/4）
+
+     これまでは、端末に入っている字（ヒラギノ・游）をそのまま使って
+     いました。どのアプリとも同じ字です。これが「どこかで見た画面」に
+     見える、いちばん大きな理由でした。
+
+       見出し・金額 … Shippori Mincho B1（画面のために作られた明朝）
+       本文　　　　 … Zen Kaku Gothic New（やわらかく、癖のない角ゴシック）
+
+     ★display=swap … 字が届くまでは、端末の字で先に出します。
+       「字が来るまで真っ白」にはなりません。
+     ★日本語の字は大きいので、Google は使う文字だけを切り分けて
+       送ります。1ページで要るのは、その一部だけです（実測は下）。
+     ══════════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
