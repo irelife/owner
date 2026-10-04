@@ -146,10 +146,27 @@
 }
 
 *, *::before, *::after{ box-sizing:border-box; }
-html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+/* ══════════════════════════════════════════════════════════════════════
+ *  字の大きさ（2026/10/4 ご指示「全体的に文字が小さい。もう少し大きく」）
+ *
+ *  【改良前】 地の字が 16px で、ほかの大きさも全部 px の直書きでした。
+ *            ・16px は指針の「最低」です。最低＝ちょうど良い、ではありません。
+ *            ・px で書いてあると、端末の「文字を大きく」の設定が **効きません**。
+ *              Android とパソコンでは、設定しても1ピクセルも変わりませんでした。
+ *  【改良後】 ① 字の大きさを全部 rem（＝地の字の倍数）に直しました（150か所）
+ *            ② ここで地の字を 106.25％＝ **17px** にしました
+ *            これで、画面の字がひとまわり大きくなり、
+ *            端末の文字サイズ設定も、そのまま掛け算で効くようになります。
+ *
+ *  ★％で書くのが肝心です。px で書き直すと、また設定が効かなくなります。
+ *  ★お断り：iPhone の「文字を大きく」は Safari のWebページには効きません
+ *    （Appleの作りです）。iPhone の方は、画面を広げる操作（ピンチ）が使えます。
+ *    だから、拡大を禁止していません。
+ * ══════════════════════════════════════════════════════════════════════ */
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; font-size:106.25%; }
 body{
   margin:0; background:var(--bg); color:var(--fg);
-  font-family:var(--font); font-size:16px; line-height:1.7;
+  font-family:var(--font); font-size:1rem; line-height:1.7;
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
 }
@@ -247,11 +264,11 @@ img{ max-width:100%; }
   border-bottom:1px solid var(--bd-60);
 }
 .logo-mark{
-  margin:0; font-size:20px; font-weight:700; letter-spacing:-.02em;
+  margin:0; font-size:1.25rem; font-weight:700; letter-spacing:-.02em;
   color:var(--pri);
 }
 .logo-mark span{ font-weight:700; }
-.logo-mark.big{ font-size:28px; margin-bottom:18px; }   /* 26 → 28 */
+.logo-mark.big{ font-size:1.75rem; margin-bottom:18px; }   /* 26 → 28 */
 /* ★ロゴを押すと、ホームに戻ります（2026-09-23 ご指示）。
    見た目は今までと1ドットも変えません。
    ★font-size と font-weight は .logo-mark のものを使うため、
@@ -264,7 +281,7 @@ img{ max-width:100%; }
 }
 .logo-btn:hover{ opacity:.78; }
 .logo-btn:focus-visible{ outline:2px solid var(--pri); outline-offset:3px; }
-.hd-name{ margin-left:auto; font-size:14px; color:var(--mut-fg);
+.hd-name{ margin-left:auto; font-size:.875rem; color:var(--mut-fg);
   max-width:40vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .icon-btn{
   margin-left:4px; margin-right:-8px; padding:8px; border:0; border-radius:8px;
@@ -280,7 +297,7 @@ img{ max-width:100%; }
 }
 .menu-i{
   display:block; width:100%; padding:12px 16px; border:0; background:transparent;
-  color:var(--fg); font:inherit; font-size:14px; text-align:left; cursor:pointer;
+  color:var(--fg); font:inherit; font-size:.875rem; text-align:left; cursor:pointer;
   transition:background .15s;
 }
 .menu-i:hover{ background:var(--acc); }
@@ -301,7 +318,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
    ★max-inline-size で読みやすい字数に区切ります。
      日本語は 20〜24字が目安です。 */
 .h-mincho{
-  font-size:36px; line-height:1.25; margin:0;
+  font-size:2.25rem; line-height:1.25; margin:0;
 /* ★2026/10/4 … ch をやめ、em にしました。
      ch は「半角の 0 の幅」です。日本語は全角なので、
      22ch ＝ 日本語11文字しか入りません。そのため
@@ -309,22 +326,22 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
      次の行へ落ちていました。em なら全角1文字ぶんです。 */
   text-wrap:balance; max-inline-size:15em;
 }
-.card .h-mincho{ font-size:28px; }
-.kicker{ margin:0 0 4px; font-size:12px; font-weight:600; letter-spacing:.06em;
+.card .h-mincho{ font-size:1.75rem; }
+.kicker{ margin:0 0 4px; font-size:.75rem; font-weight:600; letter-spacing:.06em;
   color:var(--pri); text-transform:uppercase; }
-.sub{ margin:12px 0 0; font-size:18px; line-height:1.75; color:var(--mut-fg);
+.sub{ margin:12px 0 0; font-size:1.125rem; line-height:1.75; color:var(--mut-fg);
   text-wrap:pretty; max-inline-size:24em; }
-.card .sub{ font-size:14px; margin:6px 0 20px; }
+.card .sub{ font-size:.875rem; margin:6px 0 20px; }
 .sect{
-  margin:40px 0 16px; font-size:20px; font-weight:700; letter-spacing:-.02em;
+  margin:40px 0 16px; font-size:1.25rem; font-weight:700; letter-spacing:-.02em;
 }
 .lead{
-  margin:0; padding-top:24px; font-size:20px; line-height:1.75;
+  margin:0; padding-top:24px; font-size:1.25rem; line-height:1.75;
   color:var(--mut-fg);
 }
-.year{ margin:32px 0 12px; font-size:20px; font-weight:700; }
+.year{ margin:32px 0 12px; font-size:1.25rem; font-weight:700; }
 .empty{
-  padding:32px 20px; text-align:center; font-size:14px; color:var(--mut-fg);
+  padding:32px 20px; text-align:center; font-size:.875rem; color:var(--mut-fg);
 }
 
 /* 小見出しの下の金の線（SubPageHeader の w-12 h-1） */
@@ -341,7 +358,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
   display:inline-flex; align-items:center; gap:6px;
   margin:0 0 20px; min-height:44px; padding:0 18px; border:0; border-radius:999px;
   background:var(--mut); color:var(--mut-fg);
-  font:inherit; font-size:15px; font-weight:500; cursor:pointer;
+  font:inherit; font-size:.9375rem; font-weight:500; cursor:pointer;
   transition:background .15s, color .15s;
 }
 .back:hover{ background:var(--acc); color:var(--fg); }
@@ -357,7 +374,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
   width:100%; margin-top:16px; padding:12px 24px;
   border:0; border-radius:999px; cursor:pointer;
   background:var(--pri); color:var(--pri-fg);
-  font:inherit; font-size:16px; font-weight:500;
+  font:inherit; font-size:1rem; font-weight:500;
   transition:opacity .15s;
 }
 .btn:hover{ opacity:.9; }
@@ -378,15 +395,15 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 .field{ margin-top:16px; }
 .field:first-of-type{ margin-top:0; }
 .field label{
-  display:block; margin-bottom:6px; font-size:14px; font-weight:500; color:var(--fg);
+  display:block; margin-bottom:6px; font-size:.875rem; font-weight:500; color:var(--fg);
 }
-.field .hint{ margin-left:8px; font-size:12px; font-weight:400; color:var(--mut-fg); }
+.field .hint{ margin-left:8px; font-size:.75rem; font-weight:400; color:var(--mut-fg); }
 /* ★2026/10/1 … ラベルの横ではなく、欄の「下」に置く注記。
      所在地のえらびで、選びかたの例をお出しするために足しました。
      .field .hint は margin-left:8px で横並び用なので、打ち消します。 */
 .field p.hint{
   display:block; margin:8px 0 0; margin-left:0;
-  font-size:13px; line-height:1.75; color:var(--mut-fg);
+  font-size:.8125rem; line-height:1.75; color:var(--mut-fg);
 }
 /* ★入力欄の中は、カードより一段暗くします（--input）。
  *   見本（base44）の画面を線で切って色を測りました。
@@ -398,7 +415,7 @@ input[type=date], input[type=search], select, textarea{
   width:100%; padding:12px 16px;
   background:hsl(var(--input)); color:var(--fg);
   border:1px solid var(--bd); border-radius:12px;
-  font:inherit; font-size:16px; line-height:1.5;
+  font:inherit; font-size:1rem; line-height:1.5;
   appearance:none; -webkit-appearance:none;
   transition:box-shadow .15s, border-color .15s;
 }
@@ -443,13 +460,13 @@ select{
      証券の写しをお預けいただく、最初の一歩です。 */
 input[type=file]{
   display:flex; align-items:center; min-height:44px;
-  width:100%; font-size:14px; color:var(--mut-fg);
+  width:100%; font-size:.875rem; color:var(--mut-fg);
   border:0; background:transparent; padding:0;
 }
 input[type=file]::file-selector-button{
   margin-right:12px; min-height:44px; padding:0 18px; border:0; border-radius:12px;
   background:var(--acc); color:var(--fg);
-  font:inherit; font-size:15px; font-weight:500; cursor:pointer;
+  font:inherit; font-size:.9375rem; font-weight:500; cursor:pointer;
 }
 
 /* パスワードの目 */
@@ -468,7 +485,7 @@ input[type=file]::file-selector-button{
 .pw-eye.on .eye-off{ display:block; }
 
 /* 知らせ */
-.msg{ margin:12px 0 0; min-height:20px; font-size:14px; color:var(--mut-fg); }
+.msg{ margin:12px 0 0; min-height:20px; font-size:.875rem; color:var(--mut-fg); }
 .msg.ok{ color:var(--pri); }
 
 /* ── ホーム：今月のご送金 ─────────────────── */
@@ -476,17 +493,17 @@ input[type=file]::file-selector-button{
   margin-top:20px; padding:32px;
   background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
 }
-.hero-k{ margin:0; font-size:14px; color:var(--mut-fg); }
+.hero-k{ margin:0; font-size:.875rem; color:var(--mut-fg); }
 .amount{
-  margin:4px 0 0; font-size:52px; line-height:1.05; font-weight:700;
+  margin:4px 0 0; font-size:3.25rem; line-height:1.05; font-weight:700;
   letter-spacing:-.03em; font-variant-numeric:tabular-nums;
 }
-.amount i{ margin-left:6px; font-size:20px; font-style:normal; font-weight:600;
+.amount i{ margin-left:6px; font-size:1.25rem; font-style:normal; font-weight:600;
   color:var(--mut-fg); }
 .rows{ margin-top:24px; border-top:1px solid var(--bd-40); }
 .row{
   display:flex; justify-content:space-between; gap:16px;
-  padding:12px 0; border-bottom:1px solid var(--bd-40); font-size:15px;
+  padding:12px 0; border-bottom:1px solid var(--bd-40); font-size:.9375rem;
 }
 /* ★2026/10/3 … いちばん下の罫線を消します。
      一覧の下に、どこにもつながらない線が1本だけ残っていました。
@@ -511,10 +528,10 @@ input[type=file]::file-selector-button{
 .mv:first-child{ border-top:0; }
 .mv:hover{ background:var(--acc); }
 .mv-l{ min-width:0; }
-.mv-t{ display:block; font-size:16px; font-weight:700; letter-spacing:-.01em; }
-.mv-s{ display:block; margin-top:2px; font-size:13px; line-height:1.7;
+.mv-t{ display:block; font-size:1rem; font-weight:700; letter-spacing:-.01em; }
+.mv-s{ display:block; margin-top:2px; font-size:.8125rem; line-height:1.7;
   color:var(--mut-fg); }
-.mv .st-tag{ font-size:13px; padding:5px 12px; }
+.mv .st-tag{ font-size:.8125rem; padding:5px 12px; }
 
 /* ── 年間の収支 ─────────────────────────────
    上の図（.ch2）＝収入と支出の棒、下の図（.ln-wrap）＝累積収支の折れ線。
@@ -530,7 +547,7 @@ input[type=file]::file-selector-button{
      読めないというご指摘のとおりなので、大きくし、色を棒と同じにし、
      ぜんぶの棒に出します。 */
 .c2-v{
-  height:18px; font-size:11px; line-height:18px; text-align:center;
+  height:18px; font-size:.6875rem; line-height:18px; text-align:center;
   color:var(--inc); font-weight:700; letter-spacing:-.02em;
   font-variant-numeric:tabular-nums; white-space:nowrap;
 }
@@ -552,13 +569,13 @@ input[type=file]::file-selector-button{
 .c2-b.inc{ background:var(--inc); }
 .c2-b.out{ background:var(--out); }
 .c2-x{
-  margin-top:6px; font-size:11px; line-height:1.4; text-align:center;
+  margin-top:6px; font-size:.6875rem; line-height:1.4; text-align:center;
   color:var(--mut-fg); white-space:nowrap;
 }
 /* 画面が広いときは、金額も月も大きくします */
 @media (min-width:640px){
-  .c2-v{ height:22px; font-size:13px; line-height:22px; }
-  .c2-x{ font-size:12.5px; color:var(--fg); }
+  .c2-v{ height:22px; font-size:.8125rem; line-height:22px; }
+  .c2-x{ font-size:.7812rem; color:var(--fg); }
 }
 .c2:hover .c2-w{ background:hsl(var(--accent) / .5); }
 
@@ -571,10 +588,10 @@ input[type=file]::file-selector-button{
   box-shadow:0 10px 30px rgba(0,0,0,.4); text-align:left;
 }
 .c2:hover .c2-tip, .c2:focus-within .c2-tip{ display:block; }
-.c2-tip b{ display:block; font-size:12px; margin-bottom:6px; }
+.c2-tip b{ display:block; font-size:.75rem; margin-bottom:6px; }
 .c2-tip i{
   display:flex; align-items:center; gap:6px;
-  font-style:normal; font-size:12px; color:var(--mut-fg); line-height:1.9;
+  font-style:normal; font-size:.75rem; color:var(--mut-fg); line-height:1.9;
 }
 .c2-tip s{
   margin-left:auto; text-decoration:none; color:var(--fg); font-weight:600;
@@ -590,8 +607,8 @@ input[type=file]::file-selector-button{
 .ln-p{ fill:none; stroke:var(--fg); stroke-width:2;
   stroke-linejoin:round; stroke-linecap:round; }
 .ln-d{ fill:var(--fg); stroke:var(--card-bg); stroke-width:2; }
-.ln-k{ position:absolute; top:0; left:0; font-size:11px; color:var(--mut-fg); }
-.ln-a{ position:absolute; top:0; right:0; font-size:15px; font-weight:700;
+.ln-k{ position:absolute; top:0; left:0; font-size:.6875rem; color:var(--mut-fg); }
+.ln-a{ position:absolute; top:0; right:0; font-size:.9375rem; font-weight:700;
   font-variant-numeric:tabular-nums; }
 
 /* 見わけの札 */
@@ -600,7 +617,7 @@ input[type=file]::file-selector-button{
   flex-wrap:wrap; margin-top:18px;
 }
 .ch-lg span{ display:flex; align-items:center; gap:6px;
-  font-size:12px; color:var(--mut-fg); }
+  font-size:.75rem; color:var(--mut-fg); }
 .sw{ display:inline-block; width:11px; height:11px; border-radius:2px; }
 .sw.inc{ background:var(--inc); }
 .sw.out{ background:var(--out); }
@@ -610,12 +627,12 @@ input[type=file]::file-selector-button{
 /* 数字で見る（色だけに頼らないための表） */
 .ch-tb{ margin-top:16px; }
 .ch-tb summary{
-  font-size:13px; color:var(--mut-fg); cursor:pointer; padding:6px 0;
+  font-size:.8125rem; color:var(--mut-fg); cursor:pointer; padding:6px 0;
 }
 .ch-tb summary:hover{ color:var(--fg); }
 .ch-tb table{ width:100%; border-collapse:collapse; margin-top:8px; }
 .ch-tb th, .ch-tb td{
-  padding:8px 6px; font-size:13px; text-align:right;
+  padding:8px 6px; font-size:.8125rem; text-align:right;
   border-top:1px solid var(--bd-40); font-variant-numeric:tabular-nums;
 }
 .ch-tb thead th{ color:var(--mut-fg); font-weight:600; border-top:0; }
@@ -651,7 +668,7 @@ input[type=file]::file-selector-button{
   min-width:28px; height:28px; padding:0 9px; border-radius:var(--r-pill);
   display:flex; align-items:center; justify-content:center;
   background:var(--pri); color:var(--pri-fg);
-  font-size:14px; font-weight:700; line-height:1;
+  font-size:.875rem; font-weight:700; line-height:1;
   font-variant-numeric:tabular-nums;
 }
 /* ★hidden を付けただけでは消えません。display:flex を自分で書いているため、
@@ -661,13 +678,13 @@ input[type=file]::file-selector-button{
 /* 件数がある分、見出しが数字にぶつからないようにします */
 .tile.has .tile-k, .tile.has .tile-t{ padding-right:44px; }
 .tile-k{
-  font-size:12px; font-weight:600; letter-spacing:.04em;
+  font-size:.75rem; font-weight:600; letter-spacing:.04em;
   color:var(--pri); text-transform:uppercase;
 }
 /* 見本（FeatureCard）の text-lg lg:text-xl に合わせています */
-.tile-t{ margin-top:8px; font-size:18px; font-weight:700; letter-spacing:-.02em;
+.tile-t{ margin-top:8px; font-size:1.125rem; font-weight:700; letter-spacing:-.02em;
   line-height:1.45; word-break:keep-all; }
-.tile-a{ margin-top:4px; font-size:36px; font-weight:700; line-height:1.15;
+.tile-a{ margin-top:4px; font-size:2.25rem; font-weight:700; line-height:1.15;
   letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
 /* ★2026/10/1 … 説明文を「下ぞろえ」にしました。
  *
@@ -685,7 +702,7 @@ input[type=file]::file-selector-button{
  *  ★padding-top で、上との最小の間隔（12px）は残します。 */
 .tile-d{
   margin-top:auto; padding-top:12px;
-  font-size:14px; line-height:1.75; color:var(--mut-fg);
+  font-size:.875rem; line-height:1.75; color:var(--mut-fg);
 }
 
 /* ── 送金明細 ─────────────────────────────
@@ -737,9 +754,9 @@ input[type=file]::file-selector-button{
 .pp-l{ flex:1 1 auto; min-width:0; }
 /* ★いただいた React 版の break-keep にあたるもの。
    「2026年10月」が途中で折り返されないようにします。 */
-.pp-t{ display:block; font-size:18px; font-weight:700; letter-spacing:-.01em;
+.pp-t{ display:block; font-size:1.125rem; font-weight:700; letter-spacing:-.01em;
   word-break:keep-all; }
-.pp-s{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
+.pp-s{ display:block; margin-top:2px; font-size:.8125rem; color:var(--mut-fg); }
 .pp-c{
   flex:0 0 auto; width:10px; height:10px; margin-top:6px;
   border-right:2px solid var(--mut-fg); border-bottom:2px solid var(--mut-fg);
@@ -766,14 +783,14 @@ input[type=file]::file-selector-button{
 }
 .pp-a{
   margin:8px 0 0; padding:0 24px 20px;
-  font-size:36px; font-weight:700; line-height:1.15; letter-spacing:-.03em;
+  font-size:2.25rem; font-weight:700; line-height:1.15; letter-spacing:-.03em;
   font-variant-numeric:tabular-nums;
 }
 /* 明細書（PDF）がまだ入っていない月の、ご案内 */
 .pp-n{
   margin:12px 0 0; padding:10px 12px; border-radius:var(--r-m);
   background:var(--mut); color:var(--fg);
-  font-size:14px; line-height:1.8;
+  font-size:.875rem; line-height:1.8;
 }
 /* ★2026/10/1 … 大きな1枚の金額を、枠に合わせて縮むようにしました。
  *
@@ -787,7 +804,7 @@ input[type=file]::file-selector-button{
  *    画面の幅で「列の数」を決めるのはやめましたが、
  *    「文字の大きさ」は画面の幅に素直についてきてよいところです
  *    （スマホでは 画面の幅 ≒ 枠の幅 なので、ずれません）。 */
-.pp.big .pp-a{ font-size:clamp(28px, 8.5vw, 48px); }
+.pp.big .pp-a{ font-size:clamp(1.75rem, 8.5vw, 3rem); }
 
 /* ★3枚ならびのカードは、金額を下ぞろえにします。
    いただいた React 版の h-44（高さをそろえる）＋ mt-auto（下へ寄せる）と
@@ -816,7 +833,7 @@ input[type=file]::file-selector-button{
 
 /* 小さめのボタン（PDF・CSV） */
 .btn.sm{
-  min-height:44px; padding:0 14px; font-size:14px;
+  min-height:44px; padding:0 14px; font-size:.875rem;
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn.sm svg{
@@ -826,11 +843,11 @@ input[type=file]::file-selector-button{
 }
 
 /* 月えらび */
-.sect.sm{ margin:40px 0 10px; font-size:15px; font-weight:600; color:var(--mut-fg); }
+.sect.sm{ margin:40px 0 10px; font-size:.9375rem; font-weight:600; color:var(--mut-fg); }
 .sel{
   width:100%; max-width:420px; box-sizing:border-box;
   min-height:52px; padding:0 40px 0 16px;
-  font:inherit; font-size:16px; color:var(--fg);
+  font:inherit; font-size:1rem; color:var(--fg);
   background:var(--card-bg); border:1px solid var(--bd); border-radius:12px;
   -webkit-appearance:none; appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A87A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
@@ -845,10 +862,10 @@ input[type=file]::file-selector-button{
   background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
 }
 .st-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.st-t{ font-size:20px; font-weight:700; }
+.st-t{ font-size:1.25rem; font-weight:700; }
 .st-tag{
   flex:0 0 auto; padding:6px 12px; border-radius:999px;
-  font-size:14px; font-weight:500; white-space:nowrap;
+  font-size:.875rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
 .st-tag.out{ background:var(--pri); color:var(--pri-fg); border-color:var(--pri); }
@@ -861,13 +878,13 @@ input[type=file]::file-selector-button{
    改良前： 状態ごとに縦に並び、物件を横断して混ざっていました。 */
 .st-sum{
   margin:0 0 24px; padding:14px 18px; border-radius:16px;
-  font-size:15px; line-height:1.7;
+  font-size:.9375rem; line-height:1.7;
   background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
 }
 .st-prop{ margin-bottom:32px; }
 .st-prop:last-child{ margin-bottom:0; }
 .st-pn{
-  margin:0 0 12px; font-size:20px; font-weight:700;
+  margin:0 0 12px; font-size:1.25rem; font-weight:700;
   letter-spacing:-.01em; word-break:keep-all;
 }
 /* ★1部屋の3段（2026-09-23。見本 base44 の Status.jsx と同じ形）
@@ -875,20 +892,20 @@ input[type=file]::file-selector-button{
      ② .st-d  入居者名 ｜ 契約終了日（どちらも無いときは「—」）
      ③ .st-r  賃料／月
      ④ .st-w  募集中に切り替えた理由（そのときだけ） */
-.st-d{ display:block; margin-top:6px; font-size:14px; color:var(--mut-fg); }
-.st-r{ display:block; margin-top:4px; font-size:16px; font-weight:500;
+.st-d{ display:block; margin-top:6px; font-size:.875rem; color:var(--mut-fg); }
+.st-r{ display:block; margin-top:4px; font-size:1rem; font-weight:500;
   color:var(--fg); font-variant-numeric:tabular-nums; }
-.st-w{ display:block; margin-top:8px; font-size:13px; line-height:1.7;
+.st-w{ display:block; margin-top:8px; font-size:.8125rem; line-height:1.7;
   color:var(--mut-fg); }
 
 .letter{
   margin-top:32px; padding:24px;
   background:var(--card-bg); border:1px solid var(--bd); border-radius:24px;
 }
-.lt-h{ margin:0 0 8px; font-size:12px; font-weight:600; letter-spacing:.06em;
+.lt-h{ margin:0 0 8px; font-size:.75rem; font-weight:600; letter-spacing:.06em;
   color:var(--pri); text-transform:uppercase; }
-.letter p{ margin:0; font-size:15px; line-height:1.9; white-space:pre-wrap; }
-.lt-s{ margin-top:16px !important; font-size:13px !important; color:var(--mut-fg); }
+.letter p{ margin:0; font-size:.9375rem; line-height:1.9; white-space:pre-wrap; }
+.lt-s{ margin-top:16px !important; font-size:.8125rem !important; color:var(--mut-fg); }
 
 /* ── お問い合わせ（やりとり） ───────────── */
 /* ★.work .wk-h .wk-p .wk-t（修繕の画面）は 2026/10/1 に消しました。
@@ -897,7 +914,7 @@ input[type=file]::file-selector-button{
        回答済み」、.kv は火災保険（.ins-box .kv）で使っています。 */
 .chip{
   flex:0 0 auto; padding:6px 12px; border-radius:999px;
-  font-size:13px; font-weight:500; white-space:nowrap;
+  font-size:.8125rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
 .chip.done{ background:hsl(var(--primary) / .18); color:var(--pri);
@@ -905,7 +922,7 @@ input[type=file]::file-selector-button{
 .kv{
   display:grid; grid-template-columns:auto 1fr; gap:6px 16px;
   margin-top:14px; padding-top:14px; border-top:1px solid var(--bd-40);
-  font-size:14px;
+  font-size:.875rem;
 }
 .kv .k{ color:var(--mut-fg); white-space:nowrap; }
 .kv .v{ font-variant-numeric:tabular-nums; }
@@ -913,9 +930,9 @@ input[type=file]::file-selector-button{
 .talk{ margin-top:16px; display:flex; flex-direction:column; gap:12px; }
 .bub{ display:flex; flex-direction:column; align-items:flex-end; }
 .bub.mine{ align-items:flex-start; }
-.bub-w{ margin-bottom:4px; font-size:11px; color:hsl(var(--muted-foreground) / .8); }
+.bub-w{ margin-bottom:4px; font-size:.6875rem; color:hsl(var(--muted-foreground) / .8); }
 .bub-b{
-  max-width:85%; padding:10px 14px; font-size:14px; line-height:1.8;
+  max-width:85%; padding:10px 14px; font-size:.875rem; line-height:1.8;
   white-space:pre-wrap; border-radius:16px;
   background:var(--pri); color:var(--pri-fg); border-top-right-radius:4px;
 }
@@ -926,7 +943,7 @@ input[type=file]::file-selector-button{
 
 .ask{ margin-top:16px; padding-top:14px; border-top:1px solid var(--bd-40); }
 .ask summary{
-  cursor:pointer; font-size:14px; font-weight:500; color:var(--pri);
+  cursor:pointer; font-size:.875rem; font-weight:500; color:var(--pri);
   list-style:none;
 }
 .ask summary::-webkit-details-marker{ display:none; }
@@ -939,7 +956,7 @@ input[type=file]::file-selector-button{
 
 /* ── 読み込み中 ───────────────────────────── */
 .boot{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
-.boot-t{ margin:10px 0 0; font-size:14px; color:var(--mut-fg); }
+.boot-t{ margin:10px 0 0; font-size:.875rem; color:var(--mut-fg); }
 .boot-in{ text-align:center; }
 
 /* ── 帯の知らせ ───────────────────────────── */
@@ -947,10 +964,10 @@ input[type=file]::file-selector-button{
   position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:80;
   max-width:calc(100% - 40px); padding:14px 20px; border-radius:999px;
   background:var(--pri); color:var(--pri-fg);
-  font-size:14px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35);
+  font-size:.875rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
-.foot-note{ margin-top:24px; text-align:center; font-size:13px; color:var(--mut-fg); }
+.foot-note{ margin-top:24px; text-align:center; font-size:.8125rem; color:var(--mut-fg); }
 /* ★2026/10/3 … 押せる高さを 14px → 38px にしました。
  *   文の中のメールアドレスで、実測 90×14px。指ではまず当たりません。
  *   外側の余白を打ち消す（負の margin）ので、見た目の行間は変わりません。
@@ -966,14 +983,14 @@ input[type=file]::file-selector-button{
  *  改良後： 物件ごとの箱にまとめ、満期の近さを札で出します。 */
 .ins-due{
   margin:20px 0 0; padding:14px 18px; border-radius:16px;
-  font-size:15px; line-height:1.7;
+  font-size:.9375rem; line-height:1.7;
   background:var(--card-bg); border:1px solid var(--bd); color:var(--fg);
 }
 .ins-due.soon{ border-color:var(--pri); color:var(--pri); }
 .ins-due.over{ border-color:var(--ng);  color:var(--ng); }
 
 #in-boxes{ margin-top:24px; }
-.ins-cap{ margin:8px 2px 0; font-size:13px; color:var(--mut-fg); }
+.ins-cap{ margin:8px 2px 0; font-size:.8125rem; color:var(--mut-fg); }
 
 .ins-box{
   padding:20px; margin-bottom:12px;
@@ -983,11 +1000,11 @@ input[type=file]::file-selector-button{
 .ins-box.over{ border-color:hsl(var(--destructive) / .75); }
 
 .ins-h{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.ins-n{ font-size:20px; font-weight:700; letter-spacing:-.01em; min-width:0;
+.ins-n{ font-size:1.25rem; font-weight:700; letter-spacing:-.01em; min-width:0;
   line-height:1.4; }
 .ins-tag{
   flex:0 0 auto; margin-top:3px; padding:6px 12px; border-radius:999px;
-  font-size:13px; font-weight:500; white-space:nowrap;
+  font-size:.8125rem; font-weight:500; white-space:nowrap;
   background:var(--bg); color:var(--fg); border:1px solid var(--bd);
 }
 .ins-tag.none{ color:var(--mut-fg); }
@@ -1001,7 +1018,7 @@ input[type=file]::file-selector-button{
 /* 電話は「電話をかける」だけを押せるようにします */
 .ins-call{
   display:inline-block; margin-left:10px; padding:3px 10px; border-radius:999px;
-  font-size:12.5px; font-weight:600; text-decoration:none; white-space:nowrap;
+  font-size:.7812rem; font-weight:600; text-decoration:none; white-space:nowrap;
   border:1px solid hsl(var(--primary) / .5); background:hsl(var(--primary) / .14);
 }
 
@@ -1014,24 +1031,24 @@ input[type=file]::file-selector-button{
   font:inherit; cursor:pointer; border-radius:12px;
 }
 .ins-open:hover{ background:var(--acc); }
-.ins-rt{ display:block; font-size:15px; font-weight:600;
+.ins-rt{ display:block; font-size:.9375rem; font-weight:600;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.ins-rs{ display:block; margin-top:2px; font-size:13px; color:var(--mut-fg); }
+.ins-rs{ display:block; margin-top:2px; font-size:.8125rem; color:var(--mut-fg); }
 .ins-x{
   flex:0 0 auto; width:44px; height:44px; border-radius:12px;
   border:1px solid var(--bd-60); background:transparent; color:var(--mut-fg);
-  font:inherit; font-size:15px; cursor:pointer;
+  font:inherit; font-size:.9375rem; cursor:pointer;
 }
 .ins-x:hover{ border-color:var(--ng); color:var(--ng); }
 
 .ins-warn{ margin:14px 0 0; padding-top:14px; border-top:1px solid var(--bd-40);
-  font-size:14px; line-height:1.8; color:var(--mut-fg); }
+  font-size:.875rem; line-height:1.8; color:var(--mut-fg); }
 
 .ins-form{
   margin-top:40px; padding:24px;
   background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
-.ins-for{ margin:0 0 20px; font-size:16px; font-weight:700; color:var(--pri); }
+.ins-for{ margin:0 0 20px; font-size:1rem; font-weight:700; color:var(--pri); }
 .ins-acts{ display:flex; gap:12px; align-items:center; margin-top:4px; }
 .ins-acts .btn{ flex:1 1 0; }
 .ins-acts .btn.ghost{ margin-top:0; flex:0 0 auto; }
@@ -1042,8 +1059,8 @@ input[type=file]::file-selector-button{
   padding:14px 4px; border-bottom:1px solid var(--bd-40);
 }
 .item:last-child{ border-bottom:0; }
-.item .t{ display:block; font-size:15px; font-weight:600; }
-.item .s{ display:block; margin-top:2px; font-size:13px; line-height:1.7;
+.item .t{ display:block; font-size:.9375rem; font-weight:600; }
+.item .s{ display:block; margin-top:2px; font-size:.8125rem; line-height:1.7;
   color:var(--mut-fg); }
 
 /* ── 税理士へ送信（2026-09-22）───────────── */
@@ -1051,8 +1068,8 @@ input[type=file]::file-selector-button{
   margin-top:40px; padding:24px;
   background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
-.acc-h{ margin:0 0 16px; font-size:20px; font-weight:700; }
-.acc-note{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
+.acc-h{ margin:0 0 16px; font-size:1.25rem; font-weight:700; }
+.acc-note{ margin:10px 0 0; font-size:.875rem; line-height:1.8; color:var(--mut-fg); }
 .acc-note.ok{ color:var(--pri); }
 .acc-acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px; }
 
@@ -1063,7 +1080,7 @@ input[type=file]::file-selector-button{
 .ac-cc{
   display:flex; align-items:flex-start; gap:12px; margin-top:12px;
   min-height:44px; padding:10px 0;
-  font-size:15px; line-height:1.7; color:var(--fg); cursor:pointer;
+  font-size:.9375rem; line-height:1.7; color:var(--fg); cursor:pointer;
 }
 .ac-cc input{
   flex:0 0 auto; width:24px; height:24px; margin:0;
@@ -1077,17 +1094,17 @@ input[type=file]::file-selector-button{
   margin-top:16px; padding:20px; border-radius:16px;
   background:var(--mut); border:1px solid hsl(var(--primary) / .45);
 }
-.ac-cf-h{ margin:0; font-size:16px; font-weight:700; }
+.ac-cf-h{ margin:0; font-size:1rem; font-weight:700; }
 .ac-cf-to{
   margin:10px 0 0; padding:12px 16px; border-radius:12px;
   background:hsl(var(--input)); border:1px solid var(--bd);
-  font-size:18px; font-weight:500; word-break:break-all;
+  font-size:1.125rem; font-weight:500; word-break:break-all;
 }
-.ac-cf-n{ margin:10px 0 0; font-size:14px; line-height:1.8; color:var(--mut-fg); }
+.ac-cf-n{ margin:10px 0 0; font-size:.875rem; line-height:1.8; color:var(--mut-fg); }
 
 /* ★もう一方の道（メールソフトで作る）への区切り */
 .ac-or{
-  margin:24px 0 12px; font-size:14px; color:var(--mut-fg); text-align:center;
+  margin:24px 0 12px; font-size:.875rem; color:var(--mut-fg); text-align:center;
 }
 .acc-acts .btn{ margin-top:0; }
 
@@ -1096,7 +1113,7 @@ input[type=file]::file-selector-button{
 .acc-tab{
   flex:1 1 0; min-height:46px; padding:0 12px; border-radius:12px;
   border:1px solid var(--bd); background:transparent; color:var(--fg);
-  font:inherit; font-size:15px; font-weight:600; cursor:pointer;
+  font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer;
   transition:background .15s, border-color .15s;
 }
 .acc-tab:hover{ background:var(--acc); }
@@ -1106,7 +1123,7 @@ input[type=file]::file-selector-button{
 
 #ac-prev .rows{ margin-top:14px; }
 .row.acc-sum{
-  margin-top:0; border-top:1px solid var(--bd); font-weight:700; font-size:18px;
+  margin-top:0; border-top:1px solid var(--bd); font-weight:700; font-size:1.125rem;
 }
 .row.acc-sum span:first-child{ color:var(--fg); }
 
@@ -1124,8 +1141,8 @@ input[type=file]::file-selector-button{
 }
 .tk-h:hover{ background:var(--acc); }
 .tk-l{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
-.tk-t{ font-size:16px; font-weight:700; }
-.tk-d{ font-size:12px; color:var(--mut-fg); }
+.tk-t{ font-size:1rem; font-weight:700; }
+.tk-d{ font-size:.75rem; color:var(--mut-fg); }
 .tk-c{
   flex:0 0 auto; width:11px; height:11px; border-right:2px solid var(--mut-fg);
   border-bottom:2px solid var(--mut-fg); transform:rotate(45deg) translateY(-3px);
@@ -1144,7 +1161,7 @@ input[type=file]::file-selector-button{
 .ct-q::-webkit-search-decoration,
 .ct-q::-webkit-search-cancel-button{ -webkit-appearance:none; }
 .ct-cnt{
-  margin:8px 0 0; font-size:12.5px; color:var(--mut-fg); line-height:1.8;
+  margin:8px 0 0; font-size:.7812rem; color:var(--mut-fg); line-height:1.8;
 }
 .ct-cnt:empty{ display:none; }
 
@@ -1152,7 +1169,7 @@ input[type=file]::file-selector-button{
 .stale{
   margin:16px 0 0; padding:10px 14px; border-radius:var(--r-m);
   background:var(--mut); color:var(--fg);
-  font-size:12.5px; line-height:1.8;
+  font-size:.7812rem; line-height:1.8;
 }
 
 /* ══════════ 印刷（PDF保存） ══════════
@@ -1276,10 +1293,10 @@ html.th-move, html.th-move *{
   background:var(--card-bg); border:1px solid var(--bd); border-radius:16px;
 }
 .mya-h{
-  margin:0 0 16px; font-size:20px; font-weight:700;
+  margin:0 0 16px; font-size:1.25rem; font-weight:700;
   display:flex; align-items:center; gap:8px;
 }
-.mya-note{ margin:0 0 16px; font-size:14px; line-height:1.9; color:var(--mut-fg); }
+.mya-note{ margin:0 0 16px; font-size:.875rem; line-height:1.9; color:var(--mut-fg); }
 .mya-note.ok{ color:var(--pri); }
 
 /* ご登録情報 */
@@ -1290,8 +1307,8 @@ html.th-move, html.th-move *{
 }
 .mya-id .g:first-child{ padding-top:0; }
 .mya-id .g:last-child{ border-bottom:0; padding-bottom:0; }
-.mya-id .k{ font-size:12px; color:var(--mut-fg); }
-.mya-id .v{ font-size:16px; font-weight:600; line-height:1.6; word-break:break-all; }
+.mya-id .k{ font-size:.75rem; color:var(--mut-fg); }
+.mya-id .v{ font-size:1rem; font-weight:600; line-height:1.6; word-break:break-all; }
 
 /* テーマの見本 */
 .th-list{ display:grid; gap:12px; }
@@ -1299,7 +1316,7 @@ html.th-move, html.th-move *{
   display:flex; align-items:center; gap:14px;
   min-height:62px; padding:16px; border-radius:16px;
   border:2px solid var(--bd-60); background:transparent; color:var(--fg);
-  font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
+  font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer;
   transition:background .15s, border-color .15s;
 }
 .th-i:hover{ background:var(--acc); }
@@ -1309,7 +1326,7 @@ html.th-move, html.th-move *{
   border:1px solid var(--bd-40);
 }
 .th-i .th-n{ flex:1 1 auto; }
-.th-on{ flex:0 0 auto; font-size:13px; color:var(--pri); font-weight:700; }
+.th-on{ flex:0 0 auto; font-size:.8125rem; color:var(--pri); font-weight:700; }
 .th-i[aria-pressed="false"] .th-on{ visibility:hidden; }
 
 @media (min-width:640px){
@@ -1327,14 +1344,14 @@ html.th-move, html.th-move *{
    *   列だけ広がります。実測で 309.8 / 324.4 / 309.8px と不均等でした。
    *   minmax(0, …) にすると、3列がきっちり同じ幅になります。 */
   .tiles{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
-  .h-mincho{ font-size:40px; }
-  .amount{ font-size:64px; }
-  .tile-t{ font-size:20px; }
-  .tile-a{ font-size:48px; }
-  .lead{ padding-top:48px; font-size:24px; }
+  .h-mincho{ font-size:2.5rem; }
+  .amount{ font-size:4rem; }
+  .tile-t{ font-size:1.25rem; }
+  .tile-a{ font-size:3rem; }
+  .lead{ padding-top:48px; font-size:1.5rem; }
   /* ★.pp-grid の3列は 2026/10/1 にやめました（上の auto-fit に任せます）。
        画面の幅で決めると、枠の幅（672px）と合わずに金額が切れます。 */
-  .pp.big .pp-a{ font-size:60px; }
+  .pp.big .pp-a{ font-size:3.75rem; }
 }
 
 @media (prefers-reduced-motion:reduce){
