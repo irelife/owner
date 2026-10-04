@@ -105,7 +105,7 @@
   <p class="kicker">IREライフ株式会社</p>
   <h1>オーナーマイページ</h1>
   <span class="rule gold"></span>
-  <p class="lead">ご登録のメールアドレスとパスワードで、お入りください。</p>
+  <p class="lead">ご登録のメールアドレスとパスワードをご入力ください。</p>
 
   <div class="field">
     <label for="li-mail">メールアドレス</label>
@@ -124,18 +124,17 @@
 
 <!-- ════════════════ ② パスワードの再設定 ════════════════ -->
 <main id="s-reset" class="center" hidden>
-  <p class="kicker">パスワード</p>
-  <h1>新しいパスワードを<br>おきめください</h1>
+  <h1>パスワードの再設定</h1>
   <span class="rule gold"></span>
-  <p class="lead">8文字以上でお願いいたします。
-    おきめになると、ほかの端末からは一度ログアウトされます。</p>
+  <p class="lead">新しいパスワードを、8文字以上でご設定ください。
+    ご設定になりますと、ほかの端末からは一度ログアウトされます。</p>
 
   <div class="field">
     <label for="rs-a">新しいパスワード<span class="hint">8文字以上</span></label>
     <input type="password" id="rs-a" autocomplete="new-password">
   </div>
   <div class="field">
-    <label for="rs-b">もう一度</label>
+    <label for="rs-b">新しいパスワード（確認）</label>
     <input type="password" id="rs-b" autocomplete="new-password">
   </div>
   <p class="msg"></p>
@@ -206,8 +205,8 @@
 <main id="s-papers" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <p class="kicker">送金明細</p>
-  <h1>2026年9月分<br>ご送金明細</h1>
+  <p class="kicker">2026年9月分</p>
+  <h1>ご送金明細</h1>
   <span class="rule gold"></span>
   <p class="lead">9月30日に、ご指定の口座へお振り込みいたしました。内訳は下記のとおりでございます。</p>
 
@@ -303,11 +302,11 @@
 <main id="s-insurance" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <p class="kicker">火災保険</p>
-  <h1>証券の写しを<br>お預かりします</h1>
+  <h1>火災保険</h1>
   <span class="rule gold"></span>
-  <p class="lead">満期日の近い物件から順に並びます。
-    更新のお手続きは、これまでどおりオーナー様でお願いいたします。</p>
+  <p class="lead">証券の写しをお預かりし、満期日まで控えております。
+    満期日の近い物件から順に並びます。
+    更新のお手続きは、これまでどおりオーナー様にてお願いいたします。</p>
 
   <nav class="list" style="margin-top:var(--s4)">
     <button class="item rise" type="button">
@@ -320,7 +319,7 @@
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </nav>
 
-  <h2 class="sect">新しくお預けになる</h2>
+  <h2 class="sect">新しくお預けになるとき</h2>
   <div class="pane">
     <div class="field" style="margin-top:0">
       <label for="in-prop">物件</label>
@@ -345,16 +344,16 @@
       <input type="file" id="in-file" style="min-height:52px;background:transparent;box-shadow:none;padding:0">
     </div>
   </div>
-  <button class="cta" type="button">お預けする</button>
+  <button class="cta" type="button">この内容で預ける</button>
 </main>
 
 <!-- ════════════════ ⑦ お問い合わせ ════════════════ -->
 <main id="s-contact" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <p class="kicker">お問い合わせ</p>
-  <h1>当社へ直接<br>お送りいただけます</h1>
+  <h1>お問い合わせ</h1>
   <span class="rule gold"></span>
+  <p class="lead">ご質問・ご要望を、当社へ直接お送りいただけます。</p>
 
   <h2 class="sect">これまでのやりとり</h2>
   <div class="pane">
@@ -371,7 +370,7 @@
     </div>
   </div>
 
-  <h2 class="sect">新しくお送りする</h2>
+  <h2 class="sect">新しいお問い合わせ</h2>
   <div class="pane">
     <div class="field" style="margin-top:0">
       <label for="ct-kind">ご用件</label>
@@ -387,7 +386,7 @@
       <textarea id="ct-body" placeholder="ご自由にお書きください。"></textarea>
     </div>
   </div>
-  <button class="cta" type="button" data-done>お送りする</button>
+  <button class="cta" type="button" data-done>送信する</button>
   <p class="note">お返事は、この画面とメールの両方でお知らせいたします。</p>
 </main>
 
@@ -395,15 +394,15 @@
 <main id="s-accountant" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <p class="kicker">税理士へ送信</p>
-  <h1>明細書を添えて<br>当社からお送りします</h1>
+  <h1>税理士へ送信</h1>
   <span class="rule gold"></span>
-  <p class="lead">差出人は当社ですが、ご返信はオーナー様に届きます。
+  <p class="lead">送金明細（PDF）を添えて、当社からお送りいたします。
+    差出人は当社ですが、税理士事務所からのご返信はオーナー様に届きます。
     1日5通までとさせていただいております。</p>
 
   <div class="pane" style="margin-top:var(--s4)">
     <div class="field" style="margin-top:0">
-      <label for="ac-ym">どの月の明細を</label>
+      <label for="ac-ym">対象の月</label>
       <select id="ac-ym">
         <option>2026年9月分</option><option>2026年8月分</option>
         <option>2026年7月分</option><option>2026年（年間まとめ）</option>
@@ -433,8 +432,7 @@
 <main id="s-account" hidden>
   <button class="back" type="button" data-back>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
-  <p class="kicker">マイアカウント</p>
-  <h1>ご登録の内容</h1>
+  <h1>マイアカウント</h1>
   <span class="rule gold"></span>
 
   <div class="pane" style="margin-top:var(--s4)">
@@ -445,10 +443,10 @@
     <div class="row"><b>ご所有の物件</b><span>6棟</span></div>
   </div>
 
-  <h2 class="sect">パスワードの変更</h2>
+  <h2 class="sect">パスワード</h2>
   <nav class="list">
     <button class="item" type="button" data-go="reset">
-      <span class="item-t"><strong>パスワードを変える</strong><em>8文字以上でおきめください</em></span>
+      <span class="item-t"><strong>パスワードを変更する</strong><em>8文字以上でご設定ください</em></span>
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </nav>
 
