@@ -50,13 +50,14 @@
     d.setAttribute('data-list',  g('list',  ['card','table']));
     d.setAttribute('data-font',  g('font',  ['mincho','gothic']));
     d.setAttribute('data-nav',   g('nav',   ['bar','dock']));
+    d.setAttribute('data-skin',  g('skin',  ['sea','flat']));
   }catch(e){}   /* 控えが使えない端末でも、既定の見た目で動きます */
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -599,6 +600,14 @@
   </fieldset>
 
   <fieldset class="pick">
+    <legend>雰囲気</legend>
+    <label class="opt" for="lk-skin-sea"><input type="radio" id="lk-skin-sea" name="skin" value="sea" checked>
+      <span class="opt-t"><strong>海（絵のある地）</strong><em>書面が水に浮いているように見せます</em></span></label>
+    <label class="opt" for="lk-skin-flat"><input type="radio" id="lk-skin-flat" name="skin" value="flat">
+      <span class="opt-t"><strong>板（フラット・カード）</strong><em>絵を置かず、細い枠のカードに収めます。角も丸めすぎません</em></span></label>
+  </fieldset>
+
+  <fieldset class="pick">
     <legend>字</legend>
     <label class="opt" for="lk-font-mincho"><input type="radio" id="lk-font-mincho" name="font" value="mincho" checked>
       <span class="opt-t"><strong>明朝（めいちょう）</strong><em style="font-family:var(--mincho)">見出しと金額に、筆の運びが残ります</em></span></label>
@@ -728,6 +737,6 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>そのほか</button>
 </nav>
 
-<script src="demo.js?v=5"></script>
+<script src="demo.js?v=6"></script>
 </body>
 </html>
