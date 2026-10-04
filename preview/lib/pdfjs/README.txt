@@ -15,3 +15,13 @@ pdf.js（pdfjs-dist 4.10.38）
   npm pack pdfjs-dist@<版>
   tar xzf pdfjs-dist-<版>.tgz
   package/build/pdf.min.mjs と package/build/pdf.worker.min.mjs を、ここへ上書き
+
+★2026-10-04 追記　日本語のPDFが真っ白になる不具合を直しました
+  改良前： pdf.min.mjs と pdf.worker.min.mjs の2つだけを置いていました。
+          日本語のPDF（送金明細・保険証券）は、文字の形を表す「cmaps」と
+          「standard_fonts」が無いと、**枠線だけで文字が1つも出ません**。
+          実際に送金明細のPDFで試して、真っ白になることを確かめました。
+  改良後： cmaps と standard_fonts も一緒に置きました。
+  ★この2つは「必要なファイルだけ」が読み込まれます。
+    置いてある合計は約2.5MBですが、1枚のPDFで実際に落ちてくるのは
+    数KB〜数十KBです。全部が落ちてくるわけではありません。

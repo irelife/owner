@@ -62,6 +62,7 @@
   --sh-c:0,0,0;            /* 影の色 */
   --sh-o:1;                /* 影の濃さの倍率。明るい配色では薄くします */
   --grain-op:.30;          /* 紙の粒子 */
+  --card:#2A151A;          /* カードの地（フラットの雰囲気で使います）*/
   --paper:#F4F1EC;         /* 預けた書類の、紙の色 */
   --paper-ink:#6E635C;
   --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CDBCB6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
@@ -109,7 +110,7 @@
   --glass:rgba(18,28,46,.52); --ink:#0B1220; --inp:#09101C;
   --acc-rgb:195,210,232; --ink-rgb:11,18,32; --deep-rgb:5,9,17;
   --warn-rgb:232,195,138; --spin-rgb:11,18,32; --solid:#152340;
-  --grain-op:.24;
+  --grain-op:.24; --card:#111A2C;
   --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23BBC7DB' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   --sky1:#050A14; --sky2:#0D1628; --sky3:#17243E; --sky4:#213152; --sky5:#2E4167;
   --wat1:#293B5C; --wat2:#1D2B47; --wat3:#111A2C; --wat4:#060A12;
@@ -149,7 +150,7 @@
   --warn-rgb:138,90,20; --spin-rgb:250,247,241; --solid:#FFFDF9;
   --hover:rgba(23,20,15,.05); --soft:rgba(23,20,15,.035);
   --sk-a:rgba(23,20,15,.06); --sk-b:rgba(23,20,15,.12);
-  --sh-c:80,62,40; --sh-o:.34; --grain-op:.14;
+  --sh-c:80,62,40; --sh-o:.34; --grain-op:.14; --card:#FFFFFF;
   --paper:#FFFFFF; --paper-ink:#6E635C;
   --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235B5349' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   --sky1:#F7F1E6; --sky2:#F3E8D8; --sky3:#EDDCC6; --sky4:#E5CFB4; --sky5:#DCC2A3;
@@ -184,7 +185,7 @@
   --warn-rgb:126,82,16; --spin-rgb:242,243,245; --solid:#FFFFFF;
   --hover:rgba(19,23,34,.05); --soft:rgba(19,23,34,.035);
   --sk-a:rgba(19,23,34,.06); --sk-b:rgba(19,23,34,.12);
-  --sh-c:30,45,70; --sh-o:.30; --grain-op:.06;
+  --sh-c:30,45,70; --sh-o:.30; --grain-op:.06; --card:#FFFFFF;
   --paper:#FFFFFF; --paper-ink:#525C72;
   --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23525C72' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   --sky1:#EEF1F6; --sky2:#E8ECF3; --sky3:#E1E6EF; --sky4:#D9E0EB; --sky5:#D1D9E7;
@@ -212,7 +213,7 @@
   --glass:rgba(28,28,32,.62); --ink:#121214; --inp:#0E0E10;
   --acc-rgb:255,255,255; --ink-rgb:18,18,20; --deep-rgb:8,8,10;
   --warn-rgb:230,217,166; --spin-rgb:18,18,20; --solid:#1C1C20;
-  --grain-op:.18;
+  --grain-op:.18; --card:#1C1C20;
   --paper:#FFFFFF; --paper-ink:#55555C;
   --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23A6A6AD' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   --sky1:#09090B; --sky2:#111113; --sky3:#16161A; --sky4:#1C1C20; --sky5:#232327;
@@ -227,6 +228,73 @@
     rgba(18,18,20,.56)  0%, rgba(18,18,20,.70) 22%,
     rgba(18,18,20,.78) 46%, rgba(18,18,20,.86) 100%);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  雰囲気のえらび（海＝絵あり ／ 板＝フラット・カード）
+ *  2026/10/4 ご指示「マイページのUIこういうのが良いな。雰囲気が」
+ *
+ *  いただいた見本（Serper の登録画面・設定画面）から取り出した特徴
+ *    ① 背景に絵も写真も置かない。平らな1色
+ *    ② 中身は、細い枠で囲った「カード」の中に収める
+ *    ③ 角は丸めすぎない（まる型のボタンをやめ、10px ほどに）
+ *    ④ すりガラス（ぼかし）を使わない
+ *    ⑤ たてのリズムを詰める
+ *  ★色は、お選びのテーマのままです。変わるのは雰囲気だけです。
+ * ══════════════════════════════════════════════════════════════════════ */
+[data-skin="flat"] .sea,
+[data-skin="flat"] .veil,
+[data-skin="flat"] .grain{ display:none !important; }
+
+[data-skin="flat"]{ --r:12px; --r-l:12px; --r-s:9px; }
+
+/* 上のバーは、ぼかさず平らに */
+[data-skin="flat"] .bar{
+  background:var(--ink); -webkit-backdrop-filter:none; backdrop-filter:none; }
+
+/* 書面は「カード」に。すりガラスをやめ、細い枠で囲みます */
+[data-skin="flat"] .pane{
+  background:var(--card);
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+  box-shadow:inset 0 0 0 1px var(--hair);
+  border-radius:var(--r);
+}
+/* ログイン・再設定は、中身ごと1枚のカードに収めます */
+[data-skin="flat"] main.center{
+  max-width:420px; min-height:0;
+  margin:var(--s4) auto;
+  padding:var(--s3) var(--s3) var(--s4);
+  justify-content:flex-start;
+  background:var(--card); border-radius:var(--r);
+  box-shadow:inset 0 0 0 1px var(--hair);
+}
+[data-skin="flat"] main.center h1{ font-size:1.5rem; }
+[data-skin="flat"] main.center .lead{ margin-top:var(--s2); font-size:.88rem; }
+[data-skin="flat"] main.center .rule.gold{ display:none; }
+
+/* ボタン・札の角を、丸めすぎないようにします */
+[data-skin="flat"] .cta,
+[data-skin="flat"] .ghost{ border-radius:10px; }
+[data-skin="flat"] .chip,
+[data-skin="flat"] .tag,
+[data-skin="flat"] .item-v.badge{ border-radius:8px; }
+[data-skin="flat"] .ghost{
+  background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none; }
+[data-skin="flat"] input[type=text],[data-skin="flat"] input[type=email],
+[data-skin="flat"] input[type=password],[data-skin="flat"] input[type=tel],
+[data-skin="flat"] input[type=date],[data-skin="flat"] select,
+[data-skin="flat"] textarea{ border-radius:9px; }
+
+/* たてのリズムを少し詰めます（見本の設定画面に合わせて） */
+[data-skin="flat"] .field{ margin-top:var(--s2); }
+[data-skin="flat"] h2.sect{ margin-top:var(--s3); }
+[data-skin="flat"] .opt{ border-radius:10px; }
+
+/* 一覧も、カードの中に入れます */
+[data-skin="flat"] .list{
+  padding:2px var(--s2); border-radius:var(--r);
+  background:var(--card); box-shadow:inset 0 0 0 1px var(--hair); }
+[data-skin="flat"] .item:first-child{ border-top:0; }
+[data-skin="flat"] .item:last-child{ border-bottom:0; }
 
 /* ══════════════════════════════════════════════════════════════════════
  *  字のえらび（明朝 ／ 角ゴシック）

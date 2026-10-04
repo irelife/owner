@@ -352,7 +352,18 @@
       f.arrayBuffer().then(function(buf){
         return import(PDFJS).then(function(lib){
           lib.GlobalWorkerOptions.workerSrc = PDFWK;
-          return lib.getDocument({ data: buf }).promise;
+          /* ★2026-10-04 … 日本語のPDFが真っ白になる不具合を直しました。
+               改良前： data だけを渡していました。日本語のPDFは、文字の形を
+                       表す cmaps と standard_fonts が無いと、**枠線だけで
+                       文字が1つも出ません**（送金明細で実際に起きました）。
+               改良後： その置き場所も一緒に渡します。
+               ★必要なファイルだけが落ちてきます（数KB〜数十KB）。 */
+          return lib.getDocument({
+            data               : buf,
+            cMapUrl            : new URL('cmaps/', BASE).href,
+            cMapPacked         : true,
+            standardFontDataUrl: new URL('standard_fonts/', BASE).href
+          }).promise;
         });
       }).then(function(doc){
         return doc.getPage(1);
@@ -430,7 +441,8 @@
       font  : ['mincho','gothic'],
       size  : ['m','l','xl'],
       list  : ['card','table'],
-      nav   : ['bar','dock']
+      nav   : ['bar','dock'],
+      skin  : ['sea','flat']
     };
     var d = document.documentElement;
 
