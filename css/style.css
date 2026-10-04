@@ -87,7 +87,20 @@
   --bd:    hsl(var(--border));
   --bd-60: hsl(var(--border) / .6);
   --bd-40: hsl(var(--border) / .4);
-  --ng:    hsl(var(--destructive));
+  /* ══ 赤字（マイナス）の文字の色 ══ 2026/10/4 直しました
+   *  【改良前】 --destructive（0 65% 52%）を、そのまま文字に使っていました。
+   *    暗い配色では、カードの地に対して **2.71〜3.05:1** しかなく、
+   *    読みづらい赤でした（本文の目安は 4.5:1 です）。
+   *      ワイン 2.71 ／ ミッドナイト 3.05 ／ チャコール 2.83
+   *    使っているところ … 明細のマイナス行・ログアウト・保険の期限切れ札
+   *  【改良後】 文字に使う赤だけを、読める明るさに上げました。
+   *      ワイン 4.82 ／ ミッドナイト 5.42 ／ チャコール 5.03
+   *      保険の期限切れ札（うすい赤地の上）も 4.82／5.19／4.77
+   *    ★明るい配色（紙・台帳）は、もともと 6.53／7.54 で足りています。
+   *      そちらは下で --destructive に戻しています。
+   *    ★--destructive そのものは変えていません。枠や地に使う色で、
+   *      そちらは 3:1 あれば足りるためです。 */
+  --ng:    hsl(0 80% 75%);
 
   /* 図の色。地（--card）に対して明暗差 6.7:1／4.4:1、
      色の隔たり ΔE 22.4（見分けがつく下限は 15）で確かめたものです。
@@ -539,7 +552,11 @@ input[type=file]::file-selector-button{
      「表の終わり」は余白で分かります。線は要りません。 */
 .rows .row:last-child{ border-bottom:0; }
 .row span:first-child{ color:var(--mut-fg); }
-.row span:last-child{ font-variant-numeric:tabular-nums; }
+/* ★2026/10/4 … 金額は、ぜったいに途中で折りません。
+     「＋¥41,」「300」と2行になると、読み違えます。
+     狭いときは、左の名前のほうが折れます。 */
+.row span:last-child{ font-variant-numeric:tabular-nums;
+  white-space:nowrap; flex:0 0 auto; }
 .row.minus span:last-child{ color:var(--ng); }
 
 /* ── 今月の動き（一覧の形） ───────────────── */
@@ -672,6 +689,70 @@ input[type=file]::file-selector-button{
   -webkit-mask:var(--ic-up) center / contain no-repeat;
           mask:var(--ic-up) center / contain no-repeat;
 }
+
+/* ══════════════════════════════════════════════════════════════
+ *  前月比（2026/10/4 追加）
+ *
+ *  ご指示「2枚目、前月比と入居率が出るのは GOOD。前月比をクリックしたら
+ *  何が＋なのか−なのか詳細が出てきてほしい」（見本の2枚目）。
+ *
+ *  ★色のきまりは、この画面にもともとある「黒字・赤字」に合わせます。
+ *      ふえた … ふつうの文字の色（＋ を付けます）
+ *      へった … 赤（− を付けます）
+ *    「上がったら緑」はこの画面の作法ではありません。送金明細の
+ *    マイナス行が、もとから赤です。そこにそろえます。
+ *  ★内訳が出せない月は、押せないようにします（aria-disabled）。
+ *    押しても何も出ない見出しは、置きません。
+ * ══════════════════════════════════════════════════════════════ */
+.kpi{
+  display:block; width:100%; margin-top:24px; padding:18px 20px;
+  text-align:left; background:var(--card-bg);
+  border:1px solid var(--bd); border-radius:var(--r-l);
+  color:var(--fg); font:inherit; cursor:pointer;
+  transition:border-color .15s;
+}
+.kpi:hover{ border-color:hsl(var(--primary) / .6); }
+.kpi[aria-disabled="true"]{ cursor:default; }
+.kpi[aria-disabled="true"]:hover{ border-color:var(--bd); }
+.kpi-k{ display:block; font-size:.875rem; color:var(--mut-fg); }
+.kpi-v{
+  display:block; margin-top:2px;
+  font-size:1.75rem; font-weight:700; line-height:1.2; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.kpi-v.minus{ color:var(--ng); }
+.kpi-s{
+  display:flex; align-items:center; gap:10px; margin-top:6px;
+  font-size:.875rem; color:var(--mut-fg);
+}
+.kpi-more{
+  margin-left:auto; display:inline-flex; align-items:center; gap:4px;
+  flex:0 0 auto; color:var(--pri); font-weight:500;
+}
+.kpi-more u{ text-underline-offset:3px; }
+.kpi-c{
+  width:var(--ic-s); height:var(--ic-s);
+  fill:none; stroke:currentColor; stroke-width:var(--ic-w);
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform var(--t-open) var(--ease);
+}
+.kpi[aria-expanded="true"] .kpi-c{ transform:rotate(180deg); }
+.kpi-why{
+  margin-top:12px; padding:20px 20px 8px;
+  background:var(--card-bg); border:1px solid var(--bd);
+  border-radius:var(--r-l);
+}
+.kpi-wh{ margin:0 0 4px; font-size:.875rem; line-height:1.8; color:var(--mut-fg); }
+/* 合計の行は、上に線を引いて区切ります */
+.kpi-why .row.sum{ margin-top:4px; border-top:1px solid var(--bd); border-bottom:0; }
+.kpi-why .row.sum span:first-child{ color:var(--fg); font-weight:700; }
+.kpi-why .row.sum span:last-child{ font-weight:700; }
+/* 物件名が2行になっても、金額は1行目の高さにそろえます */
+.kpi-why .row{ align-items:baseline; }
+/* 片方の月にしか無い物件は、その旨を添えます。
+   ★「この月／から」と割れないよう、ここだけ折り返しません。 */
+.kpi-why .row i{ margin-left:8px; font-style:normal; font-size:.8125rem;
+  color:var(--mut-fg); font-weight:400; white-space:nowrap; }
 
 /* ── タイル（ホームのカード） ───────────────
  * ★2026/10/4 … 横にはみ出す不具合を直しました。
@@ -1445,8 +1526,12 @@ html[data-theme="cho"]{
   --inc: #1B5E8F;
   --out: #8A5A14;
 }
-/* ★明るい配色では、影を黒で落とすと汚れて見えます。薄くします。 */
-html[data-theme="kami"], html[data-theme="cho"]{ --sh-o:.34; }
+/* ★明るい配色では、影を黒で落とすと汚れて見えます。薄くします。
+     赤字の赤は、明るい地なら濃いほうが読めます。--destructive に戻します。 */
+html[data-theme="kami"], html[data-theme="cho"]{
+  --sh-o:.34;
+  --ng:hsl(var(--destructive));
+}
 
 /* ══════════════════════════════════════════════════════════════════════
  *  文字の大きさのえらび（2026/10/4 追加）

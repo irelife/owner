@@ -41,7 +41,7 @@ try{
   if(_k === 'flat') document.documentElement.setAttribute('data-skin', _k);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=47">
+<link rel="stylesheet" href="css/style.css?v=48">
 </head>
 <body>
 
@@ -205,6 +205,28 @@ try{
       <!-- ★前回の内容をすぐ出したときに、まだ最新でないことをお伝えします。
            最新が届いたら消えます。 -->
       <p class="stale" id="hm-stale" hidden>前回ご覧になった内容を表示しています。最新の内容を読み込んでいます…</p>
+
+      <!-- ══════════ 前月比（2026/10/4）══════════
+           ご指示「前月比をクリックしたら、何が＋なのか−なのか詳細が
+           出てきてほしい」。送金明細（papers）の2か月ぶんを引き算して
+           出します。Apps Script は1行も変えていません。
+           ★月が2つそろっていないときは、この箱ごと出しません。 -->
+      <div id="hm-diff-wrap" hidden>
+        <button type="button" class="kpi" id="hm-diff-b"
+                aria-expanded="false" aria-controls="hm-diff-why">
+          <span class="kpi-k" id="hm-diff-k">前月比</span>
+          <span class="kpi-v" id="hm-diff-v">—</span>
+          <span class="kpi-s">
+            <span id="hm-diff-p"></span>
+            <span class="kpi-more" id="hm-diff-more"><u>内訳</u><svg class="kpi-c"
+              viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+          </span>
+        </button>
+        <div class="kpi-why" id="hm-diff-why" hidden>
+          <p class="kpi-wh" id="hm-diff-wh"></p>
+          <div class="rows" id="hm-diff-rows"></div>
+        </div>
+      </div>
 
       <!-- ══════════ タイルの説明文について（2026/10/3）══════════
            【改良前】 5枚それぞれに25〜39字の説明文が付いていました。
@@ -710,6 +732,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=47"></script>
+<script src="js/app.js?v=48"></script>
 </body>
 </html>
