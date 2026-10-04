@@ -1280,6 +1280,94 @@ html[data-theme="charcoal"]{
   --inc: #E0B96F;
   --out: #55A0B8;
 }
+/* ══════════════════════════════════════════════════════════════════════
+ *  明るい配色（2026/10/4 追加）
+ *
+ *  なぜ足したか
+ *    これまでの3つは、すべて暗い地でした。暗い画面が苦手な方、
+ *    明るいところで見る方、紙の明細に慣れた方には読みづらい形です。
+ *    ご高齢のオーナー様には、白地のほうが読みやすいという方が多くおられます。
+ *
+ *  ★数値で確かめてあります（どちらも、下の決まりをすべて満たします）
+ *      本文／地　　　　　　4.5:1 以上
+ *      控えめな字／カード　4.5:1 以上
+ *      差し色／カード　　　3.0:1 以上
+ *      ボタンの字／差し色　4.5:1 以上
+ *      枠／カード　　　　　3.0:1 以上（入力欄の枠は、見えないと困ります）
+ *      入力欄／カード　　　1.1:1 以上（へこんで見えるように）
+ *      収入と支出の隔たり　ΔE 15 以上
+ *
+ *    紙　　 本文 17.18:1 ／ 控えめ 7.56:1 ／ 枠 3.56:1 ／ ΔE 57.4
+ *    台帳　 本文 16.12:1 ／ 控えめ 6.70:1 ／ 枠 3.09:1 ／ ΔE 79.5
+ *
+ *  ★明るい配色では、差し色（--primary）が「濃い色」になります。
+ *    暗い配色では金（明るい色）でした。どちらでも
+ *    「塗りつぶしの上に --primary-foreground の字が乗る」形は同じなので、
+ *    ほかの指定は1行も変えていません。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="kami"]{
+  --background: 40 47% 96%;
+  --foreground: 38 21% 7%;
+  --card: 0 0% 100%;
+  --card-foreground: 38 21% 7%;
+  --primary: 38 21% 7%;
+  --primary-foreground: 40 47% 96%;
+  --secondary: 39 36% 89%;
+  --secondary-foreground: 38 21% 7%;
+  --muted: 37 33% 91%;
+  --muted-foreground: 33 11% 32%;
+  --accent: 39 36% 89%;
+  --accent-foreground: 38 21% 7%;
+  --destructive: 6 60% 41%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 39 9% 52%;
+  --ring: 38 46% 37%;
+  --input: 40 41% 93%;
+  --inc: #8A6A33;
+  --out: #1F6076;
+}
+html[data-theme="cho"]{
+  --background: 220 13% 95%;
+  --foreground: 224 28% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 28% 10%;
+  --primary: 217 70% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 218 44% 93%;
+  --secondary-foreground: 224 28% 10%;
+  --muted: 216 28% 93%;
+  --muted-foreground: 221 16% 38%;
+  --accent: 218 44% 93%;
+  --accent-foreground: 224 28% 10%;
+  --destructive: 5 66% 37%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 59%;
+  --ring: 217 70% 27%;
+  --input: 220 39% 95%;
+  --inc: #1B5E8F;
+  --out: #8A5A14;
+}
+/* ★明るい配色では、影を黒で落とすと汚れて見えます。薄くします。 */
+html[data-theme="kami"], html[data-theme="cho"]{ --sh-o:.34; }
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  文字の大きさのえらび（2026/10/4 追加）
+ *
+ *  改良前： 17px の1とおりだけでした。
+ *          小さいと感じる方には、画面を広げる操作しかありませんでした。
+ *  改良後： 3段からお選びいただけます。
+ *            ふつう 17px ／ 大きい 19px ／ 特大 21px
+ *  ★％で書いています。px で書くと、端末の「文字を大きく」の設定が
+ *    効かなくなります（html の font-size の指定を見てください）。
+ * ══════════════════════════════════════════════════════════════════════ */
+html[data-size="l"]{  font-size:118.75%; }   /* 19px 相当 */
+html[data-size="xl"]{ font-size:131.25%; }   /* 21px 相当 */
+
+/* 大きさのえらびの見本（Aa） */
+.th-sz{ flex:0 0 auto; min-width:52px; text-align:right;
+  color:var(--mut-fg); font-weight:600; line-height:1; letter-spacing:.02em; }
+
 /* 切り替えたときだけ、色をなめらかに移します。
    ★ふだんは transition を付けません。画面を描き直すたびに
      全体がにじんで見えるのを防ぐためです。 */
@@ -1326,6 +1414,7 @@ html.th-move, html.th-move *{
   border:1px solid var(--bd-40);
 }
 .th-i .th-n{ flex:1 1 auto; }
+.th-i .th-px{ color:var(--mut-fg); font-weight:400; font-size:.8125rem; }
 .th-on{ flex:0 0 auto; font-size:.8125rem; color:var(--pri); font-weight:700; }
 .th-i[aria-pressed="false"] .th-on{ visibility:hidden; }
 

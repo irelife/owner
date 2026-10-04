@@ -25,7 +25,8 @@ if (!my) {
   process.exit(1);
 }
 const box = new Function(
-  my + '; return { THEMES, thPick, thName, thOf, myNum, myTel, myZip, myMail, myCheck, myBody };'
+  my + '; return { THEMES, thPick, thName, thOf, SIZES, szPick, szName, SZKEY,'
+      + ' myNum, myTel, myZip, myMail, myCheck, myBody };'
 )();
 
 let pass = 0, fail = 0;
@@ -34,7 +35,11 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
 const eq = (got, want, m) => ok(got === want, m + '（' + JSON.stringify(got) + '）');
 
 console.log('\n── 配色の一覧（THEMES）──');
-eq(box.THEMES.length, 3, '3つ');
+/* ★2026/10/4 … 明るい配色（紙・台帳）を2つ足しました。
+     暗い地が苦手な方・紙の明細に慣れた方のためのものです。 */
+eq(box.THEMES.length, 5, '5つ（暗い3つ ＋ 明るい2つ）');
+ok(box.THEMES.some(t => t.id === 'kami') && box.THEMES.some(t => t.id === 'cho'),
+   '★明るい配色（紙・台帳）が一覧に入っている');
 eq(box.THEMES[0].id, 'wine', '1つめは既定のワイン');
 ok(box.THEMES.every(t => /^#[0-9A-F]{6}$/.test(t.bg) && /^#[0-9A-F]{6}$/.test(t.pri)),
    '★どれも色が6桁で入っている（先あての script と対になる値）');
@@ -48,6 +53,18 @@ ok(!box.THEMES.some(t => t.id === 'indigo'),
  *   ここに配色を書き忘れると、その色をお選びの方に「一瞬だけワインが見える」
  *   ことになります。画面は最後には正しくなるので、気づきにくい種類の不具合です。
  *   人が2か所を見比べるのをやめて、検査で押さえます。 */
+/* ★★ 文字の大きさ（2026/10/4 追加）
+ *
+ *   「全体的に文字が小さい」とのご指摘から入れたものです。
+ *   3段のどれを選んでも、css に受け口があり、先あての script が
+ *   読む鍵の名前と、app.js が書く鍵の名前がそろっている必要があります。
+ *   ずれると「選んだのに、次に開くと元に戻る」ことになります。 */
+console.log('\n── ★★ 文字の大きさ（SIZES）──');
+eq(box.SIZES.length, 3, '3段');
+eq(box.SIZES[0].id, 'm', '1つめは「ふつう」');
+ok(box.SIZES.map(z => z.id).join(',') === 'm,l,xl', '並びは ふつう → 大きい → 特大');
+ok(new Set(box.SIZES.map(z => z.id)).size === box.SIZES.length, 'id が重なっていない');
+
 console.log('\n── ★★ index.html の先あてと、THEMES がそろっているか ──');
 const html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
 const mTh  = html.match(/var\s+_TH\s*=\s*\{([^}]*)\}/);
@@ -175,6 +192,47 @@ console.log('\n── お問い合わせへ送る本文（myBody）──');
 eq(box.myBody('a@b.jp', {}), 'ご登録内容の変更をお願いいたします。\n',
    '1つも無ければ、見出しだけ');
 ok(box.myBody(null, null).length > 0, '何も来なくても落ちない');
+
+/* ★★ 文字の大きさと、明るい配色が「本当に効く」か
+ *
+ *   ① css に受け口（html[data-size=…] / html[data-theme=…]）があるか
+ *   ② 先あての script が、app.js と同じ鍵の名前を読んでいるか
+ *      ずれると「選んだのに、次に開くと元に戻る」ことになります
+ *   ③ 大きさが ふつう < 大きい < 特大 の順になっているか
+ *   ④ 地の字が ％ で書かれているか
+ *      px で書くと、端末の「文字を大きく」の設定が効かなくなります */
+console.log('\n── ★★ 文字の大きさ・明るい配色が、本当に効くか ──');
+{
+  const css   = fs.readFileSync(path.join(DIR, 'css/style.css'), 'utf8');
+  const html2 = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+
+  const base = css.match(/html\{[^}]*font-size:\s*([\d.]+)%/);
+  ok(!!base, '④ 地の字が ％ で書かれている（端末の文字設定が効く）');
+
+  const got = {};
+  if (base) got.m = parseFloat(base[1]);
+  ['l', 'xl'].forEach(function(id){
+    const m = css.match(new RegExp('html\\[data-size="' + id + '"\\]\\{[^}]*font-size:\\s*([\\d.]+)%'));
+    ok(!!m, '① css に受け口がある: data-size="' + id + '"');
+    if (m) got[id] = parseFloat(m[1]);
+  });
+  ok(got.m && got.l && got.xl && got.m < got.l && got.l < got.xl,
+     '③ ふつう < 大きい < 特大 の順（' + JSON.stringify(got) + '）');
+
+  const key = box.SZKEY || '';
+  ok(!!key, 'app.js に、大きさを保存する鍵の名前がある');
+  ok(key && html2.indexOf("localStorage.getItem('" + key + "')") >= 0,
+     '★★ ② 先あてが読む鍵と、app.js が書く鍵が同じ（' + JSON.stringify(key) + '）');
+
+  const mTh2 = html2.match(/var\s+_TH\s*=\s*\{([\s\S]*?)\}/);
+  ok(!!(mTh2 && /kami/.test(mTh2[1]) && /cho/.test(mTh2[1])),
+     '★ 明るい配色（紙・台帳）も、先あての一覧に入っている');
+
+  ['kami', 'cho'].forEach(function(id){
+    ok(css.indexOf('html[data-theme="' + id + '"]') >= 0,
+       '★ css に受け口がある: data-theme="' + id + '"');
+  });
+}
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);
 process.exit(fail ? 1 : 0);

@@ -23,16 +23,21 @@
        ★ずれていないかは tests/tmy.cjs が見張ります。 -->
 <script>
 try{
-  var _TH = { midnight:'#141D2E', charcoal:'#23211F' };
+  var _TH = { midnight:'#141D2E', charcoal:'#23211F',
+              kami:'#FAF7F1', cho:'#F2F3F5' };
   var _t = localStorage.getItem('ire_owner_theme');
   if(_t && _TH[_t]){
     document.documentElement.setAttribute('data-theme', _t);
     var _m = document.querySelector('meta[name="theme-color"]');
     if(_m) _m.setAttribute('content', _TH[_t]);
   }
+  /* ★文字の大きさも、絵を描く前に当てます。
+       あとから当てると、画面がいちど小さい字で出てから変わります。 */
+  var _s = localStorage.getItem('ire_owner_size');
+  if(_s === 'l' || _s === 'xl') document.documentElement.setAttribute('data-size', _s);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=45">
+<link rel="stylesheet" href="css/style.css?v=46">
 </head>
 <body>
 
@@ -639,6 +644,14 @@ try{
         <div class="th-list" id="my-themes" role="group" aria-label="配色をお選びください"></div>
       </section>
 
+      <!-- ③-2 文字の大きさ -->
+      <section class="mya">
+        <p class="mya-h">文字の大きさ</p>
+        <p class="mya-note">お選びになると、その場で画面全体が変わります。
+          お使いの端末にのみ保存されます。</p>
+        <div class="th-list" id="my-sizes" role="group" aria-label="文字の大きさをお選びください"></div>
+      </section>
+
       <!-- ④ ご登録内容の変更 -->
       <section class="mya">
         <p class="mya-h">ご登録内容の変更</p>
@@ -687,6 +700,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=45"></script>
+<script src="js/app.js?v=46"></script>
 </body>
 </html>
