@@ -4,9 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>デザイン案B（海）｜オーナーマイページ</title>
+<title>デザイン案C（藍）｜オーナーマイページ</title>
 <!-- ══════════════════════════════════════════════════════════════
-     デザイン案B（海）｜9画面
+     デザイン案C（藍）｜9画面
+       ★案B（海・夕景）の **色だけ** を変えたものです。
+         大きさ・余白・字・動き・画面の数は、案Bとまったく同じです。
+         案B は ../sea/ にそのまま残してあります。
+         字づかい（style.css）は案Bを読み込み、色だけ上書きしています。
      これは「見本」です。本番の画面ではありません。
        ・お名前・金額はすべて架空です
        ・ここから本当にログインすることはできません
@@ -31,43 +35,53 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=1">
 </head>
 <body>
 
-<!-- ══════════ 海 ══════════ -->
+<!-- ══════════ 海（藍・月あかり）══════════
+     ★かたちは案Bとまったく同じです（空と海の境は、上から246px）。
+       色と、空に出るもの（夕日 → 月）だけを替えました。 -->
 <div class="sea" aria-hidden="true">
   <svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
     <defs>
       <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"    stop-color="#2A1218"/>
-        <stop offset=".44"  stop-color="#4A2229"/>
-        <stop offset=".68"  stop-color="#6B3B2C"/>
-        <stop offset=".86"  stop-color="#85502F"/>
-        <stop offset="1"    stop-color="#946C45"/>
+        <stop offset="0"    stop-color="#050A14"/>
+        <stop offset=".44"  stop-color="#0D1628"/>
+        <stop offset=".68"  stop-color="#17243E"/>
+        <stop offset=".86"  stop-color="#213152"/>
+        <stop offset="1"    stop-color="#2E4167"/>
       </linearGradient>
       <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#573527"/>
-        <stop offset=".18" stop-color="#4E2A28"/>
-        <stop offset=".55" stop-color="#2C1419"/>
-        <stop offset="1"   stop-color="#180A0E"/>
+        <stop offset="0"   stop-color="#293B5C"/>
+        <stop offset=".18" stop-color="#1D2B47"/>
+        <stop offset=".55" stop-color="#111A2C"/>
+        <stop offset="1"   stop-color="#060A12"/>
       </linearGradient>
       <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#F0C98E" stop-opacity=".55"/>
-        <stop offset=".45" stop-color="#D4A96F" stop-opacity=".16"/>
-        <stop offset="1"   stop-color="#D4A96F" stop-opacity="0"/>
+        <stop offset="0"   stop-color="#DCE7F8" stop-opacity=".46"/>
+        <stop offset=".45" stop-color="#C3D2E8" stop-opacity=".14"/>
+        <stop offset="1"   stop-color="#C3D2E8" stop-opacity="0"/>
       </linearGradient>
       <radialGradient id="sun" cx=".5" cy=".5" r=".5">
-        <stop offset="0"   stop-color="#FFE3B4" stop-opacity=".30"/>
-        <stop offset=".55" stop-color="#E8B778" stop-opacity=".09"/>
-        <stop offset="1"   stop-color="#D4A96F" stop-opacity="0"/>
+        <stop offset="0"   stop-color="#E6EEFB" stop-opacity=".26"/>
+        <stop offset=".55" stop-color="#BFD0EA" stop-opacity=".08"/>
+        <stop offset="1"   stop-color="#C3D2E8" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="moon" cx=".5" cy=".5" r=".5">
+        <stop offset="0"   stop-color="#F2F6FD" stop-opacity=".92"/>
+        <stop offset=".62" stop-color="#E2EAF8" stop-opacity=".55"/>
+        <stop offset="1"   stop-color="#C3D2E8" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="390" height="252" fill="url(#sky)"/>
     <ellipse cx="248" cy="252" rx="138" ry="52" fill="url(#sun)"/>
+    <!-- 月。ちいさく、ひとつだけ。 -->
+    <circle cx="248" cy="138" r="30" fill="url(#moon)" opacity=".34"/>
+    <circle cx="248" cy="138" r="11" fill="#EFF4FC" opacity=".62"/>
     <rect y="246" width="390" height="598" fill="url(#water)"/>
     <path d="M248 246 L284 620 L212 620 Z" fill="url(#glow)" opacity=".30"/>
-    <g fill="none" stroke="#E8C79A" stroke-linecap="round">
+    <g fill="none" stroke="#CBDAF2" stroke-linecap="round">
       <path d="M58 260 h44"   stroke-opacity=".30" stroke-width="1"/>
       <path d="M272 266 h58"  stroke-opacity=".34" stroke-width="1"/>
       <path d="M118 274 h72"  stroke-opacity=".26" stroke-width="1.1"/>
@@ -83,9 +97,9 @@
 <div class="grain" aria-hidden="true"></div>
 
 <p class="flag">
-  <b>デザイン案B（海）9画面</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
+  <b>デザイン案C（藍）9画面</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
   画面をかえるには、右下すみの <b>見本</b> を押してください。本番は <b>irelife.github.io/owner/</b> のままです。<br>
-  <a href="../sea2/">▸ 配色ちがい（案C 藍）を見る</a>
+  <a href="../sea/">◂ もとの配色（案B 海・夕景）にもどる</a>
 </p>
 
 <header class="bar" id="bar">
@@ -547,6 +561,6 @@
   </select>
 </details>
 
-<script src="demo.js?v=2"></script>
+<script src="../sea/demo.js?v=2"></script>
 </body>
 </html>

@@ -140,9 +140,13 @@
     show(n, false);
   });
 
-  /* 見本の、画面えらび */
+  /* 見本の、画面えらび（右下すみ。えらんだら、たたみます） */
   var pick = $('pick');
-  if(pick) pick.addEventListener('change', function(){ show(pick.value, true); });
+  if(pick) pick.addEventListener('change', function(){
+    show(pick.value, true);
+    var box = $('pickbox');
+    if(box) box.open = false;
+  });
 
 
   /* ══════════════════════════════════════════════════════════════
