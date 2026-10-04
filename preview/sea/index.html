@@ -351,7 +351,19 @@
     </div>
     <div class="field">
       <label for="in-file">証券の写し<span class="hint">写真・PDF／8MBまで</span></label>
-      <input type="file" id="in-file" style="min-height:52px;background:transparent;box-shadow:none;padding:0">
+      <!-- ★2026/10/4 … ドラッグインできる受け口にしました。
+           ブラウザが出す「ファイルの選択／ファイルが選択されていません」は、
+           暗い画面の中で白く浮き、何をする場所かも伝わりませんでした。
+           押しても、落としても、どちらでも入ります。 -->
+      <label class="drop" id="in-drop" for="in-file">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 16V4m0 0L8 8m4-4l4 4"/>
+          <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        <strong>ここに写真やPDFを置いてください</strong>
+        <em>または、押してえらぶ</em>
+        <input type="file" id="in-file" accept="image/*,application/pdf">
+      </label>
+      <p class="drop-name" id="in-name" hidden></p>
     </div>
   </div>
   <button class="cta" type="button">この内容で預ける</button>
@@ -414,9 +426,20 @@
     <div class="field" style="margin-top:0">
       <label for="ac-ym">対象の月</label>
       <select id="ac-ym">
-        <option>2026年9月分</option><option>2026年8月分</option>
-        <option>2026年7月分</option><option>2026年（年間まとめ）</option>
+        <option value="2026年9月分">2026年9月分</option>
+        <option value="2026年8月分">2026年8月分</option>
+        <option value="2026年7月分">2026年7月分</option>
+        <option value="2026年1月〜12月">2026年 1年分（12か月をまとめて添付）</option>
       </select>
+      <p class="hint" id="ac-ym-note" hidden>1年分は、明細書（PDF）を12枚まとめて添付いたします。</p>
+    </div>
+    <div class="field">
+      <label for="ac-off">税理士事務所名</label>
+      <input type="text" id="ac-off" placeholder="例）サンプル税理士事務所">
+    </div>
+    <div class="field">
+      <label for="ac-nm">ご担当者名<span class="hint">任意</span></label>
+      <input type="text" id="ac-nm" placeholder="例）田中 一郎">
     </div>
     <div class="field">
       <label for="ac-to">税理士事務所のメールアドレス</label>
@@ -428,10 +451,9 @@
     </div>
     <div class="field">
       <label for="ac-body">本文</label>
-      <textarea id="ac-body">いつもお世話になっております。
-
-2026年9月分の送金明細をお送りいたします。
-ご査収のほど、よろしくお願いいたします。</textarea>
+      <textarea id="ac-body" rows="14"></textarea>
+      <p class="hint">上の欄にご入力いただくと、宛名と署名がここに入ります。
+        文面は、そのままお書き替えいただけます。</p>
     </div>
   </div>
   <button class="cta" type="button" data-done>明細書（PDF）を添付して送信</button>

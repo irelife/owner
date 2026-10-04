@@ -160,7 +160,9 @@ body{
      作りが雑に見えます。text-wrap:pretty は、最後の行が短くなる
      折り返しを避けてくれます。対応していないブラウザでは、
      これまでどおりの折り返しです（壊れません）。 */
-p, li, dd, figcaption{ text-wrap:pretty; }
+/* ★word-break:auto-phrase … 日本語を文節の切れめで折り返します。
+     「ご入力くだ／さい。」が「ご入力／ください。」になります。 */
+p, li, dd, figcaption{ text-wrap:pretty; word-break:auto-phrase; }
 
 /* ══════════════════════════════════════════════════════════════
  *  押した手ごたえ と 焦点の輪（2026/10/3 新設）
@@ -403,6 +405,30 @@ input[type=date], input[type=search], select, textarea{
 /* ★カードの外に置いてあるもの（月えらび）も、同じ色でよくなりました。
      ページの地より暗いので、どこに置いても分かります。 */
 input::placeholder, textarea::placeholder{ color:hsl(var(--muted-foreground) / .6); }
+
+/* ══════════════════════════════════════════════════════════════
+ *  自動入力（オートフィル）の色（2026/10/4）
+ *
+ *  【改良前】 ブラウザが覚えているアドレスを入れると、欄が **白** に
+ *            なりました。暗い画面の中で、そこだけ真っ白です。
+ *            写真でご指摘いただいた箇所です。
+ *  【改良後】 ほかの欄と同じ見た目にします。
+ *
+ *  ★background-color は、自動入力では上書きできません。
+ *    影（box-shadow）を内側いっぱいに敷いて、色を作ります。
+ *    これが唯一の確実な手です。
+ * ══════════════════════════════════════════════════════════════ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active{
+  -webkit-text-fill-color:var(--fg) !important;
+  caret-color:var(--fg);
+  -webkit-box-shadow:inset 0 0 0 1px var(--bd), inset 0 0 0 100px hsl(var(--input)) !important;
+  box-shadow:inset 0 0 0 1px var(--bd), inset 0 0 0 100px hsl(var(--input)) !important;
+  transition:background-color 9999s;   /* 白い一瞬を出さない */
+}
+
 input:focus, select:focus, textarea:focus{
   outline:none; border-color:var(--pri);
   box-shadow:0 0 0 2px hsl(var(--ring) / .55);

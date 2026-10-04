@@ -36,6 +36,7 @@
   --hair2:rgba(255,255,255,.06);
   --glass:rgba(38,18,22,.52);
   --ink:#201014;
+  --inp:#1C0D11;        /* 入力欄の地。自動入力でも、この色にそろえます */
 
   --mincho:'Hiragino Mincho ProN','Yu Mincho',YuMincho,'Noto Serif JP',serif;
   --gothic:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Noto Sans JP',sans-serif;
@@ -76,7 +77,16 @@ body{
      作りが雑に見えます。text-wrap:pretty は、最後の行が短くなる
      折り返しを避けてくれます。対応していないブラウザでは、
      これまでどおりの折り返しです（壊れません）。 */
-p, li, dd, figcaption{ text-wrap:pretty; }
+/* ★2026/10/4 … word-break:auto-phrase を足しました。
+     日本語は、どこでも切れてしまいます。
+       「ご入力くだ／さい。」「お送りいたしま／す。」
+     auto-phrase は、文節の切れめで折り返します。
+       「ご入力／ください。」
+     対応していないブラウザでは、これまでどおりです（壊れません）。 */
+p, li, dd, figcaption, .lead, .note, .item-t em, .bub, label{
+  text-wrap:pretty; word-break:auto-phrase;
+}
+h1, h2, .hero-l, .item-t strong{ word-break:auto-phrase; }
 button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
   -webkit-tap-highlight-color:transparent; }
 input,select,textarea{ font:inherit; }
@@ -165,11 +175,14 @@ input,select,textarea{ font:inherit; }
   border-radius:var(--r-s); text-align:left; font-size:.94rem; color:var(--fg); }
 .menu button:hover{ background:rgba(255,255,255,.07); }
 
+/* ★2026/10/4 … 上の余白を 64px → 32px に。
+     「上の余白が多い」とご指摘をいただきました。実測で、
+     ログイン画面は見出しが出るまで画面の4割を使っていました。 */
 main{ max-width:560px; margin:0 auto;
-  padding:var(--s5) max(20px,env(safe-area-inset-right))
+  padding:var(--s3) max(20px,env(safe-area-inset-right))
           calc(var(--s5) + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); }
-main.center{ min-height:calc(100dvh - 120px); display:flex; flex-direction:column;
-  justify-content:center; padding-top:var(--s4); padding-bottom:var(--s4); }
+main.center{ min-height:calc(100dvh - 180px); display:flex; flex-direction:column;
+  justify-content:center; padding-top:var(--s3); padding-bottom:var(--s4); }
 
 /* ══════════ 見出し・文字 ══════════ */
 /* ★4-c いまどこにいるか。見出しの上に小さく出します */
@@ -281,7 +294,7 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 input[type=text],input[type=email],input[type=password],input[type=tel],
 input[type=date],select,textarea{
   width:100%; min-height:52px; padding:12px 16px;
-  background:rgba(14,6,8,.55); color:var(--fg);
+  background:var(--inp); color:var(--fg);
   border:0; box-shadow:inset 0 0 0 1px var(--hair);
   border-radius:var(--r-s); font-size:1rem; line-height:1.6;
   appearance:none; -webkit-appearance:none;
@@ -290,9 +303,61 @@ textarea{ min-height:140px; resize:vertical; line-height:1.9; }
 input:focus,select:focus,textarea:focus{
   outline:none; box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 3px rgba(212,169,111,.22); }
 ::placeholder{ color:var(--dim); }
+
+/* ══════════════════════════════════════════════════════════════
+ *  自動入力（オートフィル）の色（2026/10/4）
+ *
+ *  【改良前】 ブラウザが覚えているアドレスを入れると、欄が **白** に
+ *            なりました。暗い画面の中で、そこだけ真っ白です。
+ *            写真でご指摘いただいた箇所です。
+ *  【改良後】 ほかの欄と同じ見た目にします。
+ *
+ *  ★background-color は、自動入力では上書きできません。
+ *    影（box-shadow）を内側いっぱいに敷いて、色を作ります。
+ *    これが唯一の確実な手です。
+ * ══════════════════════════════════════════════════════════════ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active{
+  -webkit-text-fill-color:var(--fg) !important;
+  caret-color:var(--fg);
+  -webkit-box-shadow:inset 0 0 0 1px var(--hair), inset 0 0 0 100px var(--inp) !important;
+  box-shadow:inset 0 0 0 1px var(--hair), inset 0 0 0 100px var(--inp) !important;
+  transition:background-color 9999s;   /* 白い一瞬を出さない */
+}
+
 select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CDBCB6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 14px center;
   background-size:18px; padding-right:44px; }
+/* ══════════ ドラッグインの受け口 ══════════ */
+/* ★.field > label の指定（display:block）が勝っていて、中の
+     アイコン・文字が横並びになっていました。
+     同じ強さ以上にするため、セレクタを合わせます。 */
+.field > label.drop,
+.drop{
+  display:grid; place-items:center; gap:6px; width:100%;
+  margin-bottom:0; font-size:1rem; font-weight:400; color:var(--fg);
+  letter-spacing:normal;
+  min-height:132px; padding:var(--s3) var(--s2); border-radius:var(--r);
+  background:rgba(14,6,8,.40); cursor:pointer; text-align:center;
+  box-shadow:inset 0 0 0 1px var(--hair);
+  transition:background var(--t-in), box-shadow var(--t-in), transform var(--t-in);
+}
+.drop input[type=file]{ position:absolute; width:1px; height:1px;
+  opacity:0; pointer-events:none; }
+.drop svg{ width:26px; height:26px; fill:none; stroke:var(--gold-t);
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.drop strong{ font-size:.94rem; font-weight:600; }
+.drop em{ font-style:normal; font-size:.81rem; color:var(--mut); }
+.drop:hover{ background:rgba(255,255,255,.05); }
+/* 置こうとしている間 */
+.drop.over{
+  background:rgba(212,169,111,.14); transform:translateY(-2px);
+  box-shadow:inset 0 0 0 2px rgba(212,169,111,.6), 0 12px 28px rgba(0,0,0,.34);
+}
+.drop-name{ margin:12px 0 0; font-size:.88rem; color:var(--gold-t); }
+
 .msg{ margin:12px 0 0; min-height:22px; font-size:.81rem; color:var(--warn); }
 .msg.ok{ color:var(--gold-t); }
 
