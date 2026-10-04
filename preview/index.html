@@ -56,6 +56,60 @@ body{
 button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
   -webkit-tap-highlight-color:transparent; }
 :where(button,a):focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+
+/* ══════════════════════════════════════════════════════════════
+ *  浮く・沈む（2026/10/4 ご指示）
+ *
+ *  ★スマートフォンに「カーソルを合わせる」はありません。
+ *    浮き上がりだけを入れると、オーナー様の大半には何も起きません。
+ *    ですので2つに分けます。
+ *      パソコン（マウス）… 合わせると 浮く
+ *      スマートフォン（指）… 押すと 沈む
+ *
+ *  ★transform で動かします。margin や top で動かすと、
+ *    まわりの部品まで押されて、画面全体がガタつきます。
+ *    transform なら、見た目だけが動き、場所の計算は変わりません。
+ *
+ *  ★動きを減らす設定の方には、動かしません（このファイルの最後）。
+ * ══════════════════════════════════════════════════════════════ */
+.cta,.ghost,.tab,.back,.item,.dots{
+  transition:transform .18s cubic-bezier(.22,.61,.36,1),
+             box-shadow .18s cubic-bezier(.22,.61,.36,1),
+             background .18s, filter .12s;
+  will-change:transform;
+}
+
+@media (hover:hover) and (pointer:fine){
+  .cta:hover{
+    transform:translateY(-3px);
+    box-shadow:0 16px 36px rgba(0,0,0,.46), 0 0 0 1px rgba(255,255,255,.08) inset;
+    filter:brightness(1.04);
+  }
+  .ghost:hover,.tab:hover,.back:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.07);
+    box-shadow:inset 0 0 0 1px rgba(199,156,107,.42), 0 10px 24px rgba(0,0,0,.34);
+    color:var(--fg);
+  }
+  /* ★一覧の行は、横いっぱいです。大きく浮かせると
+       「紙が1枚はがれた」ように見えて落ち着きません。
+       1px だけ上げ、うしろを少し明るくし、山形を右へ寄せます。 */
+  .item:hover{
+    transform:translateY(-1px);
+    background:rgba(255,255,255,.055);
+    box-shadow:0 8px 20px rgba(0,0,0,.26);
+  }
+  .item:hover .chev{ transform:translateX(3px); color:var(--gold); }
+  .dots:hover{ transform:translateY(-1px); }
+}
+.chev{ transition:transform .18s cubic-bezier(.22,.61,.36,1), color .18s; }
+
+/* 押している間は、浮かずに沈みます（指でも、マウスでも） */
+.cta:active,.ghost:active,.tab:active,.back:active,.item:active,.dots:active{
+  transform:translateY(0);
+  filter:brightness(.90);
+  transition-duration:.1s;
+}
 :where(button,a):active{ filter:brightness(.9); transition-duration:.12s; }
 
 /* ── 見本であることの帯。本番には出しません ── */
