@@ -169,6 +169,114 @@
    色の差だけでは「押せる」と気づけない方がおられるためです。 */
 [data-theme="kami"] .logo em{ color:var(--gold-t); }
 
+/* ── ④ 台帳（だいちょう）… 案E の見た目 ──────────────
+ *  ★案Eは「表組み」が本体です。この色だけでは案Eになりません。
+ *    「並べかた → 表」と合わせてお選びください。
+ *  ★紙面は平らであるべきなので、海の絵はほとんど白に沈めます。 */
+[data-theme="cho"]{
+  --fg:#131722; --mut:#525C72; --dim:#525C72;
+  /* 塗りつぶしは濃紺。その上に乗る字（--ink）は、地の色です */
+  --gold:#153A75; --gold-t:#153A75; --gold-d:#0E2A56;
+  --minus:#9E2B20; --warn:#7E5210;
+  --hair:rgba(19,23,34,.15); --hair2:rgba(19,23,34,.08);
+  --glass:rgba(255,255,255,.84); --ink:#F2F3F5; --inp:#FFFFFF;
+  --acc-rgb:21,58,117; --ink-rgb:242,243,245; --deep-rgb:226,229,235;
+  --warn-rgb:126,82,16; --spin-rgb:242,243,245; --solid:#FFFFFF;
+  --hover:rgba(19,23,34,.05); --soft:rgba(19,23,34,.035);
+  --sk-a:rgba(19,23,34,.06); --sk-b:rgba(19,23,34,.12);
+  --sh-c:30,45,70; --sh-o:.30; --grain-op:.06;
+  --paper:#FFFFFF; --paper-ink:#525C72;
+  --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23525C72' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  --sky1:#EEF1F6; --sky2:#E8ECF3; --sky3:#E1E6EF; --sky4:#D9E0EB; --sky5:#D1D9E7;
+  --wat1:#CBD4E2; --wat2:#C4CEDE; --wat3:#BDC8DA; --wat4:#B6C2D6;
+  --glow1:#FFFFFF; --glow1-o:.60; --glow2:#FFFFFF; --glow2-o:.20; --glow3:#FFFFFF;
+  --sun1:#FFFFFF;  --sun1-o:.55;  --sun2:#FFFFFF;  --sun2-o:.20;  --sun3:#FFFFFF;
+  --wave:#7B88A0;
+  --moon-o:0; --moon-core-o:0;
+}
+/* 台帳は、紙面が平らであるべきです。絵をほとんど白に沈めます */
+[data-theme="cho"] .veil{
+  background:linear-gradient(180deg,
+    rgba(242,243,245,.86) 0%, rgba(242,243,245,.91) 22%,
+    rgba(242,243,245,.93) 46%, rgba(242,243,245,.95) 100%);
+}
+
+/* ── ⑤ 墨（すみ）… 案F の見た目 ──────────────────
+ *  ★色を持ちません。白が「押せる」の印です。
+ *    「字 → 角ゴシック」と合わせると、案Fにいちばん近くなります。 */
+[data-theme="sumi"]{
+  --fg:#F3F3F4; --mut:#A6A6AD; --dim:#A6A6AD;
+  --gold:#FFFFFF; --gold-t:#E9E9EC; --gold-d:#9A9AA2;
+  --minus:#F0A0A0; --warn:#E6D9A6;
+  --hair:rgba(255,255,255,.11); --hair2:rgba(255,255,255,.06);
+  --glass:rgba(28,28,32,.62); --ink:#121214; --inp:#0E0E10;
+  --acc-rgb:255,255,255; --ink-rgb:18,18,20; --deep-rgb:8,8,10;
+  --warn-rgb:230,217,166; --spin-rgb:18,18,20; --solid:#1C1C20;
+  --grain-op:.18;
+  --paper:#FFFFFF; --paper-ink:#55555C;
+  --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23A6A6AD' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  --sky1:#09090B; --sky2:#111113; --sky3:#16161A; --sky4:#1C1C20; --sky5:#232327;
+  --wat1:#1E1E22; --wat2:#18181C; --wat3:#111115; --wat4:#08080A;
+  --glow1:#FFFFFF; --glow1-o:.16; --glow2:#FFFFFF; --glow2-o:.05; --glow3:#FFFFFF;
+  --sun1:#FFFFFF;  --sun1-o:.10;  --sun2:#FFFFFF;  --sun2-o:.04;  --sun3:#FFFFFF;
+  --wave:#8A8A92;
+  --moon-o:0; --moon-core-o:0;
+}
+[data-theme="sumi"] .veil{
+  background:linear-gradient(180deg,
+    rgba(18,18,20,.56)  0%, rgba(18,18,20,.70) 22%,
+    rgba(18,18,20,.78) 46%, rgba(18,18,20,.86) 100%);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  字のえらび（明朝 ／ 角ゴシック）
+ *
+ *  ★「角ゴシック」を選ぶと、見出しと金額も角ゴシックになります。
+ *    明朝は美しいのですが、小さな字や細い画面ではつぶれて見えることが
+ *    あります。案E・案Fは角ゴシックだけで組んでいます。
+ *  ★字の太さも上げます。明朝の600は、角ゴシックでは細く見えるためです。
+ * ══════════════════════════════════════════════════════════════════════ */
+[data-font="gothic"]{ --mincho:var(--gothic); }
+[data-font="gothic"] h1,
+[data-font="gothic"] .hero-a,
+[data-font="gothic"] .item-t strong,
+[data-font="gothic"] .logo{ font-weight:700; letter-spacing:.02em; }
+[data-font="gothic"] .hero-a{ letter-spacing:-.045em; }
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  行き先の出しかた（ホームの一覧 ／ 画面の下の札）
+ *
+ *  ★「下の札」は、案D・案Fの形です。片手で持ったまま、親指だけで
+ *    ホーム・明細・入居を行き来できます。
+ *  ★中身を隠さないよう、本文の下の余白を札の高さぶん広げます
+ *    （指針 Navigation / Sticky Navigation）。
+ * ══════════════════════════════════════════════════════════════════════ */
+.dock{ display:none; }
+[data-nav="dock"] .dock{
+  position:fixed; left:0; right:0; bottom:0; z-index:70;
+  display:flex; gap:4px;
+  padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom))
+          max(10px,env(safe-area-inset-right));
+  background:rgba(var(--ink-rgb),.90);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  backdrop-filter:blur(18px) saturate(150%);
+  border-top:1px solid var(--hair);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  [data-nav="dock"] .dock{ background:var(--solid); }
+}
+.dock button{ flex:1 1 0; display:grid; place-items:center; gap:2px;
+  min-height:58px; border-radius:var(--r-s); color:var(--mut); font-size:.69rem;
+  letter-spacing:.04em;
+  transition:color var(--t-ui), background var(--t-ui); }
+.dock svg{ width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round; }
+.dock button:hover{ color:var(--fg); background:var(--hover); }
+.dock button[aria-current=page]{ color:var(--fg); background:rgba(var(--acc-rgb),.14); }
+.dock button:active{ filter:brightness(var(--press,.9)); }
+[data-nav="dock"] .scr.pad,
+[data-nav="dock"] main{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+
 /* ══════════════════════════════════════════════════════════════════════
  *  文字の大きさのえらび
  *
