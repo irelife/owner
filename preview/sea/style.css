@@ -146,52 +146,29 @@ input,select,textarea{ font:inherit; }
   background:rgba(14,6,8,.94); border-bottom:1px solid var(--hair);
   font-size:.75rem; line-height:1.6; color:var(--dim); text-align:center;
 }
+.flag p{ margin:0; }
+/* ★見本の目次（2026/10/4 ご指示②）
+     プルダウンをやめました。ここは「見本のおことわり」の帯なので、
+     見本の道具が並んでいても、作りかけには見えません。
+     はみ出したぶんは、よこにすべらせてご覧いただけます。 */
+.flag-nav{
+  display:flex; gap:4px; margin-top:8px; padding-bottom:2px;
+  overflow-x:auto; scrollbar-width:none; justify-content:flex-start;
+  -webkit-overflow-scrolling:touch;
+}
+.flag-nav::-webkit-scrollbar{ display:none; }
+.flag-nav button{
+  flex:0 0 auto; min-height:32px; padding:0 11px; border-radius:999px;
+  font-size:.72rem; letter-spacing:.04em; color:var(--mut);
+  box-shadow:inset 0 0 0 1px var(--hair); white-space:nowrap;
+  transition:color var(--t-ui), box-shadow var(--t-ui), background var(--t-ui);
+}
+.flag-nav button:hover{ color:var(--fg); background:rgba(255,255,255,.07); }
+.flag-nav button[aria-current=page]{
+  color:var(--ink); background:var(--gold); box-shadow:none; font-weight:700; }
 .flag b{ color:var(--gold-t); font-weight:600; }
 .flag a{ color:var(--gold-t); text-decoration:underline; text-underline-offset:3px; }
 
-/* ══════════════════════════════════════════════════════════════
- *  見本の、画面えらび（2026/10/4 ご指示）
- *
- *  【改良前】 上のバーのすぐ下、中身の並びの中に置いていました。
- *            アプリの画面のよこに、見本の道具が立っている形です。
- *  【改良後】 画面の右下すみへ移し、ふだんは「見本」の一語だけに
- *            たたみます。中身の並びには、もう入りません。
- *            （本番には、この部品ごとありません）
- * ══════════════════════════════════════════════════════════════ */
-.pickbox{ opacity:.74;
-  position:fixed; z-index:95;
-  right:max(12px,env(safe-area-inset-right));
-  bottom:max(12px,env(safe-area-inset-bottom));
-  max-width:min(272px, calc(100vw - 24px));
-  border-radius:var(--r);
-  background:var(--glass);
-  -webkit-backdrop-filter:blur(18px) saturate(140%);
-  backdrop-filter:blur(18px) saturate(140%);
-  box-shadow:inset 0 0 0 1px var(--hair), 0 14px 34px rgba(0,0,0,.44);
-}
-.pickbox > summary{
-  display:flex; align-items:center; justify-content:center; gap:6px;
-  min-height:44px; padding:0 18px; border-radius:var(--r);
-  font-size:.81rem; letter-spacing:.1em; color:var(--mut);
-  list-style:none; cursor:pointer;
-}
-.pickbox > summary::-webkit-details-marker{ display:none; }
-.pickbox > summary::after{
-  content:''; width:7px; height:7px; margin-top:-3px;
-  border-right:1.4px solid currentColor; border-bottom:1.4px solid currentColor;
-  transform:rotate(-135deg); transition:transform var(--t-in) var(--ease);
-}
-.pickbox[open] > summary{ color:var(--gold-t); }
-.pickbox[open] > summary::after{ transform:rotate(45deg); margin-top:2px; }
-.pickbox[open]{ padding-bottom:var(--s2); }
-.pickbox > label{
-  display:block; padding:0 var(--s2) 6px; font-size:.69rem;
-  letter-spacing:.1em; color:var(--mut);
-}
-.pickbox > select{ width:calc(100% - var(--s2) * 2); margin:0 var(--s2); }
-.pickbox[open]{ opacity:1; }
-.pickbox:hover,.pickbox:focus-within{ opacity:1; }
-@media (prefers-reduced-motion:reduce){ .pickbox > summary::after{ transition:none; } }
 
 
 .bar{
@@ -352,6 +329,81 @@ textarea{ min-height:140px; resize:vertical; line-height:1.9; }
 input:focus,select:focus,textarea:focus{
   outline:none; box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 3px rgba(212,169,111,.22); }
 ::placeholder{ color:var(--dim); }
+
+/* ══════════════════════════════════════════════════════════════
+ *  パスワードの「目」（2026/10/4 ご指示①③）
+ *
+ *  【改良前】 ●●●● しか出ず、打ち間違いに気づけませんでした。
+ *            再設定の画面は、同じものを2回打ちます。どちらが
+ *            違っているのかも、わかりませんでした。
+ *  【改良後】 右はしの目を押すと、字が見えます。もう一度押すと隠れます。
+ *  ★押す的は 44×44px です（指針の最低）。
+ *  ★目は「いまの状態」を aria-pressed で伝えます。読み上げでも
+ *    「表示する／隠す」が伝わります。
+ *  ★見えている状態のまま画面を離れても、次に開いたときは隠れた
+ *    ところから始まります（肩ごしに見られないように）。
+ * ══════════════════════════════════════════════════════════════ */
+.pw{ position:relative; }
+.pw input{ padding-right:56px; }
+.eye{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; display:grid; place-items:center;
+  border-radius:50%; color:var(--mut);
+  transition:color var(--t-ui), background var(--t-ui);
+}
+.eye svg{ width:21px; height:21px; fill:none; stroke:currentColor;
+  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.eye:hover{ color:var(--fg); background:rgba(255,255,255,.07); }
+.eye[aria-pressed=true]{ color:var(--gold-t); }
+
+/* ══════════════════════════════════════════════════════════════
+ *  押したあとの手ごたえ（2026/10/4 ご指示④）
+ *
+ *  【改良前】 ［設定する］を押しても、画面は何も言わずに変わって
+ *            いました。「変わったのか」が、わかりませんでした。
+ *  【改良後】 ①押した瞬間 … ボタンが「変更しています」に変わり、
+ *                           輪が回ります。二度押しは効きません。
+ *            ②終わった瞬間 … ✓ と「変更しました」が出ます。
+ *            ③そのあと、つぎの画面へ進みます。
+ *  ★指針（UX / Loading feedback）… 押してから何も起きない時間を
+ *    作らない。0.1秒以内に、必ず何かを返す。
+ * ══════════════════════════════════════════════════════════════ */
+.cta[data-act][aria-busy=true]{ opacity:.9; cursor:progress; }
+.cta[data-act].done{ background:transparent; color:var(--gold-t);
+  box-shadow:inset 0 0 0 1px var(--gold); }
+.spin{ width:18px; height:18px; border-radius:50%; flex:0 0 auto;
+  border:2px solid rgba(32,16,20,.28); border-top-color:var(--ink);
+  animation:spin .7s linear infinite; }
+.cta.done .spin{ display:none; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════════
+ *  預けたものの「表紙」（2026/10/4 ご指示⑤）
+ *
+ *  【改良前】 「✓ 収支報告書 (13).pdf（129KB）」という **文字** だけ。
+ *            名前が似たPDFが並ぶと、取り違えに気づけません。
+ *  【改良後】 1ページめを、そのまま小さく出します。
+ *            写真はそのまま。PDFは1ページめを描きます。
+ *  ★読めなかったときは、紙の形の絵と名前に戻ります（壊れません）。
+ * ══════════════════════════════════════════════════════════════ */
+.shot{ display:flex; gap:var(--s2); align-items:flex-start;
+  margin:var(--s2) 0 0; padding:12px; border-radius:var(--r);
+  background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px var(--hair); }
+.shot-pic{ flex:0 0 auto; width:76px; height:100px; display:grid; place-items:center;
+  overflow:hidden; border-radius:4px; background:#F4F1EC;
+  box-shadow:0 6px 16px rgba(0,0,0,.4); }
+.shot-pic canvas,.shot-pic img{ display:block; width:100%; height:100%;
+  object-fit:cover; object-position:top center; }
+.shot-pic svg{ width:34px; height:34px; fill:none; stroke:#6E635C;
+  stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.shot-wait{ font-size:.62rem; color:#6E635C; text-align:center; padding:0 6px;
+  line-height:1.5; }
+.shot-t{ flex:1 1 auto; min-width:0; }
+.shot-t strong{ display:block; font-size:.88rem; font-weight:600;
+  overflow-wrap:anywhere; }
+.shot-t em{ display:block; margin-top:2px; font-style:normal;
+  font-size:.75rem; color:var(--mut); }
+.shot-t .link{ margin-top:2px; min-height:40px; }
 
 /* ══════════════════════════════════════════════════════════════
  *  自動入力（オートフィル）の色（2026/10/4）

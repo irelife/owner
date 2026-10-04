@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>デザイン案D（和紙）｜オーナーマイページ</title>
+<!-- ══════════════════════════════════════════════════════════════
+     デザイン案D（和紙）｜4画面の下書き
+     これは「見本」です。本番の画面ではありません。
+       ・お名前・金額はすべて架空です　・ここからログインはできません
+       ・本番は https://irelife.github.io/owner/ のままです
+
+     【案B・案C と、どこが「まったく違う」か】
+       ① 明るい地（白）です。案B・案Cは暗い地でした。
+       ② 面（カード）を置きません。1本の髪の毛ほどの線だけで分けます。
+       ③ 角を丸めません（半径0）。影も、ぼかしもありません。
+       ④ 行き先が、画面の下の4つの札（タブ）に変わります。
+          案B・案Cは「ホームの一覧から入る」形でした。
+       ⑤ 左に1本、縦の罫を通します。帳面・書面の組みかたです。
+
+     根拠（ui-ux-pro-max）
+       style  : editorial-grid-magazine（印刷物の組みかた）
+       color  : Luxury/Premium Brand（明るい地＋金茶の一点）
+                 ★そのままの #A16207 は、この紙の上で 4.4:1 でした。
+                   4.5:1 を超えるまで暗くし #8A6A33 にしています。
+       ux     : Sticky Navigation（下の札は中身にかぶせない）
+     ══════════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --paper:#FAF7F1;      /* 地。生成りの紙 */
+  --paper2:#FFFFFF;     /* 一段うえの面。ここだけ純白 */
+  --fg:#17140F;         /* 墨 */
+  --mut:#5B5349;        /* 控えめな字（紙の上で 6.9:1） */
+  --line:#DFD6C7;       /* 罫 */
+  --line2:#EDE7DC;      /* うすい罫 */
+  --accent:#8A6A33;     /* 金茶。1画面に1か所だけ */
+  --shu:#A8372A;        /* 朱。お金が減ったときだけ */
+  --mincho:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',serif;
+  --gothic:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px;
+  --t:.2s; --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{ margin:0; min-height:100dvh; background:var(--paper); color:var(--fg);
+  font-family:var(--gothic); font-size:1.0625rem; line-height:1.9;
+  -webkit-font-smoothing:antialiased; }
+[hidden]{ display:none !important; }
+p,li,dd,h1,h2,strong,em,label{ text-wrap:pretty; word-break:auto-phrase; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+input{ font:inherit; }
+:where(button,a,input,select,summary):focus-visible{
+  outline:2px solid var(--accent); outline-offset:3px; }
+
+/* ══ 上の帯（見本のおことわり）══ */
+.flag{ margin:0; padding:10px 16px; background:#2B2620; color:#E8E0D2;
+  font-size:.75rem; line-height:1.6; text-align:center; }
+.flag b{ color:#E8C98C; font-weight:600; }
+.flag a{ color:#E8C98C; text-underline-offset:3px; }
+
+/* ══ 上のバー ══ */
+.bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center;
+  height:calc(56px + env(safe-area-inset-top)); padding:env(safe-area-inset-top) 20px 0;
+  background:var(--paper); border-bottom:1px solid var(--line); }
+.logo{ font-family:var(--mincho); font-size:1.13rem; font-weight:600; letter-spacing:.18em; }
+.logo em{ font-style:normal; color:var(--accent); }
+.bar .who{ margin-left:auto; font-size:.81rem; color:var(--mut); }
+
+/* ══ 本文。左に1本、縦の罫を通します ══ */
+main{ max-width:560px; margin:0 auto;
+  padding:var(--s3) 20px calc(96px + env(safe-area-inset-bottom)); }
+main.center{ min-height:calc(100dvh - 210px); display:flex; flex-direction:column;
+  justify-content:center; }
+.col{ position:relative; padding-left:var(--s3); }
+.col::before{ content:''; position:absolute; left:0; top:4px; bottom:4px;
+  width:1px; background:var(--line); }
+
+.kicker{ margin:0 0 6px; font-size:.75rem; letter-spacing:.18em; color:var(--accent); }
+h1{ margin:0; font-family:var(--mincho); font-size:1.75rem; font-weight:600;
+  letter-spacing:.06em; line-height:1.4; text-wrap:balance; max-inline-size:15em; }
+.lead{ margin:var(--s2) 0 0; font-size:.94rem; color:var(--mut); max-inline-size:24em; }
+.note{ margin:var(--s3) 0 0; font-size:.75rem; line-height:1.8; color:var(--mut); }
+h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho); font-size:.88rem;
+  font-weight:600; letter-spacing:.14em; color:var(--mut);
+  padding-bottom:6px; border-bottom:1px solid var(--line); }
+
+/* ══ 今月の一枚。面を置かず、字の大きさだけで立てます ══ */
+.hero{ margin-top:var(--s2); }
+.hero .m{ font-size:.81rem; letter-spacing:.16em; color:var(--accent); }
+.hero .l{ margin:4px 0 0; font-family:var(--mincho); font-size:1rem;
+  font-weight:500; color:var(--mut); letter-spacing:.04em; }
+.hero .a{ margin:6px 0 0; font-family:var(--mincho); font-size:3.5rem; font-weight:500;
+  line-height:1.05; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.hero .a span{ font-size:1.6rem; color:var(--mut); margin-right:2px; }
+.hero .d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }
+
+/* ══ 行（罫だけで組みます。面は置きません）══ */
+.row{ display:flex; justify-content:space-between; gap:var(--s2); padding:13px 0;
+  border-bottom:1px solid var(--line2); font-size:.94rem; }
+.row b{ font-weight:400; color:var(--mut); }
+.row span{ font-variant-numeric:tabular-nums; }
+.row.out span{ color:var(--shu); }
+.row.sum{ padding-top:var(--s2); border-top:1px solid var(--fg); border-bottom:0; }
+.row.sum b{ color:var(--fg); }
+.row.sum span{ font-family:var(--mincho); font-size:1.31rem; }
+
+/* ══ 一覧 ══ */
+.item{ display:flex; align-items:center; gap:var(--s2); width:100%; min-height:68px;
+  padding:var(--s2) 0; border-bottom:1px solid var(--line2); text-align:left;
+  transition:background var(--t) var(--ease); }
+.item:first-child{ border-top:1px solid var(--line2); }
+.item-t{ flex:1 1 auto; min-width:0; }
+.item-t strong{ display:block; font-family:var(--mincho); font-size:1.06rem;
+  font-weight:600; letter-spacing:.03em; }
+.item-t em{ display:block; margin-top:2px; font-style:normal; font-size:.81rem; color:var(--mut); }
+.item-v{ flex:0 0 auto; font-size:.88rem; color:var(--mut); font-variant-numeric:tabular-nums; }
+.chev{ flex:0 0 auto; width:18px; height:18px; color:var(--mut); fill:none;
+  stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
+  transition:transform var(--t) var(--ease); }
+@media (hover:hover) and (pointer:fine){
+  .item:hover{ background:var(--paper2); }
+  .item:hover .chev{ transform:translateX(3px); color:var(--accent); }
+}
+.item:active{ background:var(--line2); }
+
+/* ══ 札（状態）══ */
+.tag{ display:inline-block; padding:2px 10px; font-size:.75rem; letter-spacing:.04em;
+  color:var(--mut); border:1px solid var(--line); }
+.tag.now{ color:var(--accent); border-color:var(--accent); }
+.chips{ display:flex; flex-wrap:wrap; gap:var(--s1); margin-top:var(--s3); }
+.chip{ min-height:44px; padding:0 16px; font-size:.88rem; color:var(--mut);
+  border:1px solid var(--line); background:var(--paper2);
+  transition:all var(--t) var(--ease); }
+.chip[aria-pressed=true]{ color:var(--paper2); background:var(--fg); border-color:var(--fg); }
+
+/* ══ ボタン。角を丸めません ══ */
+.cta{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+  min-height:54px; margin-top:var(--s3); background:var(--fg); color:var(--paper);
+  font-size:1rem; font-weight:500; letter-spacing:.06em;
+  transition:background var(--t) var(--ease), transform var(--t) var(--ease); }
+.ghost{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+  min-height:50px; margin-top:10px; color:var(--fg); background:var(--paper2);
+  border:1px solid var(--line); font-size:.94rem;
+  transition:all var(--t) var(--ease); }
+@media (hover:hover) and (pointer:fine){
+  .cta:hover{ background:var(--accent); transform:translateY(-2px); }
+  .ghost:hover{ border-color:var(--accent); color:var(--accent); transform:translateY(-2px); }
+}
+.cta:active,.ghost:active{ transform:translateY(0); filter:brightness(.94); }
+.cta svg,.ghost svg{ width:18px; height:18px; fill:none; stroke:currentColor;
+  stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.link{ display:inline-flex; align-items:center; min-height:44px; color:var(--mut);
+  font-size:.88rem; text-decoration:underline; text-underline-offset:3px; }
+
+/* ══ 入力 ══ */
+.field{ margin-top:var(--s3); }
+.field label{ display:block; margin-bottom:6px; font-size:.81rem; font-weight:500;
+  letter-spacing:.04em; color:var(--mut); }
+.field input{ width:100%; min-height:52px; padding:12px 14px; background:var(--paper2);
+  color:var(--fg); border:1px solid var(--line); border-radius:0; font-size:1rem;
+  transition:border-color var(--t); }
+.field input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(138,106,51,.18); }
+input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
+  -webkit-box-shadow:inset 0 0 0 100px var(--paper2) !important;
+  transition:background-color 9999s; }
+::placeholder{ color:#9A9086; }
+
+/* ══ 下の4つの札（この案だけの行き先）══
+   ★ux「Sticky Navigation」… 下の帯で中身を隠さないよう、
+     main の下の余白を 96px 取ってあります。 */
+.tabs{ position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:var(--paper2); border-top:1px solid var(--line); }
+.tabs button{ flex:1 1 0; display:grid; place-items:center; gap:3px;
+  min-height:60px; padding:8px 2px 6px; color:var(--mut); font-size:.69rem;
+  letter-spacing:.04em; transition:color var(--t); }
+.tabs svg{ width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.5;
+  stroke-linecap:round; stroke-linejoin:round; }
+.tabs button[aria-current=page]{ color:var(--fg); }
+.tabs button[aria-current=page]::before{ content:''; position:absolute; margin-top:-56px;
+  width:28px; height:2px; background:var(--accent); }
+
+/* ══ 見本の画面えらび（右下すみ。本番にはありません）══ */
+.pickbox{ position:fixed; z-index:60; right:12px; bottom:calc(72px + env(safe-area-inset-bottom));
+  max-width:min(272px,calc(100vw - 24px)); background:var(--paper2);
+  border:1px solid var(--line); opacity:.82; }
+.pickbox[open],.pickbox:hover,.pickbox:focus-within{ opacity:1; }
+.pickbox > summary{ display:flex; align-items:center; justify-content:center; gap:6px;
+  min-height:44px; padding:0 16px; font-size:.81rem; letter-spacing:.1em;
+  color:var(--mut); list-style:none; cursor:pointer; }
+.pickbox > summary::-webkit-details-marker{ display:none; }
+.pickbox > label{ display:block; padding:0 14px 6px; font-size:.69rem;
+  letter-spacing:.1em; color:var(--mut); }
+.pickbox > select{ width:calc(100% - 28px); margin:0 14px 14px; min-height:44px;
+  padding:0 12px; font:inherit; font-size:.94rem; color:var(--fg);
+  background:var(--paper); border:1px solid var(--line); border-radius:0; }
+
+/* ══ 現れかた ══ */
+.rise{ animation:rise .22s var(--ease) both; }
+.rise:nth-child(2){ animation-delay:.03s } .rise:nth-child(3){ animation-delay:.06s }
+.rise:nth-child(4){ animation-delay:.09s } .rise:nth-child(5){ animation-delay:.12s }
+.rise:nth-child(6){ animation-delay:.15s } .rise:nth-child(n+7){ animation-delay:.18s }
+@keyframes rise{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important } }
+</style>
+</head>
+<body>
+
+<p class="flag">
+  <b>デザイン案D（和紙）4画面の下書き</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
+  <a href="../all/">◂ ほかの案を見る</a>
+</p>
+
+<header class="bar">
+  <span class="logo">Owner's<em> Salon</em></span>
+  <span class="who">山田 太郎 様</span>
+</header>
+
+<!-- ════ ① ログイン ════ -->
+<main id="s-login" class="center" hidden>
+  <div class="col">
+    <p class="kicker">IREライフ株式会社</p>
+    <h1>オーナーマイページ</h1>
+    <p class="lead">ご登録のメールアドレスとパスワードをご入力ください。</p>
+    <div class="field">
+      <label for="d-mail">メールアドレス</label>
+      <input type="email" id="d-mail" autocomplete="username" placeholder="owner@example.jp">
+    </div>
+    <div class="field">
+      <label for="d-pass">パスワード</label>
+      <input type="password" id="d-pass" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="cta" type="button" data-go="home">ログイン</button>
+    <p style="text-align:center;margin-top:var(--s2)">
+      <button class="link" type="button">パスワードをお忘れの方</button></p>
+  </div>
+</main>
+
+<!-- ════ ② ホーム ════ -->
+<main id="s-home" hidden>
+  <div class="col">
+    <h1 class="hero" style="font-size:inherit;font-family:inherit;font-weight:400">
+      <span class="m">2026年9月分</span>
+      <span class="l" style="display:block">今月のご送金</span>
+      <span class="a" style="display:block"><span>¥</span>2,773,303</span>
+    </h1>
+    <p class="hero d" style="margin-top:var(--s2)">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+    <button class="cta" type="button" data-go="papers">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      明細書（PDF）をひらく</button>
+
+    <h2 class="sect">そのほか</h2>
+    <nav>
+      <button class="item rise" type="button" data-go="status">
+        <span class="item-t"><strong>入居状況</strong><em>入居・空室・解約のご予定</em></span>
+        <span class="item-v">6棟</span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button" data-go="papers">
+        <span class="item-t"><strong>過去の明細</strong><em>3年分、いつでも</em></span>
+        <span class="item-v">36か月</span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>火災保険</strong><em>証券の写しと、満期日</em></span>
+        <span class="item-v">2件</span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>お問い合わせ</strong><em>当社担当へ、そのまま</em></span>
+        <span class="item-v"><span class="tag now">1</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </nav>
+    <p class="note">ご不明な点は、当社担当までお気軽にお問い合わせくださいませ。</p>
+  </div>
+</main>
+
+<!-- ════ ③ 送金明細 ════ -->
+<main id="s-papers" hidden>
+  <div class="col">
+    <p class="kicker">2026年9月分</p>
+    <h1>ご送金明細</h1>
+    <p class="lead">9月30日に、ご指定の口座へお振り込みいたしました。内訳は下記のとおりでございます。</p>
+
+    <h2 class="sect">物件ごとのご送金額</h2>
+    <div class="row rise"><b>サンプルA棟</b><span>¥472,320</span></div>
+    <div class="row rise"><b>サンプルB棟</b><span>¥494,200</span></div>
+    <div class="row rise"><b>サンプルC棟</b><span>¥468,063</span></div>
+    <div class="row rise"><b>サンプルD棟</b><span>¥484,900</span></div>
+    <div class="row rise"><b>サンプルE棟</b><span>¥467,820</span></div>
+    <div class="row rise"><b>サンプルF棟</b><span>¥386,000</span></div>
+    <div class="row sum"><b>ご送金額</b><span>¥2,773,303</span></div>
+
+    <h2 class="sect">サンプルA棟の内訳</h2>
+    <div class="row"><b>賃料・駐車場収入</b><span>¥620,000</span></div>
+    <div class="row out"><b>管理料</b><span>−¥31,000</span></div>
+    <div class="row out"><b>修繕費（203号 給湯器）</b><span>−¥116,680</span></div>
+    <div class="row sum"><b>差引 ご送金額</b><span>¥472,320</span></div>
+
+    <button class="cta" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      明細書（PDF）をひらく</button>
+    <button class="ghost" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+      明細データ（CSV）</button>
+
+    <h2 class="sect">過去の明細</h2>
+    <nav>
+      <button class="item" type="button"><span class="item-t"><strong>2026年8月分</strong><em>送金日 8月31日</em></span><span class="item-v">¥2,700,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item" type="button"><span class="item-t"><strong>2026年7月分</strong><em>送金日 7月31日</em></span><span class="item-v">¥2,650,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item" type="button"><span class="item-t"><strong>2026年6月分</strong><em>送金日 6月30日</em></span><span class="item-v">¥2,610,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </nav>
+    <p class="note">3年分を保存しております。いつでも、何度でもご覧いただけます。</p>
+  </div>
+</main>
+
+<!-- ════ ④ 入居状況 ════ -->
+<main id="s-status" hidden>
+  <div class="col">
+    <p class="kicker">2026年9月分</p>
+    <h1>入居状況</h1>
+    <p class="lead">空室につきましては、早期のご入居者確保に向けて募集に努めてまいります。</p>
+
+    <div class="chips">
+      <button class="chip" type="button" aria-pressed="true">すべて 6</button>
+      <button class="chip" type="button" aria-pressed="false">募集中 2</button>
+      <button class="chip" type="button" aria-pressed="false">解約予定 1</button>
+      <button class="chip" type="button" aria-pressed="false">新規契約 1</button>
+    </div>
+
+    <nav style="margin-top:var(--s3)">
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>サンプルA棟　203号室</strong><em>9月1日より 新規契約となりました</em></span>
+        <span class="item-v"><span class="tag">新規</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>サンプルB棟　105号室</strong><em>62,000円／月で募集しています</em></span>
+        <span class="item-v"><span class="tag now">募集中</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>サンプルD棟　301号室</strong><em>58,000円／月で募集しています</em></span>
+        <span class="item-v"><span class="tag now">募集中</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item rise" type="button">
+        <span class="item-t"><strong>サンプルF棟　202号室</strong><em>10月31日 解約のご予定です</em></span>
+        <span class="item-v"><span class="tag">解約予定</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </nav>
+
+    <h2 class="sect">当社より</h2>
+    <p style="margin:0;font-size:.94rem;color:var(--mut)">
+      ご不明な点やお気づきの点がございましたら、お気軽に当社担当までお問い合わせくださいませ。</p>
+  </div>
+</main>
+
+<!-- ════ 下の4つの札 ════ -->
+<nav class="tabs" id="tabs" hidden aria-label="おもな行き先">
+  <button type="button" data-go="home" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>ホーム</button>
+  <button type="button" data-go="papers">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>明細</button>
+  <button type="button" data-go="status">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/></svg>入居</button>
+  <button type="button" data-go="login">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>その他</button>
+</nav>
+
+<details class="pickbox" id="pickbox">
+  <summary>見本</summary>
+  <label for="pick">画面をえらぶ</label>
+  <select id="pick">
+    <option value="login">① ログイン</option>
+    <option value="home" selected>② ホーム</option>
+    <option value="papers">③ 送金明細</option>
+    <option value="status">④ 入居状況</option>
+  </select>
+</details>
+
+<script>
+(function(){
+  var S=['login','home','papers','status'], $=function(i){return document.getElementById(i);};
+  function show(n,push){
+    if(S.indexOf(n)<0) n='home';
+    S.forEach(function(x){ var e=$('s-'+x); if(e) e.hidden=(x!==n); });
+    $('tabs').hidden=(n==='login');
+    var p=$('pick'); if(p&&p.value!==n) p.value=n;
+    document.querySelectorAll('.tabs button').forEach(function(b){
+      if(b.getAttribute('data-go')===n) b.setAttribute('aria-current','page');
+      else b.removeAttribute('aria-current'); });
+    var sc=$('s-'+n);
+    if(sc) sc.querySelectorAll('.rise').forEach(function(e){
+      e.style.animation='none'; void e.offsetWidth; e.style.animation=''; });
+    window.scrollTo(0,0);
+    if(push!==false){ try{ history.pushState({s:n},'','#'+n); }catch(e){} }
+  }
+  document.addEventListener('click',function(ev){
+    var t=ev.target; if(!t.closest) return;
+    var g=t.closest('[data-go]'); if(g){ show(g.getAttribute('data-go'),true); return; }
+    var c=t.closest('.chip');
+    if(c){ c.parentNode.querySelectorAll('.chip').forEach(function(x){
+      x.setAttribute('aria-pressed', x===c?'true':'false'); }); }
+  });
+  window.addEventListener('popstate',function(e){
+    show((e.state&&e.state.s)||(location.hash||'').replace('#','')||'home',false); });
+  var p=$('pick');
+  if(p) p.addEventListener('change',function(){ show(p.value,true); $('pickbox').open=false; });
+  var f=(location.hash||'').replace('#','');
+  show(S.indexOf(f)>=0?f:'home',true);
+})();
+</script>
+</body>
+</html>

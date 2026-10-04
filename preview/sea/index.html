@@ -31,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -82,11 +82,33 @@
 <div class="veil" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 
-<p class="flag">
-  <b>デザイン案B（海）9画面</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
-  画面をかえるには、右下すみの <b>見本</b> を押してください。本番は <b>irelife.github.io/owner/</b> のままです。<br>
-  <a href="../sea2/">▸ 配色ちがい（案C 藍）を見る</a>
-</p>
+<!-- ══════════════════════════════════════════════════════════════
+     見本のための、上の帯（2026/10/4 ご指示②）
+
+     【改良前】 選び欄（プルダウン）を画面に置いていました。
+                「素人臭い」とご指摘をいただきました。そのとおりです。
+                選び欄は、本番の画面には1つも出てこない形の部品です。
+                それが画面の上に乗っていれば、作りかけに見えます。
+     【改良後】 選び欄をやめ、この帯の中の **ただの目次** にしました。
+                帯は、ひと目で「見本のおことわり」とわかる場所です。
+                本番の画面の中には、もう何も足していません。
+     ══════════════════════════════════════════════════════════════ -->
+<div class="flag">
+  <p><b>デザイン案B（海）</b>　本番の画面ではありません。お名前・金額はすべて架空です。
+     本番は <b>irelife.github.io/owner/</b> のままです。
+     <a href="../sea2/">配色ちがい（案C 藍）を見る</a></p>
+  <nav class="flag-nav" aria-label="見本の画面">
+    <button type="button" data-go="login">ログイン</button>
+    <button type="button" data-go="reset">再設定</button>
+    <button type="button" data-go="home">ホーム</button>
+    <button type="button" data-go="papers">送金明細</button>
+    <button type="button" data-go="status">入居状況</button>
+    <button type="button" data-go="insurance">火災保険</button>
+    <button type="button" data-go="contact">問い合わせ</button>
+    <button type="button" data-go="accountant">税理士へ</button>
+    <button type="button" data-go="account">アカウント</button>
+  </nav>
+</div>
 
 <header class="bar" id="bar">
   <button type="button" class="logo" data-go="home" style="padding:0">Owner's<em> Salon</em></button>
@@ -117,10 +139,20 @@
   </div>
   <div class="field">
     <label for="li-pass">パスワード</label>
-    <input type="password" id="li-pass" autocomplete="current-password" placeholder="••••••••">
+    <div class="pw">
+  <input type="password" id="li-pass" autocomplete="current-password" placeholder="••••••••">
+    <button class="eye" type="button" data-eye="li-pass" aria-pressed="false"
+            aria-label="パスワードを表示する" title="パスワードを表示する">
+      <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden>
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+        <path d="M4 20L20 4"/></svg>
+    </button>
+    </div>
   </div>
   <p class="msg"></p>
-  <button class="cta" type="button" data-go="home">ログイン</button>
+  <button class="cta" type="button" data-act data-wait="確かめています" data-ok="ようこそ" data-go="home">ログイン</button>
   <p style="text-align:center;margin-top:var(--s2)">
     <button class="link" type="button" data-go="reset">パスワードをお忘れの方</button>
   </p>
@@ -135,14 +167,35 @@
 
   <div class="field">
     <label for="rs-a">新しいパスワード<span class="hint">8文字以上</span></label>
-    <input type="password" id="rs-a" autocomplete="new-password">
+    <div class="pw">
+  <input type="password" id="rs-a" autocomplete="new-password">
+    <button class="eye" type="button" data-eye="rs-a" aria-pressed="false"
+            aria-label="パスワードを表示する" title="パスワードを表示する">
+      <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden>
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+        <path d="M4 20L20 4"/></svg>
+    </button>
+    </div>
   </div>
   <div class="field">
     <label for="rs-b">新しいパスワード（確認）</label>
-    <input type="password" id="rs-b" autocomplete="new-password">
+    <div class="pw">
+  <input type="password" id="rs-b" autocomplete="new-password">
+    <button class="eye" type="button" data-eye="rs-b" aria-pressed="false"
+            aria-label="パスワードを表示する" title="パスワードを表示する">
+      <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden>
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+        <path d="M4 20L20 4"/></svg>
+    </button>
+    </div>
   </div>
   <p class="msg"></p>
-  <button class="cta" type="button" data-go="login">設定する</button>
+  <button class="cta" type="button" data-act data-wait="変更しています"
+          data-ok="新しいパスワードに変更しました" data-go="login">設定する</button>
   <p style="text-align:center;margin-top:var(--s2)">
     <button class="link" type="button" data-go="login">ログイン画面へ戻る</button>
   </p>
@@ -365,10 +418,21 @@
         <em>または、押してえらぶ</em>
         <input type="file" id="in-file" accept="image/*,application/pdf">
       </label>
-      <p class="drop-name" id="in-name" hidden></p>
+      <!-- ★2026/10/4 ご指示⑤ … ファイル名の文字だけでは、
+             「何を預けたか」が確かめられません。表紙を出します。
+             写真はそのまま、PDF は1ページめを描いて出します。 -->
+      <figure class="shot" id="in-shot" hidden>
+        <div class="shot-pic" id="in-pic"><span class="shot-wait">表紙をひらいています…</span></div>
+        <figcaption class="shot-t">
+          <strong id="in-nm"></strong>
+          <em id="in-sz"></em>
+          <button class="link" type="button" id="in-del">えらび直す</button>
+        </figcaption>
+      </figure>
     </div>
   </div>
-  <button class="cta" type="button">この内容で預ける</button>
+  <button class="cta" type="button" data-act data-wait="お預かりしています"
+          data-ok="お預かりしました" data-done>この内容で預ける</button>
 </main>
 
 <!-- ════════════════ ⑦ お問い合わせ ════════════════ -->
@@ -520,33 +584,7 @@
   <button class="cta" type="button" data-go="home">ホームに戻る</button>
 </main>
 
-<!-- ══════════════════════════════════════════════════════════════
-     見本のためだけの、画面えらび（2026/10/4 ご指示）
 
-     【改良前】 上のバーのすぐ下に、札と選び欄が置かれていました。
-                アプリの中身のよこに、見本の道具が並んでいる形です。
-                「違和感がある」とご指摘をいただきました。
-     【改良後】 画面のすみへ移し、ふだんは「見本」の一語だけに
-                たたんでおきます。中身の並びには、もう入りません。
-                押したときだけ、9つの画面が出ます。
-     ★details なので、JavaScript は要りません（押せば開きます）。
-     ══════════════════════════════════════════════════════════════ -->
-<details class="pickbox" id="pickbox">
-  <summary>見本</summary>
-  <label for="pick">画面をえらぶ</label>
-  <select id="pick">
-    <option value="login">① ログイン</option>
-    <option value="reset">② パスワードの再設定</option>
-    <option value="home" selected>③ ホーム</option>
-    <option value="papers">④ 送金明細</option>
-    <option value="status">⑤ 入居状況</option>
-    <option value="insurance">⑥ 火災保険</option>
-    <option value="contact">⑦ お問い合わせ</option>
-    <option value="accountant">⑧ 税理士へ送信</option>
-    <option value="account">⑨ マイアカウント</option>
-  </select>
-</details>
-
-<script src="demo.js?v=2"></script>
+<script src="demo.js?v=3"></script>
 </body>
 </html>

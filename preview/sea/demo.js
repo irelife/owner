@@ -39,8 +39,17 @@
     var inside = (name !== 'login' && name !== 'reset');
     $('bar').hidden = !inside;
 
-    var pick = $('pick');
-    if(pick && pick.value !== name && name !== 'done') pick.value = name;
+    /* 上の帯の目次で、いまの画面に印をつけます（ご指示②） */
+    var ns = document.querySelectorAll('.flag-nav button');
+    for(var i = 0; i < ns.length; i++){
+      if(ns[i].getAttribute('data-go') === name) ns[i].setAttribute('aria-current','page');
+      else ns[i].removeAttribute('aria-current');
+    }
+
+    /* ★パスワードは、画面を出すたびに「隠れた状態」から始めます。
+         見えたまま置き忘れる事故を防ぎます（ご指示①③）。 */
+    var es = document.querySelectorAll('.eye[aria-pressed=true]');
+    for(var j = 0; j < es.length; j++) eye(es[j], false);
 
     /* ── ② 骨組み（1-a）──
      *  入居状況だけ、本番の待ち時間（およそ1秒）を再現します。
@@ -140,13 +149,84 @@
     show(n, false);
   });
 
-  /* 見本の、画面えらび（右下すみ。えらんだら、たたみます） */
-  var pick = $('pick');
-  if(pick) pick.addEventListener('change', function(){
-    show(pick.value, true);
-    var box = $('pickbox');
-    if(box) box.open = false;
+  /* ══════════════════════════════════════════════════════════════
+   *  パスワードの「目」（2026/10/4 ご指示①③）
+   *
+   *  改良前： ●●●● しか出ず、打ち間違いに気づけませんでした。
+   *          再設定は同じものを2回打ちます。どちらが違うのかも
+   *          わかりませんでした。
+   *  改良後： 右はしの目で、字を出したり隠したりできます。
+   *
+   *  ★カーソルの位置（何文字めを打っているか）を保ちます。
+   *    type を入れ替えると、カーソルが末尾へ飛ぶ端末があります。
+   * ══════════════════════════════════════════════════════════════ */
+  function eye(btn, on){
+    var inp = $(btn.getAttribute('data-eye'));
+    if(!inp) return;
+    var at = null;
+    try{ at = inp.selectionStart; }catch(e){}
+    inp.type = on ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    var lab = on ? 'パスワードを隠す' : 'パスワードを表示する';
+    btn.setAttribute('aria-label', lab);
+    btn.setAttribute('title', lab);
+    var a = btn.querySelector('.e-on'), b = btn.querySelector('.e-off');
+    if(a) a.hidden = on;
+    if(b) b.hidden = !on;
+    if(at !== null && document.activeElement === inp){
+      try{ inp.setSelectionRange(at, at); }catch(e){}
+    }
+  }
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('.eye');
+    if(!b) return;
+    ev.preventDefault();
+    eye(b, b.getAttribute('aria-pressed') !== 'true');
   });
+
+  /* ══════════════════════════════════════════════════════════════
+   *  押したあとの手ごたえ（2026/10/4 ご指示④）
+   *
+   *  改良前： ［設定する］を押しても、画面は何も言わずに変わって
+   *          いました。「変わったのか」がわかりませんでした。
+   *  改良後： ①押した瞬間に「変更しています」＋回る輪
+   *          ②終わったら ✓「変更しました」
+   *          ③そのあと、つぎの画面へ進みます
+   *  ★二度押しは効きません（disabled にします）。
+   *  ★動きを減らす設定の方には、輪を回しません（CSSで止まります）。
+   * ══════════════════════════════════════════════════════════════ */
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('.cta[data-act]');
+    if(!b || b.disabled) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    var keep = b.innerHTML;
+    var wait = b.getAttribute('data-wait') || 'お待ちください';
+    var ok   = b.getAttribute('data-ok')   || '承りました';
+    var go   = b.getAttribute('data-go');
+    var done = b.hasAttribute('data-done');
+
+    b.disabled = true;
+    b.setAttribute('aria-busy','true');
+    b.innerHTML = '<span class="spin" aria-hidden="true"></span>' + wait + '…';
+
+    /* 本番では、ここがクラウドの返事を待つところです（0.4〜1.2秒ほど） */
+    setTimeout(function(){
+      b.setAttribute('aria-busy','false');
+      b.classList.add('done');
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;' +
+        'fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;' +
+        'stroke-linejoin:round"><path d="M5 13l4 4L19 7"/></svg>' + ok;
+      setTimeout(function(){
+        b.disabled = false;
+        b.classList.remove('done');
+        b.innerHTML = keep;
+        if(done) show('done', true);
+        else if(go) show(go, true);
+      }, 900);
+    }, 850);
+  }, true);
 
 
   /* ══════════════════════════════════════════════════════════════
@@ -209,15 +289,91 @@
    *    よう、ページ全体でも受け止めて止めます。
    * ══════════════════════════════════════════════════════════════ */
   (function(){
-    var zone = $('in-drop'), file = $('in-file'), name = $('in-name');
+    var zone = $('in-drop'), file = $('in-file');
+    var shot = $('in-shot'), pic = $('in-pic'),
+        nmEl = $('in-nm'), szEl = $('in-sz'), del = $('in-del');
     if(!zone || !file) return;
+
+    /* ★よそのサーバー（CDN）からは読み込みません。
+         オーナー様の証券を扱う画面で、外の置き場に頼らないためです。
+         中身は preview/lib/pdfjs/ に置いてあります（README.txt に経緯）。 */
+    var BASE  = new URL('../lib/pdfjs/', document.currentScript ?
+                        document.currentScript.src : location.href);
+    var PDFJS = new URL('pdf.min.mjs', BASE).href;
+    var PDFWK = new URL('pdf.worker.min.mjs', BASE).href;
+    var url = '';   /* いま出している写真の、一時の住所 */
+
+    function clean(){
+      if(url){ try{ URL.revokeObjectURL(url); }catch(e){} url = ''; }
+    }
+    /* 読めなかったときの、紙の形 */
+    function paper(){
+      pic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>' +
+        '<path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+     *  表紙を出す（2026/10/4 ご指示⑤）
+     *
+     *  改良前： 「✓ 収支報告書 (13).pdf（129KB）」という文字だけ。
+     *          名前の似たPDFが並ぶと、取り違えに気づけません。
+     *  改良後： 1ページめを、そのまま小さく出します。
+     *
+     *  ★写真 … そのまま出します（通信なし）
+     *  ★PDF  … 1ページめを描きます。描くための道具（pdf.js）は
+     *           **PDFを置かれたときに初めて** 読み込みます。
+     *           写真しか預けない方には、1バイトも落ちてきません。
+     *  ★読めなかったときは、紙の形と名前に戻ります（壊れません）。
+     *  ★中身はこの端末の中だけで描いています。どこへも送っていません。
+     * ══════════════════════════════════════════════════════════════ */
+    function cover(f){
+      clean();
+      pic.innerHTML = '<span class="shot-wait">表紙をひらいています…</span>';
+
+      if(/^image\//.test(f.type)){
+        url = URL.createObjectURL(f);
+        var im = new Image();
+        im.alt = '';
+        im.onload  = function(){ pic.innerHTML = ''; pic.appendChild(im); };
+        im.onerror = paper;
+        im.src = url;
+        return;
+      }
+      if(f.type !== 'application/pdf'){ paper(); return; }
+
+      f.arrayBuffer().then(function(buf){
+        return import(PDFJS).then(function(lib){
+          lib.GlobalWorkerOptions.workerSrc = PDFWK;
+          return lib.getDocument({ data: buf }).promise;
+        });
+      }).then(function(doc){
+        return doc.getPage(1);
+      }).then(function(pg){
+        var w = 152, vp0 = pg.getViewport({ scale:1 });
+        var vp = pg.getViewport({ scale: w / vp0.width });
+        var cv = document.createElement('canvas');
+        cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+        return pg.render({ canvasContext: cv.getContext('2d'), viewport: vp })
+                 .promise.then(function(){ pic.innerHTML = ''; pic.appendChild(cv); });
+      }).catch(paper);
+    }
 
     var put = function(f){
       if(!f) return;
-      name.hidden = false;
-      name.textContent = '✓ ' + f.name + '（' + Math.round(f.size/1024) + 'KB）';
+      shot.hidden = false;
+      nmEl.textContent = f.name;
+      szEl.textContent = (f.size < 1024*1024)
+        ? Math.round(f.size/1024) + 'KB'
+        : (f.size/1024/1024).toFixed(1) + 'MB';
+      cover(f);
     };
     file.addEventListener('change', function(){ put(file.files && file.files[0]); });
+
+    if(del) del.addEventListener('click', function(){
+      clean(); file.value = ''; shot.hidden = true; pic.innerHTML = '';
+      try{ zone.focus(); }catch(e){}
+    });
 
     ['dragenter','dragover'].forEach(function(ev){
       zone.addEventListener(ev, function(e){
