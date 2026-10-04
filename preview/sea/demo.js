@@ -38,8 +38,6 @@
     /* ログインと再設定では、上のバーを出しません */
     var inside = (name !== 'login' && name !== 'reset');
     $('bar').hidden = !inside;
-    $('menu').hidden = true;
-    $('mn').setAttribute('aria-expanded', 'false');
 
     var pick = $('pick');
     if(pick && pick.value !== name && name !== 'done') pick.value = name;
@@ -125,15 +123,6 @@
 
     var back = t.closest('[data-back]');
     if(back){ history.back(); return; }
-
-    var mn = t.closest('#mn');
-    if(mn){
-      var m = $('menu');
-      m.hidden = !m.hidden;
-      mn.setAttribute('aria-expanded', m.hidden ? 'false' : 'true');
-      return;
-    }
-    if(!t.closest('#menu')){ $('menu').hidden = true; }
 
     /* 入居状況の、しぼり込みの札 */
     var chip = t.closest('.chip');
