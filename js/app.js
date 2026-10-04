@@ -2665,7 +2665,13 @@
   var THEMES = [
     { id:'wine',     name:'ワイン',       bg:'#3E1E24', pri:'#C79C6B' },
     { id:'midnight', name:'ミッドナイト', bg:'#141D2E', pri:'#D8AE64' },
-    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' }
+    { id:'charcoal', name:'チャコール',   bg:'#23211F', pri:'#C79B75' },
+    /* ★2026/10/4 追加。これまでの3つは、すべて暗い地でした。
+         暗い画面が苦手な方・明るいところでご覧になる方・紙の明細に
+         慣れた方のために、白地を2つ足しました。
+         色の明暗差は css/style.css のところに数値で書いてあります。 */
+    { id:'kami',     name:'紙（あかるい）', bg:'#FAF7F1', pri:'#17140F' },
+    { id:'cho',      name:'台帳（あかるい）', bg:'#F2F3F5', pri:'#153A75' }
   ];
   /* ★2026/10/2 「藍」を取り下げました（ご指示）。
        すでに藍をお選びだった方は、thPick が一覧に無い id を
@@ -2685,6 +2691,62 @@
     var v = thPick(id);
     for(var i = 0; i < THEMES.length; i++){ if(THEMES[i].id === v) return THEMES[i]; }
     return THEMES[0];
+  }
+
+  /* ══════════════════════════════════════════════
+   *  文字の大きさ（2026/10/4 追加）
+   *
+   *  改良前： 17px の1とおりだけ。小さいと感じる方には、
+   *          画面を広げる操作（ピンチ）しかありませんでした。
+   *  改良後： ふつう 17px ／ 大きい 19px ／ 特大 21px の3段。
+   *          押したその場で、画面全体が変わります。
+   *  ★<html> に印を付けるだけです。css の指定1つで効きます。
+   *  ★端末の文字サイズ設定は、これに掛け算で効きます（％で書いたため）。
+   * ══════════════════════════════════════════════ */
+  var SIZES = [
+    { id:'m',  name:'ふつう', px:'17px' },
+    { id:'l',  name:'大きい', px:'19px' },
+    { id:'xl', name:'特大',   px:'21px' }
+  ];
+  var SZKEY = 'ire_owner_size';
+
+  function szPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < SIZES.length; i++){ if(SIZES[i].id === v) return v; }
+    return SIZES[0].id;
+  }
+  function szName(id){
+    for(var i = 0; i < SIZES.length; i++){ if(SIZES[i].id === id) return SIZES[i].name; }
+    return '';
+  }
+  function szSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(SZKEY) || ''; }catch(e){}
+    return szPick(v);
+  }
+  function szApply(id){
+    var v = szPick(id);
+    var h = document.documentElement;
+    /* ふつうのときは印を外します（css の既定が、そのまま効きます） */
+    if(v === 'm') h.removeAttribute('data-size');
+    else h.setAttribute('data-size', v);
+    try{ localStorage.setItem(SZKEY, v); }catch(e){}
+    szPaint();
+  }
+  function szPaint(){
+    var host = $('my-sizes');
+    if(!host) return;
+    var now = szSaved();
+    host.innerHTML = SIZES.map(function(z, i){
+      /* 見本は「Aa」です。「あ」だと、大きさの差が分かりにくいためです */
+      var em = [1, 1.3, 1.6][i];
+      return '<button type="button" class="th-i" data-sz="' + z.id + '"' +
+             ' aria-pressed="' + (z.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-n">' + esc(z.name) +
+               '<span class="th-px"> ' + esc(z.px) + '</span></span>' +
+             '<span class="th-sz" aria-hidden="true" style="font-size:' + em + 'em">Aa</span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
   }
 
   /* 全角の数字・記号を半角に直し、空白を取ります */
@@ -2802,6 +2864,7 @@
     say($('my-pw-msg'), '');
     say($('my-info-msg'), '');
     thPaint();
+    szPaint();
   }
 
   $('my-themes').addEventListener('click', function(ev){
@@ -2811,6 +2874,15 @@
     if(id === thSaved()) return;
     thApply(id, true);
     toast('配色を「' + thName(id) + '」に変更しました');
+  });
+
+  $('my-sizes').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-sz]');
+    if(!b) return;
+    var id = szPick(b.getAttribute('data-sz'));
+    if(id === szSaved()) return;
+    szApply(id);
+    toast('文字の大きさを「' + szName(id) + '」に変更しました');
   });
 
   $('f-mypass').addEventListener('submit', function(ev){
