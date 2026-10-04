@@ -590,6 +590,60 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 .hero-a span{ font-size:1.75rem; margin-right:2px; color:var(--mut); }
 .hero-d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }
 
+/* ══════════════════════════════════════════════════════════════
+ *  前月比と入居率（2026/10/4 ご指示）
+ *
+ *  【改良前】 ホームには「今月のご送金額」しかありませんでした。
+ *            先月より増えたのか減ったのか、入居がどうなっているのかは、
+ *            いちいち別の画面へ入って、ご自分で見くらべる必要がありました。
+ *  【改良後】 3つを横に並べます。前月比は **押せます**。
+ *            押すと「何が増えて、何が減ったか」が、その場で開きます。
+ *  ★増減は、色だけでなく ＋ − の字でも分かるようにしています
+ *    （色の見分けがつきにくい方のためです。指針 Charts & Data）。
+ *  ★押す的は、札まるごと（高さ 72px）です。
+ * ══════════════════════════════════════════════════════════════ */
+.kpi3{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  margin-top:var(--s3); border-radius:var(--r); overflow:hidden;
+  background:var(--hair);
+  box-shadow:inset 0 0 0 1px var(--hair);
+}
+.kpi3 .k{
+  display:flex; flex-direction:column; justify-content:center; gap:2px;
+  min-height:72px; padding:10px 11px; text-align:left;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  backdrop-filter:blur(20px) saturate(140%);
+}
+.k-t{ display:flex; align-items:center; gap:4px;
+  font-size:.69rem; letter-spacing:.06em; color:var(--mut); }
+.k-v{ font-size:1.06rem; font-weight:700; letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums; }
+.k-s{ font-size:.69rem; color:var(--mut); font-variant-numeric:tabular-nums; }
+.k-v.up{ color:var(--gold-t); }
+.row span.up{ color:var(--gold-t); }
+.k-s u{ text-decoration:underline; text-underline-offset:2px; }
+/* 押せる札。開いているときは、しるしが上を向きます */
+.k-btn{ cursor:pointer; transition:background var(--t-ui); }
+.k-btn:hover{ background:rgba(var(--acc-rgb),.10); }
+.k-c{ width:6px; height:6px; margin-top:-2px; flex:0 0 auto;
+  border-right:1.4px solid currentColor; border-bottom:1.4px solid currentColor;
+  transform:rotate(45deg); transition:transform var(--t-in) var(--ease); }
+.k-btn[aria-expanded=true] .k-c{ transform:rotate(-135deg); margin-top:2px; }
+.k-btn[aria-expanded=true]{ background:rgba(var(--acc-rgb),.12); }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .kpi3 .k{ background:var(--solid); }
+}
+/* 字が特大のときは、3つ横に並べると窮屈なので、2段にします */
+@media (max-width:370px){
+  .kpi3{ grid-template-columns:1fr 1fr; }
+  .kpi3 .k:first-child{ grid-column:1 / -1; }
+}
+
+/* 大きさのえらびの見本（Aa） */
+.sz{ flex:0 0 auto; color:var(--mut); letter-spacing:.02em;
+  font-weight:600; line-height:1; }
+
 /* ══════════ 書面（透ける層）══════════ */
 .pane{
   border-radius:var(--r); padding:var(--s3) var(--s3) var(--s2);
@@ -607,6 +661,10 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 .row{ display:flex; justify-content:space-between; gap:var(--s2);
   padding:13px 0; border-bottom:1px solid var(--hair2); font-size:.94rem; }
 .row:last-of-type{ border-bottom:0; }
+/* ★金額は、ぜったいに折り返させません。
+     「＋」と「41,300」が上下に分かれると、別の数字に見えます。 */
+.row > span{ white-space:nowrap; flex:0 0 auto; }
+.row > b{ min-width:0; }
 .row b{ font-weight:400; color:var(--mut); }
 .row span{ font-variant-numeric:tabular-nums; }
 .row.out span{ color:var(--minus); }

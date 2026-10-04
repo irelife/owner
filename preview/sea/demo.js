@@ -157,6 +157,31 @@
   });
 
   /* ══════════════════════════════════════════════════════════════
+   *  前月比の「内訳」を開く（2026/10/4 ご指示）
+   *
+   *  改良前： 前月比という数字だけで、何が増えて何が減ったのかは
+   *          分かりませんでした。
+   *  改良後： 札を押すと、その場で理由が開きます。
+   *          もう一度押すと閉じます。
+   * ══════════════════════════════════════════════════════════════ */
+  (function(){
+    var btn = $('k-why-b'), box = $('k-why');
+    if(!btn || !box) return;
+    btn.addEventListener('click', function(){
+      var on = btn.getAttribute('aria-expanded') !== 'true';
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      box.hidden = !on;
+      if(on){
+        /* 開いたときだけ、行をずらして出します */
+        var rs = box.querySelectorAll('.rise');
+        for(var i = 0; i < rs.length; i++){
+          rs[i].style.animation = 'none'; void rs[i].offsetWidth; rs[i].style.animation = '';
+        }
+      }
+    });
+  })();
+
+  /* ══════════════════════════════════════════════════════════════
    *  パスワードの「目」（2026/10/4 ご指示①③）
    *
    *  改良前： ●●●● しか出ず、打ち間違いに気づけませんでした。
