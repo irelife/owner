@@ -158,7 +158,8 @@ input,select,textarea{ font:inherit; }
 }
 .flag-nav::-webkit-scrollbar{ display:none; }
 .flag-nav button{
-  flex:0 0 auto; min-height:32px; padding:0 11px; border-radius:999px;
+  /* ★指の最低は 44px です（帯も例外にしません） */
+  flex:0 0 auto; min-height:44px; padding:0 14px; border-radius:999px;
   font-size:.72rem; letter-spacing:.04em; color:var(--mut);
   box-shadow:inset 0 0 0 1px var(--hair); white-space:nowrap;
   transition:color var(--t-ui), box-shadow var(--t-ui), background var(--t-ui);
@@ -167,7 +168,8 @@ input,select,textarea{ font:inherit; }
 .flag-nav button[aria-current=page]{
   color:var(--ink); background:var(--gold); box-shadow:none; font-weight:700; }
 .flag b{ color:var(--gold-t); font-weight:600; }
-.flag a{ color:var(--gold-t); text-decoration:underline; text-underline-offset:3px; }
+.flag a{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px;
+  color:var(--gold-t); text-decoration:underline; text-underline-offset:3px; }
 
 
 

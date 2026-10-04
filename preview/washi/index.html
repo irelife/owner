@@ -61,7 +61,7 @@ input{ font:inherit; }
 .flag{ margin:0; padding:10px 16px; background:#2B2620; color:#E8E0D2;
   font-size:.75rem; line-height:1.6; text-align:center; }
 .flag b{ color:#E8C98C; font-weight:600; }
-.flag a{ color:#E8C98C; text-underline-offset:3px; }
+.flag a{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px; color:#E8C98C; text-underline-offset:3px; }
 
 /* ══ 上のバー ══ */
 .bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center;
@@ -91,8 +91,8 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho); font-size:.88r
 
 /* ══ 今月の一枚。面を置かず、字の大きさだけで立てます ══ */
 .hero{ margin-top:var(--s2); }
-.hero .m{ font-size:.81rem; letter-spacing:.16em; color:var(--accent); }
-.hero .l{ margin:4px 0 0; font-family:var(--mincho); font-size:1rem;
+.hero .m{ margin:0; font-size:.81rem; letter-spacing:.16em; color:var(--accent); }
+.hero h1.l{ margin:4px 0 0; max-inline-size:none; line-height:1.6; font-family:var(--mincho); font-size:1rem;
   font-weight:500; color:var(--mut); letter-spacing:.04em; }
 .hero .a{ margin:6px 0 0; font-family:var(--mincho); font-size:3.5rem; font-weight:500;
   line-height:1.05; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
@@ -170,6 +170,19 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
   transition:background-color 9999s; }
 ::placeholder{ color:#9A9086; }
 
+/* ══ パスワードの「目」══ */
+.pw{ position:relative; }
+.pw input{ padding-right:52px; }
+.eye{ position:absolute; right:2px; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; display:grid; place-items:center; color:var(--mut); }
+.eye svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round; }
+.eye[aria-pressed=true]{ color:var(--accent); }
+.spin{ width:17px; height:17px; border-radius:50%; border:2px solid rgba(250,247,241,.35);
+  border-top-color:var(--paper); animation:spin .7s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+.cta.done{ background:var(--paper2); color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+
 /* ══ 下の4つの札（この案だけの行き先）══
    ★ux「Sticky Navigation」… 下の帯で中身を隠さないよう、
      main の下の余白を 96px 取ってあります。 */
@@ -185,20 +198,17 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
 .tabs button[aria-current=page]::before{ content:''; position:absolute; margin-top:-56px;
   width:28px; height:2px; background:var(--accent); }
 
-/* ══ 見本の画面えらび（右下すみ。本番にはありません）══ */
-.pickbox{ position:fixed; z-index:60; right:12px; bottom:calc(72px + env(safe-area-inset-bottom));
-  max-width:min(272px,calc(100vw - 24px)); background:var(--paper2);
-  border:1px solid var(--line); opacity:.82; }
-.pickbox[open],.pickbox:hover,.pickbox:focus-within{ opacity:1; }
-.pickbox > summary{ display:flex; align-items:center; justify-content:center; gap:6px;
-  min-height:44px; padding:0 16px; font-size:.81rem; letter-spacing:.1em;
-  color:var(--mut); list-style:none; cursor:pointer; }
-.pickbox > summary::-webkit-details-marker{ display:none; }
-.pickbox > label{ display:block; padding:0 14px 6px; font-size:.69rem;
-  letter-spacing:.1em; color:var(--mut); }
-.pickbox > select{ width:calc(100% - 28px); margin:0 14px 14px; min-height:44px;
-  padding:0 12px; font:inherit; font-size:.94rem; color:var(--fg);
-  background:var(--paper); border:1px solid var(--line); border-radius:0; }
+/* ══ 帯の中の目次（見本だけのもの。本番にはありません）══ */
+.flag p{ margin:0; }
+.flag-nav{ display:flex; gap:4px; margin-top:8px; overflow-x:auto;
+  scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.flag-nav::-webkit-scrollbar{ display:none; }
+.flag-nav button{ flex:0 0 auto; min-height:44px; padding:0 14px; font-size:.72rem;
+  color:#C9BFAE; border:1px solid rgba(255,255,255,.18); white-space:nowrap;
+  transition:all .2s var(--ease); }
+.flag-nav button:hover{ color:#fff; background:rgba(255,255,255,.08); }
+.flag-nav button[aria-current=page]{ color:#2B2620; background:#E8C98C;
+  border-color:#E8C98C; font-weight:700; }
 
 /* ══ 現れかた ══ */
 .rise{ animation:rise .22s var(--ease) both; }
@@ -211,10 +221,16 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
 </head>
 <body>
 
-<p class="flag">
-  <b>デザイン案D（和紙）4画面の下書き</b>　本番の画面ではありません。お名前・金額はすべて架空です。<br>
-  <a href="../all/">◂ ほかの案を見る</a>
-</p>
+<div class="flag">
+  <p><b>デザイン案D（和紙）</b>　4画面の下書きです。本番の画面ではありません。
+     お名前・金額はすべて架空です。 <a href="../all/">ほかの案を見る</a></p>
+  <nav class="flag-nav" aria-label="見本の画面">
+    <button type="button" data-go="login">ログイン</button>
+    <button type="button" data-go="home">ホーム</button>
+    <button type="button" data-go="papers">送金明細</button>
+    <button type="button" data-go="status">入居状況</button>
+  </nav>
+</div>
 
 <header class="bar">
   <span class="logo">Owner's<em> Salon</em></span>
@@ -233,9 +249,15 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
     </div>
     <div class="field">
       <label for="d-pass">パスワード</label>
-      <input type="password" id="d-pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="pw">
+        <input type="password" id="d-pass" autocomplete="current-password" placeholder="••••••••">
+        <button class="eye" type="button" data-eye="d-pass" aria-pressed="false" aria-label="パスワードを表示する">
+          <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/></svg>
+        </button>
+      </div>
     </div>
-    <button class="cta" type="button" data-go="home">ログイン</button>
+    <button class="cta" type="button" data-act data-wait="確かめています" data-ok="ようこそ" data-go="home">ログイン</button>
     <p style="text-align:center;margin-top:var(--s2)">
       <button class="link" type="button">パスワードをお忘れの方</button></p>
   </div>
@@ -244,12 +266,12 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
 <!-- ════ ② ホーム ════ -->
 <main id="s-home" hidden>
   <div class="col">
-    <h1 class="hero" style="font-size:inherit;font-family:inherit;font-weight:400">
-      <span class="m">2026年9月分</span>
-      <span class="l" style="display:block">今月のご送金</span>
-      <span class="a" style="display:block"><span>¥</span>2,773,303</span>
-    </h1>
-    <p class="hero d" style="margin-top:var(--s2)">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+    <div class="hero">
+      <p class="m">2026年9月分</p>
+      <h1 class="l">今月のご送金</h1>
+      <p class="a"><span>¥</span>2,773,303</p>
+      <p class="d">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+    </div>
     <button class="cta" type="button" data-go="papers">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
       明細書（PDF）をひらく</button>
@@ -367,48 +389,7 @@ input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>その他</button>
 </nav>
 
-<details class="pickbox" id="pickbox">
-  <summary>見本</summary>
-  <label for="pick">画面をえらぶ</label>
-  <select id="pick">
-    <option value="login">① ログイン</option>
-    <option value="home" selected>② ホーム</option>
-    <option value="papers">③ 送金明細</option>
-    <option value="status">④ 入居状況</option>
-  </select>
-</details>
 
-<script>
-(function(){
-  var S=['login','home','papers','status'], $=function(i){return document.getElementById(i);};
-  function show(n,push){
-    if(S.indexOf(n)<0) n='home';
-    S.forEach(function(x){ var e=$('s-'+x); if(e) e.hidden=(x!==n); });
-    $('tabs').hidden=(n==='login');
-    var p=$('pick'); if(p&&p.value!==n) p.value=n;
-    document.querySelectorAll('.tabs button').forEach(function(b){
-      if(b.getAttribute('data-go')===n) b.setAttribute('aria-current','page');
-      else b.removeAttribute('aria-current'); });
-    var sc=$('s-'+n);
-    if(sc) sc.querySelectorAll('.rise').forEach(function(e){
-      e.style.animation='none'; void e.offsetWidth; e.style.animation=''; });
-    window.scrollTo(0,0);
-    if(push!==false){ try{ history.pushState({s:n},'','#'+n); }catch(e){} }
-  }
-  document.addEventListener('click',function(ev){
-    var t=ev.target; if(!t.closest) return;
-    var g=t.closest('[data-go]'); if(g){ show(g.getAttribute('data-go'),true); return; }
-    var c=t.closest('.chip');
-    if(c){ c.parentNode.querySelectorAll('.chip').forEach(function(x){
-      x.setAttribute('aria-pressed', x===c?'true':'false'); }); }
-  });
-  window.addEventListener('popstate',function(e){
-    show((e.state&&e.state.s)||(location.hash||'').replace('#','')||'home',false); });
-  var p=$('pick');
-  if(p) p.addEventListener('change',function(){ show(p.value,true); $('pickbox').open=false; });
-  var f=(location.hash||'').replace('#','');
-  show(S.indexOf(f)>=0?f:'home',true);
-})();
-</script>
+<script src="../common/demo4.js?v=1"></script>
 </body>
 </html>
