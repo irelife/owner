@@ -15,7 +15,7 @@
   'use strict';
 
   var SCREENS = ['login','reset','home','papers','status',
-                 'insurance','contact','accountant','account','done'];
+                 'insurance','contact','accountant','account','look','done'];
   var $ = function(id){ return document.getElementById(id); };
 
   /* ── 控え（1-c）───────────────────────────────
@@ -69,6 +69,9 @@
         }, 1100);
       }
     }
+
+    /* 見た目の画面を開いたら、丸の選びを、いまの状態に合わせます */
+    if(name === 'look' && window.__lookSync) window.__lookSync();
 
     /* ── ⑤ 「1」の札は、開いたら消えます（5-c）── */
     if(name === 'contact'){
@@ -402,6 +405,60 @@
         e.preventDefault();
       });
     });
+  })();
+
+  /* ══════════════════════════════════════════════════════════════
+   *  見た目のえらび（2026/10/4 ご指示「ユーザーが決められるように」）
+   *
+   *  改良前： 色も、文字の大きさも、一覧の出しかたも、こちらで決めた
+   *          1とおりだけでした。暗い画面がお苦手な方、字が小さくて
+   *          お困りの方には、どうにもできませんでした。
+   *  改良後： オーナー様がお選びになれます。押したその場で変わります。
+   *
+   *  ★中身（HTML）は1つのままです。変わるのは <html> の印だけです。
+   *    だから、今後の直しは1回で済みます（4とおり作ると4回になります）。
+   *  ★本番では、この控えをオーナー様の控えに入れて、どの端末でも
+   *    同じ見えかたにします（表に1列足すだけで済みます）。
+   * ══════════════════════════════════════════════════════════════ */
+  (function(){
+    var KEYS = { theme:['umi','ai','kami'], size:['m','l','xl'], list:['card','table'] };
+    var d = document.documentElement;
+
+    function put(k, v){
+      if(KEYS[k].indexOf(v) < 0) v = KEYS[k][0];
+      d.setAttribute('data-' + k, v);
+      try{ localStorage.setItem('look.' + k, v); }catch(e){}
+    }
+    /* いまの状態を、丸の選びに写します（画面を開くたび）
+       ★選ばれている行の囲みは CSS の :has で描いていますが、
+         古い Firefox には :has がありません。印が丸だけになって
+         しまうので、JavaScript でも同じ印（.on）を付けます。 */
+    function sync(){
+      Object.keys(KEYS).forEach(function(k){
+        var now = d.getAttribute('data-' + k) || KEYS[k][0];
+        var r = document.querySelector('input[name="' + k + '"][value="' + now + '"]');
+        if(r) r.checked = true;
+      });
+      var opts = document.querySelectorAll('.opt');
+      for(var i = 0; i < opts.length; i++){
+        var inp = opts[i].querySelector('input');
+        opts[i].classList.toggle('on', !!(inp && inp.checked));
+      }
+    }
+    document.addEventListener('change', function(ev){
+      var t = ev.target;
+      if(t && t.name && KEYS[t.name] && t.type === 'radio'){ put(t.name, t.value); sync(); }
+    });
+    var rs = $('look-reset');
+    if(rs) rs.addEventListener('click', function(){
+      Object.keys(KEYS).forEach(function(k){
+        try{ localStorage.removeItem('look.' + k); }catch(e){}
+        d.setAttribute('data-' + k, KEYS[k][0]);
+      });
+      sync();
+    });
+    window.__lookSync = sync;
+    sync();
   })();
 
   /* はじめに出す画面 */

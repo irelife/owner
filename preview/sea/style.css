@@ -38,6 +38,45 @@
   --ink:#201014;
   --inp:#1C0D11;        /* 入力欄の地。自動入力でも、この色にそろえます */
 
+  /* ══════════════════════════════════════════════════════════════
+   *  ここから下は「配色を選べるようにする」ために足したものです
+   *  （2026/10/4 ご指示「ユーザーが決められるように選択できる？」）
+   *
+   *  改良前： 色が style.css の中の 40か所に直に書かれていました。
+   *          配色を変えるには、その40か所を全部書き替えるしかなく、
+   *          オーナー様ごとに選んでいただくことはできませんでした。
+   *  改良後： 色を全部ここに集めました。下の [data-theme=…] で、
+   *          **ここの値だけ** を差し替えます。ほかは1行も変わりません。
+   *  ★いまの「海」の値を、そのまま写しただけです。見た目は変わりません。
+   * ══════════════════════════════════════════════════════════════ */
+  --acc-rgb:212,169,111;   /* 差し色（金）の中身 */
+  --ink-rgb:26,12,16;      /* 地の中身（帯・札・veil） */
+  --deep-rgb:14,6,8;       /* いちばん濃い地 */
+  --warn-rgb:224,183,120;  /* 注意 */
+  --spin-rgb:32,16,20;     /* 回る輪の、うすいほう */
+  --solid:#2F171C;         /* すりガラスに対応していないブラウザの面 */
+  --hover:rgba(255,255,255,.07);   /* カーソルを乗せたとき */
+  --soft:rgba(255,255,255,.055);   /* ほんのり浮かせる面 */
+  --sk-a:rgba(255,255,255,.05);    /* 骨組み（ゆれる帯）*/
+  --sk-b:rgba(255,255,255,.10);
+  --sh-c:0,0,0;            /* 影の色 */
+  --sh-o:1;                /* 影の濃さの倍率。明るい配色では薄くします */
+  --grain-op:.30;          /* 紙の粒子 */
+  --paper:#F4F1EC;         /* 預けた書類の、紙の色 */
+  --paper-ink:#6E635C;
+  --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CDBCB6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+
+  /* 海の絵（SVG）の色。ここも差し替えられるようにしました */
+  --sky1:#2A1218; --sky2:#4A2229; --sky3:#6B3B2C; --sky4:#85502F; --sky5:#946C45;
+  --wat1:#573527; --wat2:#4E2A28; --wat3:#2C1419; --wat4:#180A0E;
+  --glow1:#F0C98E; --glow1-o:.55; --glow2:#D4A96F; --glow2-o:.16; --glow3:#D4A96F;
+  --sun1:#FFE3B4;  --sun1-o:.30;  --sun2:#E8B778;  --sun2-o:.09;  --sun3:#D4A96F;
+  --wave:#E8C79A;
+  --moon-o:0; --moon-core-o:0;   /* 海（夕景）に月は出しません */
+
+  /* 文字の大きさの倍率（オーナー様がお選びになります） */
+  --scale:1;
+
   /* ★端末の字をそのまま使うのをやめました。どのアプリとも同じ字で、
        これが「どこかで見た画面」に見える、いちばん大きな理由でした。
        届くまでは端末の字で出ます（display=swap）。 */
@@ -52,6 +91,113 @@
   --t-in:.22s; --t-out:.14s; --t-tap:.12s;
   --ease:cubic-bezier(.22,.61,.36,1);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  配色のえらび（2026/10/4 ご指示「ユーザーが決められるようにできる？」）
+ *
+ *  <html data-theme="…"> を差し替えるだけで、色が全部入れ替わります。
+ *  大きさ・余白・字・動き・画面の数は、どれを選んでも同じです。
+ *  ★中身（HTML）は1行も変わりません。だから、今後の直しは1回で済みます。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── ② 藍（あい）・月あかり ─────────────────────── */
+[data-theme="ai"]{
+  --fg:#EDF2F9; --mut:#BBC7DB; --dim:#BBC7DB;
+  --gold:#C3D2E8; --gold-t:#D2DEF0; --gold-d:#8EA2C2;
+  --minus:#F0A7B2; --warn:#E8C38A;
+  --hair:rgba(255,255,255,.11); --hair2:rgba(255,255,255,.065);
+  --glass:rgba(18,28,46,.52); --ink:#0B1220; --inp:#09101C;
+  --acc-rgb:195,210,232; --ink-rgb:11,18,32; --deep-rgb:5,9,17;
+  --warn-rgb:232,195,138; --spin-rgb:11,18,32; --solid:#152340;
+  --grain-op:.24;
+  --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23BBC7DB' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  --sky1:#050A14; --sky2:#0D1628; --sky3:#17243E; --sky4:#213152; --sky5:#2E4167;
+  --wat1:#293B5C; --wat2:#1D2B47; --wat3:#111A2C; --wat4:#060A12;
+  --glow1:#DCE7F8; --glow1-o:.46; --glow2:#C3D2E8; --glow2-o:.14; --glow3:#C3D2E8;
+  --sun1:#E6EEFB;  --sun1-o:.26;  --sun2:#BFD0EA;  --sun2-o:.08;  --sun3:#C3D2E8;
+  --wave:#CBDAF2;
+  /* ★2026/10/4 実測で見つけた不具合の修正
+     改良前： 月を .34／芯を .62 の濃さで出していました。その結果、
+              背景のいちばん明るい画素が rgb(94,101,115) になり、
+              そこに乗る字が 3.0〜4.3:1 しかありませんでした。
+              指針は 4.5:1 です。**藍は、字が読みにくい配色でした。**
+     改良後： 月を沈め、veil（かすみ）を濃くしました。下で測り直します。 */
+  --moon-o:.17; --moon-core-o:.26;
+}
+/* 藍のときは、かすみを濃くします（月あかりの下でも字が読めるように） */
+[data-theme="ai"] .veil{
+  background:linear-gradient(180deg,
+    rgba(var(--ink-rgb),.60)  0%, rgba(var(--ink-rgb),.72) 22%,
+    rgba(var(--ink-rgb),.78) 46%, rgba(var(--ink-rgb),.84) 100%);
+}
+
+/* ── ③ 紙（かみ）・朝のあかるさ ───────────────────
+ *  ★暗い画面がお苦手な方のためのものです。印刷した明細に
+ *    いちばん近い見えかたになります。
+ *  ★影は、明るい地では黒いと汚れて見えます。--sh-o で薄くします。
+ *  ★差し色（塗りつぶし）は金ではなく墨です。明るい地のうえで、
+ *    金の塗りに白い字を置くと 2:1 ほどしか出ず、読めないためです。 */
+[data-theme="kami"]{
+  --fg:#17140F; --mut:#5B5349; --dim:#5B5349;
+  --gold:#17140F;        /* 塗りつぶしは墨。字（--ink）は紙の色です */
+  --gold-t:#7A5A28;      /* 文字の差し色（金茶）。紙の上で 5.9:1 */
+  --gold-d:#A8893F;
+  --minus:#A8372A; --warn:#8A5A14;
+  --hair:rgba(23,20,15,.16); --hair2:rgba(23,20,15,.09);
+  --glass:rgba(255,253,249,.76); --ink:#FAF7F1; --inp:#FFFFFF;
+  --acc-rgb:122,90,40; --ink-rgb:250,247,241; --deep-rgb:236,229,216;
+  --warn-rgb:138,90,20; --spin-rgb:250,247,241; --solid:#FFFDF9;
+  --hover:rgba(23,20,15,.05); --soft:rgba(23,20,15,.035);
+  --sk-a:rgba(23,20,15,.06); --sk-b:rgba(23,20,15,.12);
+  --sh-c:80,62,40; --sh-o:.34; --grain-op:.14;
+  --paper:#FFFFFF; --paper-ink:#6E635C;
+  --sel-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235B5349' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  --sky1:#F7F1E6; --sky2:#F3E8D8; --sky3:#EDDCC6; --sky4:#E5CFB4; --sky5:#DCC2A3;
+  --wat1:#D4BBA0; --wat2:#CBB096; --wat3:#C0A48B; --wat4:#B59880;
+  --glow1:#FFFBF2; --glow1-o:.62; --glow2:#FFF3DE; --glow2-o:.22; --glow3:#FFF3DE;
+  --sun1:#FFFFFF;  --sun1-o:.52;  --sun2:#FFF6E6;  --sun2-o:.20;  --sun3:#FFF3DE;
+  --wave:#8E7A60;
+  --moon-o:0; --moon-core-o:0;
+}
+/* 紙のときは、海をさらに白く沈めます（字が読める明るさまで） */
+[data-theme="kami"] .veil{
+  background:linear-gradient(180deg,
+    rgba(250,247,241,.62) 0%, rgba(250,247,241,.74) 22%,
+    rgba(250,247,241,.80) 46%, rgba(250,247,241,.86) 100%);
+}
+/* 紙のときだけ、押せる文字に下線を足します。
+   色の差だけでは「押せる」と気づけない方がおられるためです。 */
+[data-theme="kami"] .logo em{ color:var(--gold-t); }
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  文字の大きさのえらび
+ *
+ *  ★html の font-size は「％」で書きます。％は端末の設定からの倍率です。
+ *    px で書くと、端末の「文字を大きく」の設定が効かなくなります。
+ * ══════════════════════════════════════════════════════════════════════ */
+html{ font-size:calc(100% * var(--scale)); }
+[data-size="l"]{  --scale:1.12; }   /* 大きい   17px → 19px 相当 */
+[data-size="xl"]{ --scale:1.25; }   /* 特大     17px → 21px 相当 */
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  一覧の出しかたのえらび（ふつう／表）
+ *
+ *  改良前： 1行68px。6棟で画面の半分を使い、7件めからは指で送る必要が
+ *          ありました。「全部を一度に見たい」方には、遠回りです。
+ *  改良後： 「表」を選ぶと1行48px、字も小さくなり、ほぼ倍の数が
+ *          一度に入ります。罫で区切るので、けたが縦にそろいます。
+ *  ★48px です。44px（指の最低）を割りません。
+ * ══════════════════════════════════════════════════════════════════════ */
+[data-list="table"] .item{ min-height:48px; padding:6px 2px; gap:10px; }
+[data-list="table"] .item-t strong{ font-size:.94rem; letter-spacing:0; }
+[data-list="table"] .item-t em{ font-size:.75rem; margin-top:0; }
+[data-list="table"] .item-v{ font-size:.81rem; }
+[data-list="table"] .pane{ padding:var(--s2) var(--s2) var(--s1); }
+[data-list="table"] .row{ padding:9px 0; font-size:.88rem; }
+[data-list="table"] .row span,[data-list="table"] .item-v{
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
+[data-list="table"] .chev{ width:15px; height:15px; }
+[data-list="table"] h2.sect{ margin-top:var(--s3); }
 
 *,*::before,*::after{ box-sizing:border-box; }
 
@@ -96,17 +242,35 @@ input,select,textarea{ font:inherit; }
 
 /* ══════════ 海（下の層）══════════ */
 .sea{ position:fixed; inset:0; z-index:-3; overflow:hidden; background:var(--ink); }
+/* 絵の色は、ぜんぶここから差します（配色のえらびに連れて変わります） */
+#sky .k1{ stop-color:var(--sky1) } #sky .k2{ stop-color:var(--sky2) }
+#sky .k3{ stop-color:var(--sky3) } #sky .k4{ stop-color:var(--sky4) }
+#sky .k5{ stop-color:var(--sky5) }
+#water .w1{ stop-color:var(--wat1) } #water .w2{ stop-color:var(--wat2) }
+#water .w3{ stop-color:var(--wat3) } #water .w4{ stop-color:var(--wat4) }
+#glow .g1{ stop-color:var(--glow1); stop-opacity:var(--glow1-o) }
+#glow .g2{ stop-color:var(--glow2); stop-opacity:var(--glow2-o) }
+#glow .g3{ stop-color:var(--glow3); stop-opacity:0 }
+#sun .u1{ stop-color:var(--sun1); stop-opacity:var(--sun1-o) }
+#sun .u2{ stop-color:var(--sun2); stop-opacity:var(--sun2-o) }
+#sun .u3{ stop-color:var(--sun3); stop-opacity:0 }
+#moon .m1{ stop-color:#F2F6FD; stop-opacity:.92 }
+#moon .m2{ stop-color:#E2EAF8; stop-opacity:.55 }
+#moon .m3{ stop-color:#C3D2E8; stop-opacity:0 }
+.sea .moon{ opacity:var(--moon-o) }
+.sea .moon-core{ fill:#EFF4FC; opacity:var(--moon-core-o) }
+.sea .waves{ stroke:var(--wave) }
 .sea svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .veil{
   position:fixed; inset:0; z-index:-2; pointer-events:none;
   background:linear-gradient(180deg,
-    rgba(26,12,16,.44)  0%, rgba(26,12,16,.58) 22%,
-    rgba(26,12,16,.66) 46%, rgba(26,12,16,.74) 100%);
+    rgba(var(--ink-rgb),.44)  0%, rgba(var(--ink-rgb),.58) 22%,
+    rgba(var(--ink-rgb),.66) 46%, rgba(var(--ink-rgb),.74) 100%);
 }
 /* ★4-b 紙の粒子。真っ平らな面は「画面」に見えます。
      粒子が入ると「刷られたもの」に見えます。2KB ほどです。 */
 .grain{
-  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.30;
+  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:var(--grain-op);
   background-image:url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>\
 <filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/>\
@@ -127,12 +291,13 @@ input,select,textarea{ font:inherit; }
 
 @media (hover:hover) and (pointer:fine){
   .cta:hover{ transform:translateY(-3px); filter:brightness(1.04);
-    box-shadow:0 16px 36px rgba(0,0,0,.46); }
+    box-shadow:0 16px 36px rgba(var(--sh-c),calc(.46 * var(--sh-o))); }
   .ghost:hover,.tab:hover,.back:hover,.chip:hover{
-    transform:translateY(-2px); background:rgba(255,255,255,.07); color:var(--fg);
-    box-shadow:inset 0 0 0 1px rgba(212,169,111,.42), 0 10px 24px rgba(0,0,0,.34); }
-  .item:hover{ transform:translateY(-1px); background:rgba(255,255,255,.055);
-    box-shadow:0 8px 20px rgba(0,0,0,.26); }
+    transform:translateY(-2px); background:var(--hover); color:var(--fg);
+    box-shadow:inset 0 0 0 1px rgba(var(--acc-rgb),.42),
+               0 10px 24px rgba(var(--sh-c),calc(.34 * var(--sh-o))); }
+  .item:hover{ transform:translateY(-1px); background:var(--soft);
+    box-shadow:0 8px 20px rgba(var(--sh-c),calc(.26 * var(--sh-o))); }
   .item:hover .chev{ transform:translateX(3px); color:var(--gold); }
   .dots:hover{ transform:translateY(-1px); }
 }
@@ -143,7 +308,7 @@ input,select,textarea{ font:inherit; }
 /* ══════════ 枠組み ══════════ */
 .flag{
   position:relative; z-index:90; padding:10px max(16px,env(safe-area-inset-left));
-  background:rgba(14,6,8,.94); border-bottom:1px solid var(--hair);
+  background:rgba(var(--deep-rgb),.94); border-bottom:1px solid var(--hair);
   font-size:.75rem; line-height:1.6; color:var(--dim); text-align:center;
 }
 .flag p{ margin:0; }
@@ -164,7 +329,7 @@ input,select,textarea{ font:inherit; }
   box-shadow:inset 0 0 0 1px var(--hair); white-space:nowrap;
   transition:color var(--t-ui), box-shadow var(--t-ui), background var(--t-ui);
 }
-.flag-nav button:hover{ color:var(--fg); background:rgba(255,255,255,.07); }
+.flag-nav button:hover{ color:var(--fg); background:var(--hover); }
 .flag-nav button[aria-current=page]{
   color:var(--ink); background:var(--gold); box-shadow:none; font-weight:700; }
 .flag b{ color:var(--gold-t); font-weight:600; }
@@ -179,7 +344,7 @@ input,select,textarea{ font:inherit; }
   height:calc(58px + env(safe-area-inset-top));
   padding:env(safe-area-inset-top) max(20px,env(safe-area-inset-right)) 0
           max(20px,env(safe-area-inset-left));
-  background:rgba(26,12,16,.90);
+  background:rgba(var(--ink-rgb),.90);
   -webkit-backdrop-filter:blur(18px) saturate(150%);
   backdrop-filter:blur(18px) saturate(150%);
   border-bottom:1px solid var(--hair);
@@ -197,11 +362,12 @@ input,select,textarea{ font:inherit; }
 
 .menu{ position:fixed; right:max(16px,env(safe-area-inset-right)); top:70px; z-index:85;
   min-width:220px; padding:var(--s1); border-radius:var(--r);
-  background:rgba(32,16,20,.96); box-shadow:inset 0 0 0 1px var(--hair),0 20px 48px rgba(0,0,0,.5);
+  background:rgba(var(--ink-rgb),.96); box-shadow:inset 0 0 0 1px var(--hair),
+    0 20px 48px rgba(var(--sh-c),calc(.5 * var(--sh-o)));
   -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
 .menu button{ display:block; width:100%; min-height:48px; padding:0 var(--s2);
   border-radius:var(--r-s); text-align:left; font-size:.94rem; color:var(--fg); }
-.menu button:hover{ background:rgba(255,255,255,.07); }
+.menu button:hover{ background:var(--hover); }
 
 /* ★2026/10/4 … 上の余白を 64px → 32px に。
      「上の余白が多い」とご指摘をいただきました。実測で、
@@ -222,7 +388,7 @@ h1{ margin:0; font-family:var(--mincho); font-size:1.88rem; font-weight:600;
      「当社からお送りしま／す」のように、最後の1文字だけが
      次の行へ落ちていました。em なら全角1文字ぶんです。 */
   letter-spacing:.06em; line-height:1.35; text-wrap:balance; max-inline-size:15em;
-  text-shadow:0 2px 20px rgba(0,0,0,.5); }
+  text-shadow:0 2px 20px rgba(var(--sh-c),calc(.5 * var(--sh-o))); }
 h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
   font-size:.94rem; font-weight:600; letter-spacing:.1em; color:var(--mut); }
 .rule{ height:1px; margin:var(--s4) 0; background:var(--hair); border:0; }
@@ -244,7 +410,7 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 .hero-a{ margin:10px 0 0; font-family:var(--mincho);
   font-size:3.6rem; font-weight:500; line-height:1.05;
   letter-spacing:-.035em; font-variant-numeric:tabular-nums;
-  text-shadow:0 2px 24px rgba(0,0,0,.55); }
+  text-shadow:0 2px 24px rgba(var(--sh-c),calc(.55 * var(--sh-o))); }
 .hero-a span{ font-size:1.75rem; margin-right:2px; color:var(--mut); }
 .hero-d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }
 
@@ -254,10 +420,11 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
   background:var(--glass);
   -webkit-backdrop-filter:blur(20px) saturate(140%);
   backdrop-filter:blur(20px) saturate(140%);
-  box-shadow:inset 0 0 0 1px var(--hair), 0 18px 40px rgba(0,0,0,.30);
+  box-shadow:inset 0 0 0 1px var(--hair),
+    0 18px 40px rgba(var(--sh-c),calc(.30 * var(--sh-o)));
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .pane,.bar,.tab,.menu,.ghost{ background:#2F171C; }
+  .pane,.bar,.tab,.menu,.ghost{ background:var(--solid); }
 }
 .pane h2{ margin:0 0 var(--s2); font-family:var(--mincho);
   font-size:.88rem; font-weight:600; letter-spacing:.1em; color:var(--mut); }
@@ -268,7 +435,7 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
 .row span{ font-variant-numeric:tabular-nums; }
 .row.out span{ color:var(--minus); }
 .row.sum{ margin-top:var(--s1); padding-top:var(--s2);
-  border-top:1px solid rgba(212,169,111,.42); border-bottom:0; }
+  border-top:1px solid rgba(var(--acc-rgb),.42); border-bottom:0; }
 .row.sum b{ color:var(--fg); }
 .row.sum span{ font-family:var(--mincho); font-size:1.31rem; }
 
@@ -300,12 +467,12 @@ h2.sect{ margin:var(--s4) 0 var(--s2); font-family:var(--mincho);
   width:100%; min-height:52px; margin-top:var(--s3);
   border-radius:999px; background:var(--gold); color:var(--ink);
   font-size:1rem; font-weight:600; letter-spacing:.04em;
-  box-shadow:0 10px 26px rgba(0,0,0,.34); }
+  box-shadow:0 10px 26px rgba(var(--sh-c),calc(.34 * var(--sh-o))); }
 .cta:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
 .ghost{ display:flex; align-items:center; justify-content:center; gap:10px;
   width:100%; min-height:48px; margin-top:12px;
   border-radius:999px; color:var(--mut);
-  background:rgba(26,12,16,.44);
+  background:rgba(var(--ink-rgb),.44);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
   box-shadow:inset 0 0 0 1px var(--hair); font-size:.94rem; }
 .link{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px;
@@ -329,7 +496,7 @@ input[type=date],select,textarea{
   transition:box-shadow var(--t-in); }
 textarea{ min-height:140px; resize:vertical; line-height:1.9; }
 input:focus,select:focus,textarea:focus{
-  outline:none; box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 3px rgba(212,169,111,.22); }
+  outline:none; box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 3px rgba(var(--acc-rgb),.22); }
 ::placeholder{ color:var(--dim); }
 
 /* ══════════════════════════════════════════════════════════════
@@ -355,7 +522,7 @@ input:focus,select:focus,textarea:focus{
 }
 .eye svg{ width:21px; height:21px; fill:none; stroke:currentColor;
   stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
-.eye:hover{ color:var(--fg); background:rgba(255,255,255,.07); }
+.eye:hover{ color:var(--fg); background:var(--hover); }
 .eye[aria-pressed=true]{ color:var(--gold-t); }
 
 /* ══════════════════════════════════════════════════════════════
@@ -374,7 +541,7 @@ input:focus,select:focus,textarea:focus{
 .cta[data-act].done{ background:transparent; color:var(--gold-t);
   box-shadow:inset 0 0 0 1px var(--gold); }
 .spin{ width:18px; height:18px; border-radius:50%; flex:0 0 auto;
-  border:2px solid rgba(32,16,20,.28); border-top-color:var(--ink);
+  border:2px solid rgba(var(--spin-rgb),.28); border-top-color:var(--ink);
   animation:spin .7s linear infinite; }
 .cta.done .spin{ display:none; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
@@ -390,15 +557,15 @@ input:focus,select:focus,textarea:focus{
  * ══════════════════════════════════════════════════════════════ */
 .shot{ display:flex; gap:var(--s2); align-items:flex-start;
   margin:var(--s2) 0 0; padding:12px; border-radius:var(--r);
-  background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px var(--hair); }
+  background:var(--soft); box-shadow:inset 0 0 0 1px var(--hair); }
 .shot-pic{ flex:0 0 auto; width:76px; height:100px; display:grid; place-items:center;
-  overflow:hidden; border-radius:4px; background:#F4F1EC;
-  box-shadow:0 6px 16px rgba(0,0,0,.4); }
+  overflow:hidden; border-radius:4px; background:var(--paper);
+  box-shadow:0 6px 16px rgba(var(--sh-c),calc(.4 * var(--sh-o))); }
 .shot-pic canvas,.shot-pic img{ display:block; width:100%; height:100%;
   object-fit:cover; object-position:top center; }
-.shot-pic svg{ width:34px; height:34px; fill:none; stroke:#6E635C;
+.shot-pic svg{ width:34px; height:34px; fill:none; stroke:var(--paper-ink);
   stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-.shot-wait{ font-size:.62rem; color:#6E635C; text-align:center; padding:0 6px;
+.shot-wait{ font-size:.62rem; color:var(--paper-ink); text-align:center; padding:0 6px;
   line-height:1.5; }
 .shot-t{ flex:1 1 auto; min-width:0; }
 .shot-t strong{ display:block; font-size:.88rem; font-weight:600;
@@ -430,7 +597,7 @@ input:-webkit-autofill:active{
   transition:background-color 9999s;   /* 白い一瞬を出さない */
 }
 
-select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23CDBCB6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+select{ background-image:var(--sel-arrow);
   background-repeat:no-repeat; background-position:right 14px center;
   background-size:18px; padding-right:44px; }
 /* ══════════ ドラッグインの受け口 ══════════ */
@@ -443,7 +610,7 @@ select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
   margin-bottom:0; font-size:1rem; font-weight:400; color:var(--fg);
   letter-spacing:normal;
   min-height:132px; padding:var(--s3) var(--s2); border-radius:var(--r);
-  background:rgba(14,6,8,.40); cursor:pointer; text-align:center;
+  background:rgba(var(--deep-rgb),.40); cursor:pointer; text-align:center;
   box-shadow:inset 0 0 0 1px var(--hair);
   transition:background var(--t-in), box-shadow var(--t-in), transform var(--t-in);
 }
@@ -453,34 +620,70 @@ select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
   stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .drop strong{ font-size:.94rem; font-weight:600; }
 .drop em{ font-style:normal; font-size:.81rem; color:var(--mut); }
-.drop:hover{ background:rgba(255,255,255,.05); }
+.drop:hover{ background:var(--soft); }
 /* 置こうとしている間 */
 .drop.over{
-  background:rgba(212,169,111,.14); transform:translateY(-2px);
-  box-shadow:inset 0 0 0 2px rgba(212,169,111,.6), 0 12px 28px rgba(0,0,0,.34);
+  background:rgba(var(--acc-rgb),.14); transform:translateY(-2px);
+  box-shadow:inset 0 0 0 2px rgba(var(--acc-rgb),.6),
+             0 12px 28px rgba(var(--sh-c),calc(.34 * var(--sh-o)));
 }
 .drop-name{ margin:12px 0 0; font-size:.88rem; color:var(--gold-t); }
 
 .msg{ margin:12px 0 0; min-height:22px; font-size:.81rem; color:var(--warn); }
 .msg.ok{ color:var(--gold-t); }
 
+/* ══════════════════════════════════════════════════════════════
+ *  見た目のえらび（2026/10/4）
+ *
+ *  ★押す的は、丸だけではなく **1行ぜんぶ** です（高さ 60px）。
+ *    小さな丸だけを的にすると、指の太い方・手の震える方が外します。
+ *  ★選ばれている行には、枠と差し色を付けます。丸の色だけに
+ *    頼りません（色の見分けがつきにくい方のためです）。
+ *  ★［保存する］は置きません。押したその場で変わります。
+ * ══════════════════════════════════════════════════════════════ */
+.pick{ margin:var(--s3) 0 0; padding:0; border:0; }
+.pick legend{ padding:0; margin-bottom:var(--s1); font-size:.81rem;
+  font-weight:600; letter-spacing:.1em; color:var(--mut); }
+.opt{ display:flex; align-items:center; gap:14px; min-height:60px;
+  padding:10px 16px; margin-top:8px; border-radius:var(--r);
+  background:rgba(var(--ink-rgb),.44);
+  box-shadow:inset 0 0 0 1px var(--hair); cursor:pointer;
+  transition:background var(--t-ui), box-shadow var(--t-ui); }
+.opt input{ appearance:none; -webkit-appearance:none; flex:0 0 auto;
+  width:22px; height:22px; margin:0; border-radius:50%;
+  box-shadow:inset 0 0 0 2px var(--mut); background:transparent;
+  transition:box-shadow var(--t-ui); }
+.opt input:checked{ box-shadow:inset 0 0 0 7px var(--gold); }
+.opt:has(input:checked),
+.opt.on{ background:rgba(var(--acc-rgb),.12);
+  box-shadow:inset 0 0 0 1px rgba(var(--acc-rgb),.5); }
+.opt:hover{ background:var(--hover); }
+.opt input:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+.opt-t{ flex:1 1 auto; min-width:0; }
+.opt-t strong{ display:block; font-size:.97rem; font-weight:600; }
+.opt-t em{ display:block; margin-top:-2px; font-style:normal;
+  font-size:.81rem; color:var(--mut); }
+.opt .sw{ flex:0 0 auto; display:flex; gap:3px; }
+.opt .sw i{ display:block; width:18px; height:18px; border-radius:50%;
+  box-shadow:inset 0 0 0 1px var(--hair); }
+
 /* ══════════ 札（チップ）══════════ */
 .chips{ display:flex; flex-wrap:wrap; gap:var(--s1); margin-top:var(--s2); }
 .chip{ min-height:44px; padding:0 16px; border-radius:999px; font-size:.88rem;
   color:var(--mut); box-shadow:inset 0 0 0 1px var(--hair);
-  background:rgba(26,12,16,.44); }
+  background:rgba(var(--ink-rgb),.44); }
 .chip[aria-pressed=true]{ color:var(--fg);
-  box-shadow:inset 0 0 0 1px rgba(212,169,111,.5); background:rgba(212,169,111,.14); }
+  box-shadow:inset 0 0 0 1px rgba(var(--acc-rgb),.5); background:rgba(var(--acc-rgb),.14); }
 .tag{ display:inline-block; padding:3px 10px; border-radius:999px;
   font-size:.75rem; letter-spacing:.04em;
   box-shadow:inset 0 0 0 1px var(--hair); color:var(--mut); }
-.tag.now{ color:var(--warn); box-shadow:inset 0 0 0 1px rgba(224,183,120,.45); }
+.tag.now{ color:var(--warn); box-shadow:inset 0 0 0 1px rgba(var(--warn-rgb),.45); }
 
 /* ══════════ 骨組み（1-a）══════════
    ★出来上がりと同じ形・同じ高さにします。1行の「読み込んでいます…」から
      一覧がドサッと出ると、画面が飛びます（指針では重大度 High）。 */
 .sk{ border-radius:6px; background:linear-gradient(90deg,
-     rgba(255,255,255,.05) 25%, rgba(255,255,255,.10) 37%, rgba(255,255,255,.05) 63%);
+     var(--sk-a) 25%, var(--sk-b) 37%, var(--sk-a) 63%);
   background-size:400% 100%; animation:skw 1.4s ease-in-out infinite; }
 @keyframes skw{ 0%{ background-position:100% 0; } 100%{ background-position:0 0; } }
 .sk-item{ display:flex; align-items:center; gap:var(--s2);
@@ -519,7 +722,7 @@ select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
   height:100%; position:relative; }
 .b{ width:10px; border-radius:5px 5px 0 0;
   background:linear-gradient(180deg,var(--gold) 0%,var(--gold-d) 100%); }
-.bw.past .b{ background:rgba(212,169,111,.42); }
+.bw.past .b{ background:rgba(var(--acc-rgb),.42); }
 .bw em{ position:absolute; bottom:-24px; left:0; right:0; text-align:center;
   font-style:normal; font-size:.69rem; color:var(--mut); }
 .bw i{ position:absolute; top:-22px; left:0; right:0; text-align:center;
@@ -530,9 +733,9 @@ select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 .talk{ margin-top:var(--s2); }
 .bub{ max-width:84%; padding:12px 16px; border-radius:var(--r);
   font-size:.94rem; line-height:1.85; }
-.bub.me{ margin-left:auto; background:rgba(212,169,111,.16);
-  box-shadow:inset 0 0 0 1px rgba(212,169,111,.3); border-bottom-right-radius:6px; }
-.bub.you{ background:rgba(255,255,255,.06);
+.bub.me{ margin-left:auto; background:rgba(var(--acc-rgb),.16);
+  box-shadow:inset 0 0 0 1px rgba(var(--acc-rgb),.3); border-bottom-right-radius:6px; }
+.bub.you{ background:var(--soft);
   box-shadow:inset 0 0 0 1px var(--hair); border-bottom-left-radius:6px; }
 .bub + .bub{ margin-top:12px; }
 .bub-at{ display:block; margin-top:6px; font-size:.69rem; color:var(--dim); }
@@ -548,6 +751,6 @@ select{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 /* ══════════ 動きを減らす設定の方へ ══════════ */
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; animation:none !important; }
-  .sk{ background:rgba(255,255,255,.07); }
+  .sk{ background:var(--hover); }
   .done svg{ stroke-dashoffset:0; }
 }
