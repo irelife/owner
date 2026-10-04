@@ -181,7 +181,13 @@ const SCREENS = ['home','papers','status','insurance','contact','accountant','ac
       safe  : /safe-area-inset/.test(css),
       open  : /@keyframes ppOpen/.test(css),
       /* 字・角・アイコン・線が、きまりの中におさまっているか */
-      odd17 : /font-size:\s*(17|22|26)px/.test(css),
+      /* ★2026/10/4 … 字の大きさを px から rem に直しました（地の字17px）。
+           端数の見張りも、同じ値の rem で見ます。
+           17px=1.0625rem ／ 22px=1.375rem ／ 26px=1.625rem
+           px がまた混ざっていないかも、合わせて見ます。 */
+      odd17 : /font-size:\s*(17|22|26)px/.test(css)
+              || /font-size:\s*(1\.0625|1\.375|1\.625)rem/.test(css),
+      pxLeft: /font-size:\s*[\d.]+px/.test(css),
       oddR  : /border-radius:\s*(10|14)px/.test(css),
       oddW  : /stroke-width:\s*(1\.7|2\.2)(?!\d)/.test(css),
       aria  : h ? h.getAttribute('aria-expanded') : null
@@ -191,7 +197,8 @@ const SCREENS = ['home','papers','status','insurance','contact','accountant','ac
   ok(feel.focus, '★焦点の輪（:focus-visible）がある');
   ok(feel.safe,  '★iPhone のノッチ・ホームバーをよけている');
   ok(feel.open,  '★開くときの動きがある');
-  ok(!feel.odd17, '字の大きさに、端数（17・22・26px）が残っていない');
+  ok(!feel.odd17, '字の大きさに、端数（17・22・26px 相当）が残っていない');
+  ok(!feel.pxLeft, '字の大きさが、すべて rem で書かれている（端末の文字設定が効く）');
   ok(!feel.oddR,  '角の丸みに、端数（10・14px）が残っていない');
   ok(!feel.oddW,  '線の太さに、端数（1.7・2.2）が残っていない');
   ok(feel.aria === 'true' || feel.aria === 'false',
