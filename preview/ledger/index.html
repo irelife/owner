@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>デザイン案E（台帳）｜オーナーマイページ</title>
+<!-- ══════════════════════════════════════════════════════════════
+     デザイン案E（台帳）｜4画面の下書き
+     これは「見本」です。本番の画面ではありません。
+       ・お名前・金額はすべて架空です　・ここからログインはできません
+       ・本番は https://irelife.github.io/owner/ のままです
+
+     【ほかの案と、どこが「まったく違う」か】
+       ① 中身が「表」です。ほかの案は「読みもの」でした。
+          1画面に入る数が、およそ3倍になります。
+       ② 棟ごとの数字と、先月との差が、同じ行に並びます。
+          「増えたのか減ったのか」を、めくらずに確かめられます。
+       ③ 数字が等幅です。けたが縦にそろうので、目で足せます。
+       ④ 行き先が、上のよこ並びの札（タブ）です。
+       ⑤ 影も、ぼかしも、角の丸みもありません（半径0）。
+
+     根拠（ui-ux-pro-max）
+       style : data-dense-dashboard（--table-row-height / --card-padding 12px）
+               minimalism-and-swiss-style（--border-radius 0 / --shadow none）
+       ★ただし行の高さは、指針の 36px ではなく **48px** にしています。
+         36px は、マウスの画面の値です。指の最低は 44px です。
+     ══════════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F2F3F5;        /* 地 */
+  --card:#FFFFFF;      /* 表の地 */
+  --fg:#131722;        /* 字 */
+  --mut:#56607A;       /* 控えめな字（白の上で 7.0:1） */
+  --line:#D9DDE4;      /* 罫 */
+  --line2:#EDEFF3;     /* うすい罫 */
+  --accent:#153A75;    /* 1色だけ。濃紺 */
+  --accent-w:#E7EDF7;  /* 濃紺のうすいほう */
+  --minus:#A3281D;     /* 減ったとき */
+  --plus:#1B5E43;      /* 増えたとき */
+  --gothic:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  --s1:8px; --s2:12px; --s3:20px; --s4:32px;
+  --t:.16s; --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{ margin:0; min-height:100dvh; background:var(--bg); color:var(--fg);
+  font-family:var(--gothic); font-size:1rem; line-height:1.7;
+  -webkit-font-smoothing:antialiased; }
+[hidden]{ display:none !important; }
+p,li,h1,h2,label{ text-wrap:pretty; word-break:auto-phrase; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+input{ font:inherit; }
+:where(button,a,input,select):focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.num{ font-family:var(--mono); font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em; }
+
+/* ══ 見本の帯 ══ */
+.flag{ padding:9px 14px; background:var(--accent); color:#DCE6F5;
+  font-size:.75rem; line-height:1.6; text-align:center; }
+.flag p{ margin:0; }
+.flag b{ color:#fff; font-weight:700; }
+.flag a{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px; color:#fff; text-underline-offset:3px; }
+.flag-nav{ display:flex; gap:4px; margin-top:7px; overflow-x:auto;
+  scrollbar-width:none; }
+.flag-nav::-webkit-scrollbar{ display:none; }
+.flag-nav button{ flex:0 0 auto; min-height:44px; padding:0 14px; font-size:.72rem;
+  color:#DCE6F5; border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+.flag-nav button[aria-current=page]{ background:#fff; color:var(--accent); font-weight:700;
+  border-color:#fff; }
+
+/* ══ 上のバー＋よこ並びの札 ══ */
+.bar{ position:sticky; top:0; z-index:40; background:var(--card);
+  border-bottom:1px solid var(--line); padding-top:env(safe-area-inset-top); }
+.bar-h{ display:flex; align-items:center; height:52px; padding:0 14px; }
+.bar-h .logo{ font-size:.94rem; font-weight:700; letter-spacing:.14em; }
+.bar-h .logo em{ font-style:normal; color:var(--accent); }
+.bar-h .who{ margin-left:auto; font-size:.78rem; color:var(--mut); }
+.tabs{ display:flex; gap:0; overflow-x:auto; scrollbar-width:none;
+  border-top:1px solid var(--line2); }
+.tabs::-webkit-scrollbar{ display:none; }
+.tabs button{ flex:0 0 auto; min-height:46px; padding:0 16px; font-size:.88rem;
+  color:var(--mut); border-bottom:2px solid transparent; white-space:nowrap;
+  transition:color var(--t), border-color var(--t); }
+.tabs button:hover{ color:var(--fg); }
+.tabs button[aria-current=page]{ color:var(--accent); font-weight:700;
+  border-bottom-color:var(--accent); }
+
+main{ max-width:720px; margin:0 auto;
+  padding:var(--s2) var(--s2) calc(var(--s4) + env(safe-area-inset-bottom)); }
+main.center{ min-height:calc(100dvh - 190px); display:flex; flex-direction:column;
+  justify-content:center; max-width:420px; }
+
+h1{ margin:var(--s2) 0 0; font-size:1.25rem; font-weight:700; letter-spacing:.02em; }
+.sub{ margin:4px 0 0; font-size:.81rem; color:var(--mut); }
+h2{ margin:var(--s4) 0 var(--s1); font-size:.81rem; font-weight:700;
+  letter-spacing:.1em; color:var(--mut); }
+
+/* ══ 見出しの3枚（KPI）══ */
+.kpi{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  margin-top:var(--s2); background:var(--line); border:1px solid var(--line); }
+.kpi div{ background:var(--card); padding:12px 10px; }
+.kpi dt{ margin:0; font-size:.69rem; color:var(--mut); letter-spacing:.04em; }
+.kpi dd{ margin:3px 0 0; font-size:1.19rem; font-weight:700; }
+.kpi dd small{ display:block; font-size:.69rem; font-weight:400; margin-top:1px; }
+.up{ color:var(--plus); } .down{ color:var(--minus); }
+
+/* ══ 表 ══ */
+.tw{ margin-top:var(--s1); border:1px solid var(--line); background:var(--card);
+  overflow-x:auto; }
+table{ width:100%; border-collapse:collapse; font-size:.88rem; }
+thead th{ position:sticky; top:0; background:var(--card); z-index:1;
+  padding:9px 10px; font-size:.72rem; font-weight:700; color:var(--mut);
+  letter-spacing:.06em; text-align:left; white-space:nowrap;
+  border-bottom:1px solid var(--line); }
+thead th.r,tbody td.r{ text-align:right; }
+tbody td{ padding:0 10px; height:48px; border-bottom:1px solid var(--line2);
+  white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:0; }
+tbody tr.sum td{ background:var(--accent-w); font-weight:700;
+  border-top:2px solid var(--accent); border-bottom:0; }
+tbody tr[tabindex]:hover{ background:#F7F9FC; cursor:pointer; }
+td .nm{ display:block; font-weight:500; }
+td .sb{ display:block; font-size:.72rem; color:var(--mut); margin-top:-4px; }
+.pill{ display:inline-block; padding:1px 8px; font-size:.72rem;
+  border:1px solid var(--line); color:var(--mut); }
+.pill.on{ color:var(--accent); border-color:var(--accent); background:var(--accent-w); }
+
+/* ══ ボタン ══ */
+.cta{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+  min-height:48px; margin-top:var(--s3); background:var(--accent); color:#fff;
+  font-size:.94rem; font-weight:700; letter-spacing:.04em;
+  transition:filter var(--t), transform var(--t); }
+.ghost{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+  min-height:46px; margin-top:var(--s1); color:var(--accent); background:var(--card);
+  border:1px solid var(--accent); font-size:.88rem; font-weight:500;
+  transition:background var(--t), transform var(--t); }
+.btns{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s1); margin-top:var(--s3); }
+.btns .cta,.btns .ghost{ margin-top:0; }
+@media (hover:hover) and (pointer:fine){
+  .cta:hover{ filter:brightness(1.18); transform:translateY(-1px); }
+  .ghost:hover{ background:var(--accent-w); transform:translateY(-1px); }
+}
+.cta:active,.ghost:active{ transform:none; filter:brightness(.94); }
+.cta svg,.ghost svg{ width:17px; height:17px; fill:none; stroke:currentColor;
+  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.link{ display:inline-flex; align-items:center; min-height:44px; color:var(--mut);
+  font-size:.85rem; text-decoration:underline; text-underline-offset:3px; }
+
+/* ══ 入力 ══ */
+.field{ margin-top:var(--s3); }
+.field label{ display:block; margin-bottom:5px; font-size:.78rem; font-weight:700;
+  color:var(--mut); letter-spacing:.04em; }
+.pw{ position:relative; }
+.pw input{ padding-right:52px; }
+.field input{ width:100%; min-height:48px; padding:10px 12px; background:var(--card);
+  color:var(--fg); border:1px solid var(--line); border-radius:0; font-size:1rem; }
+.field input:focus{ outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--accent-w); }
+.eye{ position:absolute; right:2px; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; display:grid; place-items:center; color:var(--mut); }
+.eye svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round; }
+.eye[aria-pressed=true]{ color:var(--accent); }
+input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
+  -webkit-box-shadow:inset 0 0 0 100px var(--card) !important;
+  transition:background-color 9999s; }
+::placeholder{ color:#9AA2B4; }
+.note{ margin:var(--s3) 0 0; font-size:.75rem; line-height:1.75; color:var(--mut); }
+
+.spin{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff; animation:spin .7s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important } }
+</style>
+</head>
+<body>
+
+<div class="flag">
+  <p><b>デザイン案E（台帳）</b>　4画面の下書きです。本番の画面ではありません。
+     お名前・金額はすべて架空です。 <a href="../all/">ほかの案を見る</a></p>
+  <nav class="flag-nav" aria-label="見本の画面">
+    <button type="button" data-go="login">ログイン</button>
+    <button type="button" data-go="home">ホーム</button>
+    <button type="button" data-go="papers">送金明細</button>
+    <button type="button" data-go="status">入居状況</button>
+  </nav>
+</div>
+
+<header class="bar" id="bar" hidden>
+  <div class="bar-h">
+    <span class="logo">IRE<em>ライフ</em>　オーナーマイページ</span>
+    <span class="who">山田 太郎 様</span>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="おもな行き先">
+    <button type="button" data-go="home" aria-current="page">ホーム</button>
+    <button type="button" data-go="papers">送金明細</button>
+    <button type="button" data-go="status">入居状況</button>
+    <button type="button" data-go="home">火災保険</button>
+    <button type="button" data-go="home">お問い合わせ</button>
+  </nav>
+</header>
+
+<!-- ════ ① ログイン ════ -->
+<main id="s-login" class="center" hidden>
+  <h1>オーナーマイページ</h1>
+  <p class="sub">IREライフ株式会社</p>
+  <div class="field">
+    <label for="e-mail">メールアドレス</label>
+    <input type="email" id="e-mail" autocomplete="username" placeholder="owner@example.jp">
+  </div>
+  <div class="field">
+    <label for="e-pass">パスワード</label>
+    <div class="pw">
+      <input type="password" id="e-pass" autocomplete="current-password" placeholder="••••••••">
+      <button class="eye" type="button" data-eye="e-pass" aria-pressed="false" aria-label="パスワードを表示する">
+        <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/></svg>
+      </button>
+    </div>
+  </div>
+  <button class="cta" type="button" data-act data-wait="確かめています" data-ok="ようこそ" data-go="home">ログイン</button>
+  <p style="text-align:center;margin-top:var(--s1)"><button class="link" type="button">パスワードをお忘れの方</button></p>
+</main>
+
+<!-- ════ ② ホーム ════ -->
+<main id="s-home" hidden>
+  <h1>2026年9月分</h1>
+  <p class="sub">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+
+  <dl class="kpi">
+    <div><dt>ご送金額</dt><dd class="num">2,773,303</dd></div>
+    <div><dt>前月比</dt><dd class="num up">+73,303<small>＋2.7％</small></dd></div>
+    <div><dt>入居率</dt><dd class="num">94.4％<small>34／36室</small></dd></div>
+  </dl>
+
+  <h2>棟ごとのご送金額</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">物件</th><th scope="col" class="r">ご送金額</th><th scope="col" class="r">前月比</th><th scope="col" class="r">空室</th></tr></thead>
+      <tbody>
+        <tr tabindex="0"><td><span class="nm">サンプルA棟</span><span class="sb">6室</span></td><td class="r num">472,320</td><td class="r num up">+12,000</td><td class="r num">0</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルB棟</span><span class="sb">6室</span></td><td class="r num">494,200</td><td class="r num down">−8,400</td><td class="r num">1</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルC棟</span><span class="sb">6室</span></td><td class="r num">468,063</td><td class="r num up">+3,063</td><td class="r num">0</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルD棟</span><span class="sb">6室</span></td><td class="r num">484,900</td><td class="r num up">+41,300</td><td class="r num">1</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルE棟</span><span class="sb">6室</span></td><td class="r num">467,820</td><td class="r num up">+5,340</td><td class="r num">0</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルF棟</span><span class="sb">6室</span></td><td class="r num">386,000</td><td class="r num up">+20,000</td><td class="r num">0</td></tr>
+        <tr class="sum"><td>合計</td><td class="r num">2,773,303</td><td class="r num">+73,303</td><td class="r num">2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="btns">
+    <button class="cta" type="button" data-go="papers">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>明細書（PDF）</button>
+    <button class="ghost" type="button" data-go="status">入居状況を見る</button>
+  </div>
+
+  <h2>この3か月</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">対象月</th><th scope="col" class="r">ご送金額</th><th scope="col" class="r">送金日</th><th scope="col">明細</th></tr></thead>
+      <tbody>
+        <tr tabindex="0"><td>2026年8月分</td><td class="r num">2,700,000</td><td class="r num">8/31</td><td><span class="pill on">PDF</span></td></tr>
+        <tr tabindex="0"><td>2026年7月分</td><td class="r num">2,650,000</td><td class="r num">7/31</td><td><span class="pill on">PDF</span></td></tr>
+        <tr tabindex="0"><td>2026年6月分</td><td class="r num">2,610,000</td><td class="r num">6/30</td><td><span class="pill on">PDF</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">3年分（36か月）を保存しております。いつでも、何度でもご覧いただけます。</p>
+</main>
+
+<!-- ════ ③ 送金明細 ════ -->
+<main id="s-papers" hidden>
+  <h1>ご送金明細</h1>
+  <p class="sub">2026年9月分／9月30日 お振り込み済み</p>
+
+  <h2>サンプルA棟の内訳</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">項目</th><th scope="col" class="r">金額</th></tr></thead>
+      <tbody>
+        <tr><td>賃料・駐車場収入</td><td class="r num">620,000</td></tr>
+        <tr><td>管理料</td><td class="r num down">−31,000</td></tr>
+        <tr><td>修繕費（203号 給湯器）</td><td class="r num down">−116,680</td></tr>
+        <tr class="sum"><td>差引 ご送金額</td><td class="r num">472,320</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>棟ごとのご送金額</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">物件</th><th scope="col" class="r">収入</th><th scope="col" class="r">差引</th><th scope="col" class="r">ご送金額</th></tr></thead>
+      <tbody>
+        <tr><td>サンプルA棟</td><td class="r num">620,000</td><td class="r num down">−147,680</td><td class="r num">472,320</td></tr>
+        <tr><td>サンプルB棟</td><td class="r num">530,000</td><td class="r num down">−35,800</td><td class="r num">494,200</td></tr>
+        <tr><td>サンプルC棟</td><td class="r num">496,000</td><td class="r num down">−27,937</td><td class="r num">468,063</td></tr>
+        <tr><td>サンプルD棟</td><td class="r num">513,000</td><td class="r num down">−28,100</td><td class="r num">484,900</td></tr>
+        <tr><td>サンプルE棟</td><td class="r num">491,000</td><td class="r num down">−23,180</td><td class="r num">467,820</td></tr>
+        <tr><td>サンプルF棟</td><td class="r num">404,000</td><td class="r num down">−18,000</td><td class="r num">386,000</td></tr>
+        <tr class="sum"><td>合計</td><td class="r num">3,054,000</td><td class="r num">−280,697</td><td class="r num">2,773,303</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="btns">
+    <button class="cta" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>明細書（PDF）</button>
+    <button class="ghost" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>CSV</button>
+  </div>
+  <p class="note">金額は税込みです。管理料・修繕費は、当月にお支払いが生じたぶんを差し引いております。</p>
+</main>
+
+<!-- ════ ④ 入居状況 ════ -->
+<main id="s-status" hidden>
+  <h1>入居状況</h1>
+  <p class="sub">2026年9月分／36室のうち 34室がご入居中です。</p>
+
+  <dl class="kpi">
+    <div><dt>入居中</dt><dd class="num">34室<small>36室のうち</small></dd></div>
+    <div><dt>募集中</dt><dd class="num down">2室<small>B棟・D棟</small></dd></div>
+    <div><dt>解約予定</dt><dd class="num">1室<small>10月31日</small></dd></div>
+  </dl>
+
+  <h2>動きのあったお部屋</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">物件・部屋</th><th scope="col">状態</th><th scope="col" class="r">賃料</th><th scope="col" class="r">期日</th></tr></thead>
+      <tbody>
+        <tr tabindex="0"><td><span class="nm">サンプルA棟 203</span><span class="sb">1LDK／32㎡</span></td><td><span class="pill on">新規</span></td><td class="r num">64,000</td><td class="r num">9/1</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルB棟 105</span><span class="sb">1K／24㎡</span></td><td><span class="pill">募集中</span></td><td class="r num">62,000</td><td class="r num">—</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルD棟 301</span><span class="sb">1K／26㎡</span></td><td><span class="pill">募集中</span></td><td class="r num">58,000</td><td class="r num">—</td></tr>
+        <tr tabindex="0"><td><span class="nm">サンプルF棟 202</span><span class="sb">2DK／41㎡</span></td><td><span class="pill">解約予定</span></td><td class="r num">71,000</td><td class="r num">10/31</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>棟ごとの入居率</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">物件</th><th scope="col" class="r">入居</th><th scope="col" class="r">空室</th><th scope="col" class="r">入居率</th></tr></thead>
+      <tbody>
+        <tr><td>サンプルA棟</td><td class="r num">6</td><td class="r num">0</td><td class="r num">100.0％</td></tr>
+        <tr><td>サンプルB棟</td><td class="r num">5</td><td class="r num down">1</td><td class="r num">83.3％</td></tr>
+        <tr><td>サンプルC棟</td><td class="r num">6</td><td class="r num">0</td><td class="r num">100.0％</td></tr>
+        <tr><td>サンプルD棟</td><td class="r num">5</td><td class="r num down">1</td><td class="r num">83.3％</td></tr>
+        <tr><td>サンプルE棟</td><td class="r num">6</td><td class="r num">0</td><td class="r num">100.0％</td></tr>
+        <tr><td>サンプルF棟</td><td class="r num">6</td><td class="r num">0</td><td class="r num">100.0％</td></tr>
+        <tr class="sum"><td>合計</td><td class="r num">34</td><td class="r num">2</td><td class="r num">94.4％</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">空室につきましては、早期のご入居者確保に向けて募集に努めてまいります。</p>
+</main>
+
+<script src="../common/demo4.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>デザイン案の一覧｜オーナーマイページ</title>
+<!-- これは「見本の入口」です。本番の画面ではありません。
+     本番は https://irelife.github.io/owner/ のままです。 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#13100F; --up:#1D1917; --fg:#F2EEEA; --mut:#B9AEA6; --line:rgba(255,255,255,.1);
+  --acc:#D9B88A;
+  --mincho:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',serif;
+  --gothic:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--fg); font-family:var(--gothic);
+  font-size:1.0625rem; line-height:1.9; -webkit-font-smoothing:antialiased; }
+p,li,h1,h2{ text-wrap:pretty; word-break:auto-phrase; }
+main{ max-width:620px; margin:0 auto; padding:40px 20px 64px; }
+h1{ margin:0; font-family:var(--mincho); font-size:1.75rem; font-weight:600;
+  letter-spacing:.06em; text-wrap:balance; }
+.lead{ margin:16px 0 0; font-size:.94rem; color:var(--mut); max-inline-size:26em; }
+.note{ margin:16px 0 0; font-size:.78rem; color:var(--mut); }
+h2{ margin:48px 0 12px; font-family:var(--mincho); font-size:.88rem; font-weight:600;
+  letter-spacing:.14em; color:var(--mut); padding-bottom:8px; border-bottom:1px solid var(--line); }
+.card{ display:block; margin-top:12px; padding:20px; border-radius:16px;
+  background:var(--up); color:inherit; text-decoration:none;
+  box-shadow:inset 0 0 0 1px var(--line);
+  transition:transform .2s cubic-bezier(.22,.61,.36,1), background .2s, box-shadow .2s; }
+.card:hover{ transform:translateY(-3px); background:#241F1C;
+  box-shadow:inset 0 0 0 1px rgba(217,184,138,.4), 0 14px 32px rgba(0,0,0,.4); }
+.card:focus-visible{ outline:2px solid var(--acc); outline-offset:3px; }
+.card h3{ margin:0; font-family:var(--mincho); font-size:1.19rem; font-weight:600;
+  letter-spacing:.04em; }
+.card .t{ display:block; margin-top:2px; font-size:.78rem; letter-spacing:.1em; color:var(--acc); }
+.card p{ margin:10px 0 0; font-size:.88rem; color:var(--mut); }
+.sw{ display:flex; gap:6px; margin-top:14px; }
+.sw i{ display:block; width:28px; height:28px; border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); }
+.tagrow{ margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; }
+.tagrow span{ padding:2px 10px; border-radius:999px; font-size:.72rem; color:var(--mut);
+  box-shadow:inset 0 0 0 1px var(--line); }
+.back{ display:inline-flex; align-items:center; min-height:44px; margin-top:40px;
+  color:var(--mut); font-size:.88rem; text-decoration:underline; text-underline-offset:3px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>デザイン案の一覧</h1>
+  <p class="lead">どれも「見本」です。本番の画面ではありません。
+    お名前・金額はすべて架空で、ここからログインすることもできません。
+    本番は <b>irelife.github.io/owner/</b> のままです。</p>
+
+  <h2>いま、ご検討中のもの</h2>
+
+  <a class="card" href="../sea/">
+    <span class="t">9画面・完成版</span>
+    <h3>案B　海（夕景）</h3>
+    <p>暗い地に、葡萄酒いろの夕景。差し色は金。見出しと金額は明朝。
+       書面が水に浮いているように見せています。9画面すべて動きます。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#201014"></i><i style="background:#D4A96F"></i>
+      <i style="background:#F7EFEC"></i><i style="background:#85502F"></i></span>
+    <span class="tagrow"><span>暗い</span><span>明朝</span><span>すりガラス</span><span>金 1色</span></span>
+  </a>
+
+  <a class="card" href="../sea2/">
+    <span class="t">9画面・完成版／案Bの色ちがい</span>
+    <h3>案C　藍（月あかり）</h3>
+    <p>案Bの<b>色だけ</b>を替えたものです。地を藍に沈め、差し色を月白（銀）に。
+       大きさ・余白・字・動きは、案Bとまったく同じです。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#0B1220"></i><i style="background:#C3D2E8"></i>
+      <i style="background:#EDF2F9"></i><i style="background:#2E4167"></i></span>
+    <span class="tagrow"><span>暗い</span><span>明朝</span><span>すりガラス</span><span>銀 1色</span></span>
+  </a>
+
+  <h2>まったく違う組みかた（4画面の下書き）</h2>
+  <p class="note">ログイン・ホーム・送金明細・入居状況の4画面だけを作ってあります。
+    組みかたの違いは、この4画面でほぼ出し切れます。
+    お決めいただいた1つだけを、9画面に仕上げます。</p>
+
+  <a class="card" href="../washi/">
+    <span class="t">明るい・印刷物</span>
+    <h3>案D　和紙</h3>
+    <p>白い紙の上に、墨で刷ったように組みます。面（カード）も、影も、
+       角の丸みもありません。罫だけで分けます。行き先は<b>画面の下の4つの札</b>です。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#FAF7F1"></i><i style="background:#8A6A33"></i>
+      <i style="background:#17140F"></i><i style="background:#A8372A"></i></span>
+    <span class="tagrow"><span>明るい</span><span>明朝</span><span>半径0</span><span>下に札</span></span>
+  </a>
+
+  <a class="card" href="../ledger/">
+    <span class="t">一望できる・情報量が多い</span>
+    <h3>案E　台帳</h3>
+    <p>中身が「表」です。棟ごとの金額と、先月との差が、同じ行に並びます。
+       数字は等幅でけたがそろいます。1画面に入る数が、ほかの案の約3倍です。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#F2F3F5"></i><i style="background:#153A75"></i>
+      <i style="background:#131722"></i><i style="background:#A3281D"></i></span>
+    <span class="tagrow"><span>明るい</span><span>表組み</span><span>等幅の数字</span><span>上に札</span></span>
+  </a>
+
+  <a class="card" href="../thumb/">
+    <span class="t">片手で・大きい字</span>
+    <h3>案F　掌（てのひら）</h3>
+    <p>押すところが、すべて画面の下半分にあります。片手で持ったまま、
+       親指だけで全部できます。色を持たず、白が「押せる」の印です。
+       金額は画面の4分の1を占めます。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#121214"></i><i style="background:#FFFFFF"></i>
+      <i style="background:#26262B"></i><i style="background:#A6A6AD"></i></span>
+    <span class="tagrow"><span>暗い</span><span>角ゴシック</span><span>無彩色</span><span>下から板</span></span>
+  </a>
+
+  <h2>いちばんはじめの案</h2>
+  <a class="card" href="../">
+    <span class="t">2画面</span>
+    <h3>案A　紙</h3>
+    <p>いちばんはじめにお出しした、editorial（印刷物の組みかた）の案です。</p>
+    <span class="sw" aria-hidden="true">
+      <i style="background:#34191E"></i><i style="background:#C79C6B"></i>
+      <i style="background:#F6EDEA"></i><i style="background:#42232A"></i></span>
+  </a>
+
+  <p class="note" style="margin-top:40px">
+    ★どの案も、クラウドへは1度も通信していません。
+    ボタンの多くは、押しても何も起きません（見本のためです）。</p>
+</main>
+</body>
+</html>

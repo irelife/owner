@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>デザイン案F（掌）｜オーナーマイページ</title>
+<!-- ══════════════════════════════════════════════════════════════
+     デザイン案F（掌・てのひら）｜4画面の下書き
+     これは「見本」です。本番の画面ではありません。
+       ・お名前・金額はすべて架空です　・ここからログインはできません
+       ・本番は https://irelife.github.io/owner/ のままです
+
+     【ほかの案と、どこが「まったく違う」か】
+       ① 押すところが、すべて画面の下半分にあります。
+          片手で持ったまま、親指だけで end から end まで行けます。
+          （5.5インチ以上の端末では、画面の上3分の1に親指は届きません）
+       ② 行き先は、下から上がってくる板（シート）です。
+          画面を離れずに選べます。戻るを押す回数が減ります。
+       ③ 色を持ちません。ほぼ無彩色で、白が「押せる」の印です。
+          金も銀も使いません。目が休まります。
+       ④ 明朝を使いません。角ゴシックだけです。
+       ⑤ 数字が、画面の高さの4分の1を占めます。
+          遠目でも、めがねが無くても読めます。
+
+     根拠（ui-ux-pro-max）
+       ux : Touch & Interaction（的 44×44px 以上・間を8px以上あける）
+            Navigation（下の行き先は5つまで／端末の戻るを壊さない）
+       ★「親指の届く範囲」は指針の Touch 分類の考えかたで、
+         この案はそれを **画面の組みかたそのもの** にしたものです。
+     ══════════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#121214;        /* 地 */
+  --up:#1C1C20;        /* 一段うえ */
+  --up2:#26262B;       /* もう一段うえ */
+  --fg:#F3F3F4;        /* 字 */
+  --mut:#A6A6AD;       /* 控えめな字（地の上で 7.6:1） */
+  --line:rgba(255,255,255,.10);
+  --acc:#FFFFFF;       /* 押せるものの印。これが唯一の「色」です */
+  --minus:#F0A0A0;     /* お金が減ったときだけ */
+  --gothic:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px;
+  --r:20px; --r-s:14px;
+  --t:.22s; --t-out:.14s; --ease:cubic-bezier(.22,.61,.36,1);
+  --dock:calc(84px + env(safe-area-inset-bottom));
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{ margin:0; min-height:100dvh; background:var(--bg); color:var(--fg);
+  font-family:var(--gothic); font-size:1.0625rem; line-height:1.85;
+  -webkit-font-smoothing:antialiased; }
+[hidden]{ display:none !important; }
+p,li,h1,h2,label,strong,em{ text-wrap:pretty; word-break:auto-phrase; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+input{ font:inherit; }
+:where(button,a,input):focus-visible{ outline:2px solid var(--acc); outline-offset:3px; }
+
+/* ══ 見本の帯 ══ */
+.flag{ padding:9px 14px; background:#000; color:var(--mut);
+  font-size:.75rem; line-height:1.6; text-align:center; }
+.flag p{ margin:0; } .flag b{ color:var(--fg); font-weight:700; }
+.flag a{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px; color:var(--fg); text-underline-offset:3px; }
+.flag-nav{ display:flex; gap:4px; margin-top:7px; overflow-x:auto; scrollbar-width:none; }
+.flag-nav::-webkit-scrollbar{ display:none; }
+.flag-nav button{ flex:0 0 auto; min-height:44px; padding:0 14px; border-radius:999px;
+  font-size:.72rem; color:var(--mut); box-shadow:inset 0 0 0 1px var(--line);
+  white-space:nowrap; }
+.flag-nav button[aria-current=page]{ background:var(--acc); color:#000; font-weight:700;
+  box-shadow:none; }
+
+/* ══ 本文。下の操作板のぶん、余白をあけます ══ */
+main{ max-width:520px; margin:0 auto; padding:var(--s3) 20px calc(var(--dock) + 24px); }
+main.center{ min-height:calc(100dvh - 160px); display:flex; flex-direction:column;
+  justify-content:flex-end; padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom)); }
+
+.who{ font-size:.81rem; color:var(--mut); letter-spacing:.04em; }
+h1{ margin:var(--s1) 0 0; font-size:1.5rem; font-weight:700; letter-spacing:.02em;
+  line-height:1.45; text-wrap:balance; max-inline-size:15em; }
+.lead{ margin:var(--s2) 0 0; font-size:.94rem; color:var(--mut); max-inline-size:24em; }
+h2{ margin:var(--s4) 0 var(--s1); font-size:.78rem; font-weight:700;
+  letter-spacing:.14em; color:var(--mut); }
+.note{ margin:var(--s3) 0 0; font-size:.75rem; line-height:1.8; color:var(--mut); }
+
+/* ══ 大きな数字（画面の4分の1）══ */
+.big{ margin:var(--s2) 0 0; }
+.big .m{ font-size:.81rem; letter-spacing:.14em; color:var(--mut); }
+.big h1.m{ margin:var(--s2) 0 0; font-weight:500; line-height:1.7; max-inline-size:none; }
+.big .a{ margin:2px 0 0; font-size:4.1rem; font-weight:900; line-height:1;
+  letter-spacing:-.045em; font-variant-numeric:tabular-nums; }
+.big .a span{ font-size:1.8rem; font-weight:700; color:var(--mut); margin-right:2px; }
+.big .d{ margin:var(--s2) 0 0; font-size:.88rem; color:var(--mut); }
+
+/* ══ 行。大きく、間をあけて ══ */
+.list{ display:grid; gap:var(--s1); margin-top:var(--s1); }
+.item{ display:flex; align-items:center; gap:var(--s2); width:100%; min-height:72px;
+  padding:0 18px; border-radius:var(--r-s); background:var(--up); text-align:left;
+  transition:background var(--t) var(--ease), transform var(--t) var(--ease); }
+.item-t{ flex:1 1 auto; min-width:0; }
+.item-t strong{ display:block; font-size:1.06rem; font-weight:700; }
+.item-t em{ display:block; font-style:normal; font-size:.81rem; color:var(--mut);
+  margin-top:-2px; }
+.item-v{ flex:0 0 auto; font-size:.88rem; color:var(--mut); font-variant-numeric:tabular-nums; }
+.chev{ flex:0 0 auto; width:18px; height:18px; color:var(--mut); fill:none;
+  stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+  transition:transform var(--t) var(--ease); }
+@media (hover:hover) and (pointer:fine){
+  .item:hover{ background:var(--up2); transform:translateY(-2px); }
+  .item:hover .chev{ transform:translateX(3px); color:var(--acc); }
+}
+.item:active{ transform:none; background:var(--up2); }
+.badge{ min-width:26px; height:26px; padding:0 9px; border-radius:999px; display:grid;
+  place-items:center; background:var(--acc); color:#000; font-size:.78rem; font-weight:700; }
+.tag{ display:inline-block; padding:2px 10px; border-radius:999px; font-size:.72rem;
+  color:var(--mut); box-shadow:inset 0 0 0 1px var(--line); }
+.tag.on{ color:#000; background:var(--acc); box-shadow:none; font-weight:700; }
+
+/* ══ 明細の行 ══ */
+.rows{ margin-top:var(--s1); padding:var(--s1) 18px; border-radius:var(--r-s);
+  background:var(--up); }
+.row{ display:flex; justify-content:space-between; gap:var(--s2); padding:12px 0;
+  border-bottom:1px solid var(--line); font-size:.94rem; }
+.row:last-child{ border-bottom:0; }
+.row b{ font-weight:400; color:var(--mut); }
+.row span{ font-variant-numeric:tabular-nums; }
+.row.out span{ color:var(--minus); }
+.row.sum{ border-bottom:0; border-top:1px solid var(--acc); margin-top:4px; padding-top:14px; }
+.row.sum b{ color:var(--fg); font-weight:700; }
+.row.sum span{ font-size:1.25rem; font-weight:700; }
+
+/* ══ しぼり込みの札 ══ */
+.chips{ display:flex; flex-wrap:wrap; gap:var(--s1); margin-top:var(--s3); }
+.chip{ min-height:44px; padding:0 18px; border-radius:999px; font-size:.88rem;
+  color:var(--mut); background:var(--up); transition:all var(--t) var(--ease); }
+.chip[aria-pressed=true]{ background:var(--acc); color:#000; font-weight:700; }
+
+/* ══ ボタン ══ */
+.cta{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+  min-height:58px; margin-top:var(--s3); border-radius:999px; background:var(--acc);
+  color:#000; font-size:1.03rem; font-weight:700; letter-spacing:.04em;
+  transition:transform var(--t) var(--ease), filter var(--t); }
+.ghost{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+  min-height:52px; margin-top:10px; border-radius:999px; color:var(--fg);
+  background:var(--up); font-size:.94rem; transition:all var(--t) var(--ease); }
+@media (hover:hover) and (pointer:fine){
+  .cta:hover{ transform:translateY(-3px); filter:brightness(.94); }
+  .ghost:hover{ background:var(--up2); transform:translateY(-2px); }
+}
+.cta:active,.ghost:active{ transform:none; filter:brightness(.88); }
+.cta svg,.ghost svg{ width:19px; height:19px; fill:none; stroke:currentColor;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.cta.done{ background:transparent; color:var(--acc); box-shadow:inset 0 0 0 1px var(--acc); }
+.spin{ width:18px; height:18px; border-radius:50%; border:2px solid rgba(0,0,0,.25);
+  border-top-color:#000; animation:spin .7s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+.link{ display:inline-flex; align-items:center; min-height:44px; color:var(--mut);
+  font-size:.88rem; text-decoration:underline; text-underline-offset:3px; }
+
+/* ══ 入力 ══ */
+.field{ margin-top:var(--s2); }
+.field label{ display:block; margin-bottom:6px; font-size:.81rem; font-weight:700;
+  color:var(--mut); }
+.pw{ position:relative; }
+.pw input{ padding-right:56px; }
+.field input{ width:100%; min-height:56px; padding:12px 18px; border-radius:var(--r-s);
+  background:var(--up); color:var(--fg); border:0; font-size:1rem;
+  box-shadow:inset 0 0 0 1px transparent; transition:box-shadow var(--t); }
+.field input:focus{ outline:none; box-shadow:inset 0 0 0 2px var(--acc); }
+input:-webkit-autofill{ -webkit-text-fill-color:var(--fg) !important;
+  -webkit-box-shadow:inset 0 0 0 100px var(--up) !important; transition:background-color 9999s; }
+::placeholder{ color:#9B9BA3; }   /* ★4.10:1 しかなく、指針（4.5:1）に足りませんでした */
+.eye{ position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; display:grid; place-items:center; border-radius:50%;
+  color:var(--mut); }
+.eye svg{ width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round; }
+.eye[aria-pressed=true]{ color:var(--acc); }
+
+/* ══ 下の操作板（この案だけの行き先）══
+   ★押すところを、すべて画面の下に集めます。
+     親指は、画面の下3分の1がいちばん楽に届きます。 */
+.dock{ position:fixed; left:0; right:0; bottom:0; z-index:50;
+  display:flex; gap:var(--s1); align-items:center; justify-content:space-between;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(18,18,20,.86);
+  -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
+  border-top:1px solid var(--line); }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .dock{ background:#121214; }
+}
+.dock button{ flex:1 1 0; display:grid; place-items:center; gap:2px;
+  min-height:60px; border-radius:var(--r-s); color:var(--mut); font-size:.69rem;
+  transition:color var(--t), background var(--t); }
+.dock svg{ width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round; }
+.dock button[aria-current=page]{ color:var(--fg); background:var(--up); }
+.dock button:active{ background:var(--up2); }
+
+/* ══ 下から上がる板（行き先の一覧）══ */
+.sheet[open]{ position:fixed; inset:0; z-index:60; }
+.sheet > summary{ list-style:none; }
+.sheet > summary::-webkit-details-marker{ display:none; }
+.sheet-in{ position:fixed; left:0; right:0; bottom:0; z-index:61;
+  padding:var(--s2) 14px calc(var(--s2) + env(safe-area-inset-bottom));
+  border-radius:var(--r) var(--r) 0 0; background:var(--up);
+  box-shadow:0 -20px 60px rgba(0,0,0,.6);
+  animation:up .24s var(--ease) both; }
+.sheet-bg{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55);
+  animation:fade .2s both; }
+@keyframes up{ from{ transform:translateY(28px); opacity:0 } to{ transform:none; opacity:1 } }
+@keyframes fade{ from{ opacity:0 } to{ opacity:1 } }
+.sheet-in h2{ margin:0 0 var(--s1); }
+.sheet-in .grip{ width:40px; height:4px; border-radius:2px; background:var(--line);
+  margin:0 auto var(--s2); }
+
+.rise{ animation:rise .22s var(--ease) both; }
+.rise:nth-child(2){ animation-delay:.03s } .rise:nth-child(3){ animation-delay:.06s }
+.rise:nth-child(4){ animation-delay:.09s } .rise:nth-child(5){ animation-delay:.12s }
+.rise:nth-child(n+6){ animation-delay:.15s }
+@keyframes rise{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important } }
+</style>
+</head>
+<body>
+
+<div class="flag">
+  <p><b>デザイン案F（掌）</b>　4画面の下書きです。本番の画面ではありません。
+     お名前・金額はすべて架空です。 <a href="../all/">ほかの案を見る</a></p>
+  <nav class="flag-nav" aria-label="見本の画面">
+    <button type="button" data-go="login">ログイン</button>
+    <button type="button" data-go="home">ホーム</button>
+    <button type="button" data-go="papers">送金明細</button>
+    <button type="button" data-go="status">入居状況</button>
+  </nav>
+</div>
+
+<!-- ════ ① ログイン ════
+     ★入力も、ボタンも、ぜんぶ下半分にあります。
+       片手で持ったまま、持ちかえずに入れます。 -->
+<main id="s-login" class="center" hidden>
+  <p class="who">IREライフ株式会社</p>
+  <h1>オーナーマイページ</h1>
+  <p class="lead">ご登録のメールアドレスとパスワードをご入力ください。</p>
+  <div class="field">
+    <label for="t-mail">メールアドレス</label>
+    <input type="email" id="t-mail" autocomplete="username" placeholder="owner@example.jp">
+  </div>
+  <div class="field">
+    <label for="t-pass">パスワード</label>
+    <div class="pw">
+      <input type="password" id="t-pass" autocomplete="current-password" placeholder="••••••••">
+      <button class="eye" type="button" data-eye="t-pass" aria-pressed="false" aria-label="パスワードを表示する">
+        <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/></svg>
+      </button>
+    </div>
+  </div>
+  <button class="cta" type="button" data-act data-wait="確かめています" data-ok="ようこそ" data-go="home">ログイン</button>
+  <p style="text-align:center;margin-top:var(--s1)">
+    <button class="link" type="button">パスワードをお忘れの方</button></p>
+</main>
+
+<!-- ════ ② ホーム ════ -->
+<main id="s-home" hidden>
+  <p class="who">山田 太郎 様</p>
+  <div class="big">
+    <h1 class="m">2026年9月分　今月のご送金</h1>
+    <p class="a"><span>¥</span>2,773,303</p>
+    <p class="d">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+  </div>
+  <button class="cta" type="button" data-go="papers">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    明細書（PDF）をひらく</button>
+
+  <h2>よくご覧になるもの</h2>
+  <div class="list">
+    <button class="item rise" type="button" data-go="status">
+      <span class="item-t"><strong>入居状況</strong><em>入居・空室・解約のご予定</em></span>
+      <span class="item-v">6棟</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item rise" type="button" data-go="papers">
+      <span class="item-t"><strong>過去の明細</strong><em>3年分、いつでも</em></span>
+      <span class="item-v">36か月</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item rise" type="button">
+      <span class="item-t"><strong>お問い合わせ</strong><em>当社担当へ、そのまま</em></span>
+      <span class="item-v"><span class="badge">1</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <p class="note">ご不明な点は、当社担当までお気軽にお問い合わせくださいませ。</p>
+</main>
+
+<!-- ════ ③ 送金明細 ════ -->
+<main id="s-papers" hidden>
+  <p class="who">2026年9月分</p>
+  <h1>ご送金明細</h1>
+  <p class="lead">9月30日に、ご指定の口座へお振り込みいたしました。</p>
+
+  <h2>棟ごとのご送金額</h2>
+  <div class="rows">
+    <div class="row"><b>サンプルA棟</b><span>¥472,320</span></div>
+    <div class="row"><b>サンプルB棟</b><span>¥494,200</span></div>
+    <div class="row"><b>サンプルC棟</b><span>¥468,063</span></div>
+    <div class="row"><b>サンプルD棟</b><span>¥484,900</span></div>
+    <div class="row"><b>サンプルE棟</b><span>¥467,820</span></div>
+    <div class="row"><b>サンプルF棟</b><span>¥386,000</span></div>
+    <div class="row sum"><b>ご送金額</b><span>¥2,773,303</span></div>
+  </div>
+
+  <h2>サンプルA棟の内訳</h2>
+  <div class="rows">
+    <div class="row"><b>賃料・駐車場収入</b><span>¥620,000</span></div>
+    <div class="row out"><b>管理料</b><span>−¥31,000</span></div>
+    <div class="row out"><b>修繕費（203号 給湯器）</b><span>−¥116,680</span></div>
+    <div class="row sum"><b>差引 ご送金額</b><span>¥472,320</span></div>
+  </div>
+
+  <button class="cta" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    明細書（PDF）をひらく</button>
+  <button class="ghost" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+    明細データ（CSV）</button>
+
+  <h2>過去の明細</h2>
+  <div class="list">
+    <button class="item" type="button"><span class="item-t"><strong>2026年8月分</strong><em>送金日 8月31日</em></span><span class="item-v">¥2,700,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item" type="button"><span class="item-t"><strong>2026年7月分</strong><em>送金日 7月31日</em></span><span class="item-v">¥2,650,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item" type="button"><span class="item-t"><strong>2026年6月分</strong><em>送金日 6月30日</em></span><span class="item-v">¥2,610,000</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <p class="note">3年分を保存しております。いつでも、何度でもご覧いただけます。</p>
+</main>
+
+<!-- ════ ④ 入居状況 ════ -->
+<main id="s-status" hidden>
+  <p class="who">2026年9月分</p>
+  <h1>入居状況</h1>
+  <p class="lead">36室のうち、34室がご入居中です。</p>
+
+  <div class="chips">
+    <button class="chip" type="button" aria-pressed="true">すべて 6</button>
+    <button class="chip" type="button" aria-pressed="false">募集中 2</button>
+    <button class="chip" type="button" aria-pressed="false">解約予定 1</button>
+    <button class="chip" type="button" aria-pressed="false">新規契約 1</button>
+  </div>
+
+  <div class="list" style="margin-top:var(--s3)">
+    <button class="item rise" type="button">
+      <span class="item-t"><strong>サンプルA棟　203号室</strong><em>9月1日より 新規契約となりました</em></span>
+      <span class="item-v"><span class="tag on">新規</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item rise" type="button">
+      <span class="item-t"><strong>サンプルB棟　105号室</strong><em>62,000円／月で募集しています</em></span>
+      <span class="item-v"><span class="tag">募集中</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item rise" type="button">
+      <span class="item-t"><strong>サンプルD棟　301号室</strong><em>58,000円／月で募集しています</em></span>
+      <span class="item-v"><span class="tag">募集中</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="item rise" type="button">
+      <span class="item-t"><strong>サンプルF棟　202号室</strong><em>10月31日 解約のご予定です</em></span>
+      <span class="item-v"><span class="tag">解約予定</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <p class="note">空室につきましては、早期のご入居者確保に向けて募集に努めてまいります。</p>
+</main>
+
+<!-- ════ 下の操作板 ════ -->
+<nav class="dock" id="tabs" hidden aria-label="おもな行き先">
+  <button type="button" data-go="home" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>ホーム</button>
+  <button type="button" data-go="papers">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>明細</button>
+  <button type="button" data-go="status">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/></svg>入居</button>
+  <button type="button" id="more" aria-expanded="false" aria-controls="sheet">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>そのほか</button>
+</nav>
+
+<!-- ════ 下から上がる板 ════ -->
+<div id="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-label="そのほかの行き先">
+    <span class="grip" aria-hidden="true"></span>
+    <h2>そのほか</h2>
+    <div class="list">
+      <button class="item" type="button" data-close><span class="item-t"><strong>火災保険</strong><em>証券の写しと、満期日</em></span><span class="item-v">2件</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item" type="button" data-close><span class="item-t"><strong>税理士へ送信</strong><em>明細書を、そのままお送りします</em></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item" type="button" data-close><span class="item-t"><strong>マイアカウント</strong><em>ご連絡先・パスワード</em></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="item" type="button" data-go="login"><span class="item-t"><strong>ログアウト</strong><em>60分で自動でもログアウトします</em></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <button class="ghost" type="button" data-close>閉じる</button>
+  </div>
+</div>
+
+<script src="../common/demo4.js?v=1"></script>
+<script>
+/* 下から上がる板の、開け閉めだけ（この案だけのもの）
+   ★Escape でも閉じます。開いているあいだは、後ろを触れなくします。 */
+(function(){
+  var sh=document.getElementById('sheet'), mo=document.getElementById('more');
+  function open(on){
+    sh.hidden=!on; mo.setAttribute('aria-expanded',on?'true':'false');
+    document.body.style.overflow=on?'hidden':'';
+    if(on){ var f=sh.querySelector('.item'); if(f) f.focus(); } else { mo.focus(); }
+  }
+  mo.addEventListener('click',function(e){ e.stopPropagation(); open(sh.hidden); });
+  sh.addEventListener('click',function(e){ if(e.target.closest('[data-close],[data-go]')) open(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!sh.hidden) open(false); });
+})();
+</script>
+</body>
+</html>
