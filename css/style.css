@@ -155,6 +155,13 @@ body{
 }
 [hidden]{ display:none !important; }
 
+/* ★2026/10/4 … 文の最後の1〜2文字だけが次の行へ落ちるのを防ぎます。
+     「…お振り込みいたしまし／た。」のような落ちかたは、読みにくく、
+     作りが雑に見えます。text-wrap:pretty は、最後の行が短くなる
+     折り返しを避けてくれます。対応していないブラウザでは、
+     これまでどおりの折り返しです（壊れません）。 */
+p, li, dd, figcaption{ text-wrap:pretty; }
+
 /* ══════════════════════════════════════════════════════════════
  *  押した手ごたえ と 焦点の輪（2026/10/3 新設）
  *
@@ -293,13 +300,18 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
      日本語は 20〜24字が目安です。 */
 .h-mincho{
   font-size:36px; line-height:1.25; margin:0;
-  text-wrap:balance; max-inline-size:22ch;
+/* ★2026/10/4 … ch をやめ、em にしました。
+     ch は「半角の 0 の幅」です。日本語は全角なので、
+     22ch ＝ 日本語11文字しか入りません。そのため
+     「当社からお送りしま／す」のように、最後の1文字だけが
+     次の行へ落ちていました。em なら全角1文字ぶんです。 */
+  text-wrap:balance; max-inline-size:15em;
 }
 .card .h-mincho{ font-size:28px; }
 .kicker{ margin:0 0 4px; font-size:12px; font-weight:600; letter-spacing:.06em;
   color:var(--pri); text-transform:uppercase; }
 .sub{ margin:12px 0 0; font-size:18px; line-height:1.75; color:var(--mut-fg);
-  text-wrap:pretty; max-inline-size:38ch; }
+  text-wrap:pretty; max-inline-size:24em; }
 .card .sub{ font-size:14px; margin:6px 0 20px; }
 .sect{
   margin:40px 0 16px; font-size:20px; font-weight:700; letter-spacing:-.02em;
