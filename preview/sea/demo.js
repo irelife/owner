@@ -144,6 +144,106 @@
   var pick = $('pick');
   if(pick) pick.addEventListener('change', function(){ show(pick.value, true); });
 
+
+  /* ══════════════════════════════════════════════════════════════
+   *  税理士へ送信：宛名と署名を、本文に入れます（2026/10/4 ご指示）
+   *
+   *  ★文面は、そのままお書き替えいただけます。
+   *    一度でもお書き替えになったら、こちらからは触りません。
+   *    打っている途中の文が消えるのは、いちばん腹の立つことです。
+   * ══════════════════════════════════════════════════════════════ */
+  var ME = '山田 太郎';
+  var acTouched = false;
+
+  function acBody(){
+    var ym  = ($('ac-ym')  || {}).value || '';
+    var off = (($('ac-off') || {}).value || '').trim();
+    var nm  = (($('ac-nm')  || {}).value || '').trim();
+
+    var atena = '';
+    if(off) atena += off + (nm ? '\n' : ' 御中\n');
+    if(nm)  atena += nm + ' 様\n';
+    if(atena) atena += '\n';
+
+    return atena +
+      'いつもお世話になっております。\n\n' +
+      ym + 'の送金明細をお送りいたします。\n' +
+      'ご査収のほど、よろしくお願いいたします。\n\n' +
+      '─────────────────\n' +
+      ME + '\n' +
+      '（IREライフ株式会社 オーナーマイページより）\n' +
+      '─────────────────';
+  }
+  function acSubject(){
+    var ym = ($('ac-ym') || {}).value || '';
+    return '【' + ME + '】' + ym + ' 送金明細のご送付';
+  }
+  function acPaint(){
+    var b = $('ac-body'), su = $('ac-sub');
+    if(b && !acTouched) b.value = acBody();
+    if(su && !su.dataset.touched) su.value = acSubject();
+    var note = $('ac-ym-note');
+    if(note) note.hidden = (($('ac-ym')||{}).value !== '2026年1月〜12月');
+  }
+  ['ac-ym','ac-off','ac-nm'].forEach(function(id){
+    var e = $(id); if(e) e.addEventListener('input', acPaint);
+    if(e) e.addEventListener('change', acPaint);
+  });
+  (function(){
+    var b = $('ac-body');
+    if(b) b.addEventListener('input', function(){ acTouched = true; });
+    var su = $('ac-sub');
+    if(su) su.addEventListener('input', function(){ su.dataset.touched = '1'; });
+    acPaint();
+  })();
+
+  /* ══════════════════════════════════════════════════════════════
+   *  証券の写し：ドラッグインできる受け口（2026/10/4 ご指示）
+   *
+   *  ★押しても、落としても、どちらでも入ります。
+   *  ★画面のどこへ落としても、ブラウザがファイルを開いてしまわない
+   *    よう、ページ全体でも受け止めて止めます。
+   * ══════════════════════════════════════════════════════════════ */
+  (function(){
+    var zone = $('in-drop'), file = $('in-file'), name = $('in-name');
+    if(!zone || !file) return;
+
+    var put = function(f){
+      if(!f) return;
+      name.hidden = false;
+      name.textContent = '✓ ' + f.name + '（' + Math.round(f.size/1024) + 'KB）';
+    };
+    file.addEventListener('change', function(){ put(file.files && file.files[0]); });
+
+    ['dragenter','dragover'].forEach(function(ev){
+      zone.addEventListener(ev, function(e){
+        e.preventDefault(); e.stopPropagation(); zone.classList.add('over');
+      });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      zone.addEventListener(ev, function(e){
+        e.preventDefault(); e.stopPropagation(); zone.classList.remove('over');
+      });
+    });
+    zone.addEventListener('drop', function(e){
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if(!f) return;
+      /* 本番では、ここで大きさと種類を確かめます（8MB・写真かPDF） */
+      try{ file.files = e.dataTransfer.files; }catch(x){}
+      put(f);
+    });
+
+    /* ★受け口の外に落とされたときに、ブラウザがそのファイルを
+         開いてしまうのを止めます。画面が別のものに変わってしまい、
+         入力途中の文が消えます。 */
+    ['dragover','drop'].forEach(function(ev){
+      window.addEventListener(ev, function(e){
+        if(zone.contains(e.target)) return;
+        e.preventDefault();
+      });
+    });
+  })();
+
   /* はじめに出す画面 */
   var first = (location.hash || '').replace('#','');
   show(SCREENS.indexOf(first) >= 0 ? first : 'home', true);
