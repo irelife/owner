@@ -293,6 +293,35 @@ try{
         </div>
       </div>
 
+      <!-- 入居率。
+           ★2026/10/5 新規。見本（Base44）にある「入居率」です。
+             明細PDFに「総戸数」という欄がどこにも無いため、ここだけ
+             作れずに残っていました。収入明細の表には空いているお部屋も
+             1行として出ますので、PIVOT2 がその行の数を数えて送るように
+             しました（実際の明細6棟で 35室。ご確認いただいた数と一致）。
+
+             入居率 ＝（総戸数 − 募集中 − 解約予定）÷ 総戸数
+             ★解約予定は空室に数えます（2026/10/5 ご指示）。
+
+           ★総戸数が送られてこないとき（PIVOT2 が数えられなかったとき）は、
+             この箱ごと出しません。0% とは出しません。 -->
+      <div id="hm-occ-wrap" hidden>
+        <button type="button" class="kpi" id="hm-occ-b"
+                aria-expanded="false" aria-controls="hm-occ-why">
+          <span class="kpi-k" id="hm-occ-k">入居率</span>
+          <span class="kpi-v" id="hm-occ-v">—</span>
+          <span class="kpi-s">
+            <span id="hm-occ-p"></span>
+            <span class="kpi-more" id="hm-occ-more"><u>内訳</u><svg class="kpi-c"
+              viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+          </span>
+        </button>
+        <div class="kpi-why" id="hm-occ-why" hidden>
+          <p class="kpi-wh" id="hm-occ-wh"></p>
+          <div class="rows" id="hm-occ-rows"></div>
+        </div>
+      </div>
+
 
       <!-- 年間の収支（サーバーから月ごとの金額が返るようになったら出します） -->
       <section id="hm-chart-wrap" hidden>
@@ -766,6 +795,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=50"></script>
+<script src="js/app.js?v=51"></script>
 </body>
 </html>
