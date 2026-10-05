@@ -21,7 +21,7 @@ if (a < 0 || b < 0 || b < a) {
   console.log('PASS=0 FAIL=1');
   process.exit(1);
 }
-const box = new Function(src.slice(a, b) + '; return { ppNo, ppSort, csvOf, ppShort };')();
+const box = new Function(src.slice(a, b) + '; return { ppNo, ppSort, csvOf, ppShort, ppDiff };')();
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✅ ' + m); }
@@ -124,6 +124,137 @@ eq(box.ppShort(''),                '',        '空は空');
 eq(box.ppShort(null),              '',        '無いものは空');
 eq(box.ppShort('2026年8月15日 予定'), '2026年8月15日 予定',
    '★ことばが付いているものは、削らない（意味が消えるため）');
+
+/* ══════════════════════════════════════════════════════════════
+ *  前月比（ppDiff）2026/10/4 追加
+ *
+ *  ここはお金の引き算です。出してよい条件を、1つずつ確かめます。
+ *  ★「出さない」を間違えるより、「出す」を間違えるほうが重いので、
+ *    出さない条件を先に並べています。
+ * ══════════════════════════════════════════════════════════════ */
+const P = (items) => ({ ok:true, years:[{ year:'2026年', items }] });
+const R = (...a) => a.map(([label, amount]) => ({ label, amount }));
+
+console.log('\n── ★★ 前月比：出さない条件（ppDiff）──');
+ok(box.ppDiff(P([{ ym:'2026年9月', total:100 }])) === null,
+   '★月が1つしかなければ出さない');
+ok(box.ppDiff(P([])) === null, '★1つも無ければ出さない');
+ok(box.ppDiff(null) === null, '★何も来なくても落ちない');
+ok(box.ppDiff({}) === null,   '★形が違っても落ちない');
+ok(box.ppDiff(P([{ ym:'2026年9月', total:100 }, { ym:'2026年8月' }])) === null,
+   '★先月のご送金額が入っていなければ出さない（0 とみなさない）');
+ok(box.ppDiff(P([{ ym:'2026年9月' }, { ym:'2026年8月', total:100 }])) === null,
+   '★今月のご送金額が入っていなければ出さない');
+ok(box.ppDiff(P([{ ym:'2026年9月', total:'—' }, { ym:'2026年8月', total:100 }])) === null,
+   '★数でないものは出さない');
+
+console.log('\n── ★★ 前月比：金額（ppDiff）──');
+{
+  const d = box.ppDiff(P([{ ym:'2026年9月', total:2773303 },
+                          { ym:'2026年8月', total:2700000 }]));
+  eq(d.diff, 73303, '差を出す');
+  eq(d.isPrev, true, '★ちょうど1か月前なら「前月」と呼んでよい');
+  eq(Math.round(d.pct * 10) / 10, 2.7, '割合（＋2.7％）');
+  eq(d.nowYm, '2026年9月', '今月の名前');
+  eq(d.prevYm, '2026年8月', '先月の名前');
+}
+{
+  const d = box.ppDiff(P([{ ym:'2026年9月', total:2600000 },
+                          { ym:'2026年8月', total:2700000 }]));
+  eq(d.diff, -100000, '★減ったときは、マイナスで返す');
+  ok(d.pct < 0, '割合もマイナス');
+}
+{
+  const d = box.ppDiff(P([{ ym:'2026年9月', total:100 },
+                          { ym:'2026年8月', total:100 }]));
+  eq(d.diff, 0, '同じなら 0');
+}
+{
+  const d = box.ppDiff(P([{ ym:'2026年9月', total:100 },
+                          { ym:'2026年8月', total:0 }]));
+  eq(d.diff, 100, '先月が 0 でも、差は出す');
+  eq(d.pct, null, '★先月が 0 のとき、割合は出さない（割れないため）');
+}
+{
+  const d = box.ppDiff(P([{ ym:'2026年9月', total:100 },
+                          { ym:'2026年6月', total:80 }]));
+  eq(d.isPrev, false, '★間の月が抜けていたら「前月」とは呼ばない');
+  eq(d.prevYm, '2026年6月', 'そのかわり、その月の名前を返す');
+}
+{
+  /* 新しい順に並んでいないものを渡しても、並べ替えてから見ます */
+  const d = box.ppDiff(P([{ ym:'2026年8月', total:2700000 },
+                          { ym:'2026年9月', total:2773303 }]));
+  eq(d.nowYm, '2026年9月', '★並び順が逆でも、新しい月を「今月」にする');
+  eq(d.diff, 73303, '差も正しい');
+}
+
+console.log('\n── ★★ 前月比：物件ごとの内訳（ppDiff）──');
+{
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:200, rows:R(['A棟', 150], ['B棟', 50]) },
+    { ym:'2026年8月', total:150, rows:R(['A棟', 100], ['B棟', 50]) }]));
+  eq(d.parts.length, 1, '★動いた物件だけを並べる（B棟は同額なので出さない）');
+  eq(d.parts[0].label, 'A棟', 'A棟');
+  eq(d.parts[0].diff, 50, '＋50');
+  eq(d.partsOk, true, '足し算が合っている');
+}
+{
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:60, rows:R(['A棟', 10], ['B棟', 20], ['C棟', 30]) },
+    { ym:'2026年8月', total:60, rows:R(['A棟', 30], ['B棟', 20], ['C棟', 10]) }]));
+  eq(d.parts.map(x => x.label).join(','), 'C棟,A棟',
+     '★大きく増えたものから順に並べる');
+  eq(d.parts[0].diff, 20, 'C棟 ＋20');
+  eq(d.parts[1].diff, -20, 'A棟 −20');
+}
+{
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:150, rows:R(['A棟', 100], ['新棟', 50]) },
+    { ym:'2026年8月', total:100, rows:R(['A棟', 100]) }]));
+  eq(d.parts.length, 1, '今月から増えた物件だけ出る');
+  eq(d.parts[0].only, 'new', '★今月から入った物件だと分かる印が付く');
+}
+{
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:100, rows:R(['A棟', 100]) },
+    { ym:'2026年8月', total:150, rows:R(['A棟', 100], ['旧棟', 50]) }]));
+  eq(d.parts[0].only, 'gone', '★先月までだった物件だと分かる印が付く');
+  eq(d.parts[0].diff, -50, '−50');
+}
+{
+  /* 内訳の合計が、ご送金額の差と合わない例 */
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:999, rows:R(['A棟', 100]) },
+    { ym:'2026年8月', total:100, rows:R(['A棟', 100]) }]));
+  eq(d.diff, 899, '差そのものは出す');
+  eq(d.partsOk, false, '★足し算が合っていないことを、はっきり持つ');
+  eq(d.parts.length, 0,
+     '★★ 足し算の合わない内訳は、1行も出さない（表の数字が合わなくなるため）');
+}
+{
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:100 }, { ym:'2026年8月', total:80 }]));
+  eq(d.parts.length, 0, '★内訳が届いていない月は、内訳を出さない');
+}
+{
+  /* 同じ物件が2行に分かれていても、足してから比べます */
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:100, rows:R(['A棟', 60], ['A棟', 40]) },
+    { ym:'2026年8月', total:80,  rows:R(['A棟', 80]) }]));
+  eq(d.parts.length, 1, '1行にまとめる');
+  eq(d.parts[0].diff, 20, '★60＋40 と 80 を比べて ＋20');
+}
+{
+  /* 管理料のようなマイナス行も、そのまま引き算に入ります */
+  const d = box.ppDiff(P([
+    { ym:'2026年9月', total:70, rows:R(['A棟', 100], ['管理料', -30]) },
+    { ym:'2026年8月', total:80, rows:R(['A棟', 100], ['管理料', -20]) }]));
+  eq(d.parts.length, 1, '動いたのは管理料だけ');
+  eq(d.parts[0].label, '管理料', '管理料');
+  eq(d.parts[0].diff, -10, '★マイナスがさらに増えたので −10');
+  eq(d.partsOk, true, '足し算が合っている');
+}
 
 console.log('\nPASS=' + pass + ' FAIL=' + fail);
 process.exit(fail ? 1 : 0);

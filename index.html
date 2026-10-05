@@ -35,9 +35,17 @@ try{
        あとから当てると、画面がいちど小さい字で出てから変わります。 */
   var _s = localStorage.getItem('ire_owner_size');
   if(_s === 'l' || _s === 'xl') document.documentElement.setAttribute('data-size', _s);
+  /* ★雰囲気（角の丸み）も、絵を描く前に当てます。
+       あとから当てると、まる型のボタンが一瞬見えてから四角くなります。 */
+  var _k = localStorage.getItem('ire_owner_skin');
+  if(_k === 'flat') document.documentElement.setAttribute('data-skin', _k);
+  /* ★字も、絵を描く前に当てます。あとから当てると、見出しが
+       いちどゴシックで出てから明朝に変わります。 */
+  var _f = localStorage.getItem('ire_owner_font');
+  if(_f === 'gothic') document.documentElement.setAttribute('data-font', _f);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=46">
+<link rel="stylesheet" href="css/style.css?v=50">
 </head>
 <body>
 
@@ -255,6 +263,36 @@ try{
           <span class="tile-d">明細書を添えて、当社からお送りします。</span>
         </button>
       </nav>
+
+      <!-- ══════════ 前月比（2026/10/4 ／ 10/5 置き場所を直しました）══════
+           ご指示「前月比をクリックしたら、何が＋なのか−なのか詳細が
+           出てきてほしい」。送金明細（papers）の2か月ぶんを引き算して
+           出します。Apps Script は1行も変えていません。
+           ★月が2つそろっていないときは、この箱ごと出しません。
+
+           ★2026/10/5 … タイルの「上」から「下」へ移しました。
+             上に置くと、＋232,823 が、今月のご送金 ¥2,773,303 より
+             先に目に入ります。見出しは付けていますが、額だけ見て
+             取り違える方がいないとは言えません。
+             下に置けば「金額 → その差 → 年間の収支」と、
+             大きい話から順に読めます。 -->
+      <div id="hm-diff-wrap" hidden>
+        <button type="button" class="kpi" id="hm-diff-b"
+                aria-expanded="false" aria-controls="hm-diff-why">
+          <span class="kpi-k" id="hm-diff-k">前月比</span>
+          <span class="kpi-v" id="hm-diff-v">—</span>
+          <span class="kpi-s">
+            <span id="hm-diff-p"></span>
+            <span class="kpi-more" id="hm-diff-more"><u>内訳</u><svg class="kpi-c"
+              viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+          </span>
+        </button>
+        <div class="kpi-why" id="hm-diff-why" hidden>
+          <p class="kpi-wh" id="hm-diff-wh"></p>
+          <div class="rows" id="hm-diff-rows"></div>
+        </div>
+      </div>
+
 
       <!-- 年間の収支（サーバーから月ごとの金額が返るようになったら出します） -->
       <section id="hm-chart-wrap" hidden>
@@ -587,7 +625,7 @@ try{
       <button type="button" class="back" data-go="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ホームに戻る</button>
       <h1 class="h-mincho">マイアカウント</h1>
       <span class="bar-line"></span>
-      <p class="sub">ご登録情報のご確認と、パスワード・配色の変更ができます。</p>
+      <p class="sub">ご登録情報のご確認と、パスワード・画面の見た目の変更ができます。</p>
 
       <!-- ① ご登録情報 -->
       <section class="mya">
@@ -637,22 +675,11 @@ try{
           ［パスワードをお忘れの方］よりご再設定ください。</p>
       </section>
 
-      <!-- ③ 配色 -->
-      <section class="mya">
-        <p class="mya-h">配色</p>
-        <p class="mya-note">お選びいただいた配色は、お使いの端末にのみ保存されます。</p>
-        <div class="th-list" id="my-themes" role="group" aria-label="配色をお選びください"></div>
-      </section>
-
-      <!-- ③-2 文字の大きさ -->
-      <section class="mya">
-        <p class="mya-h">文字の大きさ</p>
-        <p class="mya-note">お選びになると、その場で画面全体が変わります。
-          お使いの端末にのみ保存されます。</p>
-        <div class="th-list" id="my-sizes" role="group" aria-label="文字の大きさをお選びください"></div>
-      </section>
-
-      <!-- ④ ご登録内容の変更 -->
+      <!-- ③ ご登録内容の変更
+           ★2026/10/5 … 「画面の見た目」4つより、前に出しました。
+             ここは、ご用のある方が来る場所です。見た目のえらびは
+             一度決めたら、たいてい二度と触りません。
+             用のあるものを、触らないものの下に置いていました。 -->
       <section class="mya">
         <p class="mya-h">ご登録内容の変更</p>
         <p class="mya-note">
@@ -690,6 +717,45 @@ try{
           <button type="submit" id="my-info-go" class="btn">変更をお知らせする</button>
         </form>
       </section>
+
+      <!-- ══════════ ここから下は「画面の見た目」 ══════════
+           ★2026/10/5 … 4つを1つのまとまりに見せます。
+             配色・雰囲気・字・大きさが、ご登録情報やパスワードと
+             同じ重さで4枚並ぶと、この画面が「設定の画面」に
+             見えてしまいます。見出しを1つ置いて、下げます。 -->
+      <p class="sect">画面の見た目</p>
+      <p class="mya-note" style="margin-top:-8px">
+        どれも、お使いの端末にのみ保存されます。一度お決めになれば、
+        次からはそのまま開きます。</p>
+
+      <!-- ④ 配色 -->
+      <section class="mya">
+        <p class="mya-h">配色</p>
+        <p class="mya-note">画面ぜんたいの色が変わります。</p>
+        <div class="th-list" id="my-themes" role="group" aria-label="配色をお選びください"></div>
+      </section>
+
+      <!-- ④-2 雰囲気 -->
+      <section class="mya">
+        <p class="mya-h">雰囲気</p>
+        <p class="mya-note">角の丸みが変わります。配色はそのままです。</p>
+        <div class="th-list" id="my-skins" role="group" aria-label="雰囲気をお選びください"></div>
+      </section>
+
+      <!-- ④-3 字 -->
+      <section class="mya">
+        <p class="mya-h">字</p>
+        <p class="mya-note">見出しの書体が変わります。本文と金額は変わりません。</p>
+        <div class="th-list" id="my-fonts" role="group" aria-label="字をお選びください"></div>
+      </section>
+
+      <!-- ④-4 文字の大きさ -->
+      <section class="mya">
+        <p class="mya-h">文字の大きさ</p>
+        <p class="mya-note">お選びになると、その場で画面全体が変わります。</p>
+        <div class="th-list" id="my-sizes" role="group" aria-label="文字の大きさをお選びください"></div>
+      </section>
+
     </section>
 
   </main>
@@ -700,6 +766,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=46"></script>
+<script src="js/app.js?v=50"></script>
 </body>
 </html>

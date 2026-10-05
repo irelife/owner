@@ -942,6 +942,92 @@
     }
     return line.join('\r\n');
   }
+
+  /* ══════════════════════════════════════════════════════════════
+   *  前月比（2026/10/4 追加）
+   *
+   *  ご指示「前月比と入居率が出るのは GOOD。あと、前月比をクリックしたら
+   *  何が＋なのか−なのか詳細が出てきてほしい」（見本の2枚目）。
+   *
+   *  ★Apps Script は1行も変えていません。
+   *    送金明細（papers）が、月ごとの ご送金額と物件ごとの内訳を
+   *    すでに返しているので、その2か月ぶんを引き算するだけです。
+   *    ホームはもともと papers を読んでいます（年間の収支の図のため）。
+   *    通信は増えません。
+   *
+   *  ★推測はしません。出さない条件を先に決めてあります。
+   *    ① 月が2つそろっていない　　　　　　　　　　→ 出しません
+   *    ② どちらかの月の「ご送金額」が入っていない → 出しません
+   *    ③ ちょうど1か月違いでない（間の月が抜けている）
+   *       → 出しますが「前月比」とは書かず、その月の名前を出します
+   *    ④ 物件ごとの差を足した額が、ご送金額の差と1円でも違う
+   *       → 内訳を出しません（足し算の合わない表はお見せしません）
+   * ══════════════════════════════════════════════════════════════ */
+  function ppDiff(r){
+    var all = [];
+    (Array.isArray(r && r.years) ? r.years : []).forEach(function(y){
+      (y.items || []).forEach(function(it){ if(it) all.push(it); });
+    });
+    all = ppSort(all);
+    if(all.length < 2) return null;                       /* ① */
+
+    var now = all[0], prev = all[1];
+    if(now.total == null || prev.total == null) return null;   /* ② */
+    var a = Number(now.total), b = Number(prev.total);
+    if(!isFinite(a) || !isFinite(b)) return null;              /* ② */
+
+    /* ③ ちょうど1か月前かどうか */
+    var na = ppNo(now.ym), nb = ppNo(prev.ym), isPrev = false;
+    if(na != null && nb != null){
+      isPrev = ((Math.floor(na / 100) * 12 + (na % 100)) -
+                (Math.floor(nb / 100) * 12 + (nb % 100))) === 1;
+    }
+
+    /* 物件ごとに、金額を足しあわせます（同じ名前が2行あっても足します） */
+    function bundle(it){
+      var m = {}, order = [];
+      (Array.isArray(it.rows) ? it.rows : []).forEach(function(x){
+        var k = String((x && x.label != null) ? x.label : '').trim();
+        if(!k) return;
+        if(!(k in m)){ m[k] = 0; order.push(k); }
+        m[k] += Number(x.amount) || 0;
+      });
+      return { m:m, order:order };
+    }
+    var A = bundle(now), B = bundle(prev), seen = {}, parts = [], psum = 0;
+    A.order.concat(B.order).forEach(function(k){
+      if(seen[k]) return;
+      seen[k] = 1;
+      var d = (A.m[k] || 0) - (B.m[k] || 0);
+      psum += d;
+      if(d === 0) return;
+      parts.push({
+        label : k,
+        diff  : d,
+        /* その月にしか無い物件は、お知らせします（引き算の理由が違うため） */
+        only  : (k in A.m) ? ((k in B.m) ? '' : 'new') : 'gone'
+      });
+    });
+    parts.sort(function(x, y){
+      if(y.diff !== x.diff) return y.diff - x.diff;
+      return String(x.label).localeCompare(String(y.label), 'ja');
+    });
+
+    return {
+      nowYm   : now.ym  || '',
+      prevYm  : prev.ym || '',
+      total   : a,
+      prev    : b,
+      diff    : a - b,
+      /* 割合は、先月が 0 のときは出しません（割れないためです） */
+      pct     : b ? ((a - b) / Math.abs(b) * 100) : null,
+      isPrev  : isPrev,
+      /* ④ 足し算が合ったときだけ、内訳を渡します */
+      parts   : (psum === (a - b)) ? parts : [],
+      partsOk : psum === (a - b)
+    };
+  }
+
   /* ===== 検査できる道具（送金明細）ここまで ===== */
 
   function paintPapers(r){
@@ -1181,9 +1267,73 @@
    *   図を2つに分ければ、どちらも自分のものさしで正しく読めます。
    *   月の並び（横軸）は上下でそろえてあります。 */
   function loadChart(){
-    /* ★ quiet。ここも「ホームのついで」です。 */
-    getPapers(true).then(paintChart)
-      .catch(function(){ $('hm-chart-wrap').hidden = true; });
+    /* ★ quiet。ここも「ホームのついで」です。
+     *   ★2026/10/4 … 前月比も、ここでいっしょに描きます。
+     *     読むのは同じ papers なので、通信は増えません。 */
+    getPapers(true)
+      .then(function(r){ paintChart(r); paintDiff(r); })
+      .catch(function(){
+        $('hm-chart-wrap').hidden = true;
+        $('hm-diff-wrap').hidden  = true;
+      });
+  }
+
+  /* ── 前月比を描きます ─────────────────────── */
+  function paintDiff(r){
+    var wrap = $('hm-diff-wrap');
+    if(!wrap) return;
+    var d = ppDiff(r);
+    if(!d){ wrap.hidden = true; return; }
+
+    var up = d.diff > 0, down = d.diff < 0;
+
+    /* 見出し。ちょうど1か月前のときだけ「前月比」と書きます。
+       間の月が抜けているときに「前月」と書くと、嘘になります。 */
+    $('hm-diff-k').textContent = d.prevYm
+      ? (d.isPrev ? ('前月比（' + d.prevYm + 'より）') : (d.prevYm + 'より'))
+      : '前の月より';
+
+    var v = $('hm-diff-v');
+    v.textContent = (d.diff === 0)
+      ? '増減なし'
+      : ((up ? '+' : '−') + '\u00a5' + yen(Math.abs(d.diff)));
+    v.className = 'kpi-v' + (down ? ' minus' : '');
+
+    /* 割合。先月が 0 のときは出しません（割れないため） */
+    $('hm-diff-p').textContent = (d.pct == null || d.diff === 0)
+      ? ''
+      : ((up ? '+' : '−') + (Math.round(Math.abs(d.pct) * 10) / 10) + '％');
+
+    /* 内訳 */
+    var b = $('hm-diff-b'), more = $('hm-diff-more'), why = $('hm-diff-why');
+    var has = d.parts.length > 0;
+    more.hidden = !has;
+    why.hidden  = true;
+    if(has){
+      b.removeAttribute('aria-disabled');
+      b.setAttribute('aria-expanded', 'false');
+      $('hm-diff-wh').textContent =
+        '物件ごとの、' + (d.prevYm || '前の月') + 'との差です。';
+      $('hm-diff-rows').innerHTML = d.parts.map(function(x){
+        var m = x.diff < 0;
+        return '<div class="row' + (m ? ' minus' : '') + '">' +
+               '<span>' + esc(x.label) +
+                 (x.only === 'new'  ? '<i>この月から</i>' : '') +
+                 (x.only === 'gone' ? '<i>' + esc(d.prevYm) + 'まで</i>' : '') +
+               '</span>' +
+               '<span>' + (m ? '−' : '+') + '\u00a5' + esc(yen(Math.abs(x.diff))) +
+               '</span></div>';
+      }).join('') +
+      '<div class="row sum' + (down ? ' minus' : '') + '">' +
+        '<span>合計</span><span>' +
+        (d.diff === 0 ? '±0' : ((up ? '+' : '−') + '\u00a5' + yen(Math.abs(d.diff)))) +
+      '</span></div>';
+    }else{
+      b.setAttribute('aria-disabled', 'true');
+      b.removeAttribute('aria-expanded');
+    }
+
+    wrap.hidden = false;
   }
 
   /* 明細の内訳から、月ごとの 収入・支出・累積収支 を作ります */
@@ -2749,6 +2899,122 @@
     }).join('');
   }
 
+  /* ══════════════════════════════════════════════
+   *  雰囲気（2026/10/4 追加）
+   *
+   *  改良前： 角 24px／ボタンはまる型。1とおりだけでした。
+   *  改良後： 2つからお選びいただけます。
+   *            まる（既定）… いままでと1ドットも同じ
+   *            板　　　　 … 角をひかえめに（箱 12px・ボタン 10px・札 8px）
+   *  ★変わるのは形だけです。配色・文字の大きさには触りません。
+   *  ★css は html[data-skin="flat"] に角の丸み6つを書き直すだけで
+   *    画面じゅうに効きます（丸みを css の 1か所にまとめたためです）。
+   *    ほかに書いたのは、上のバーのぼかしを消す指定などわずかです。
+   * ══════════════════════════════════════════════ */
+  /* r は、えらびの画面に出す「見本の角」です。
+     札（--r-tag）の値を使います。まる型 999px と 8px がいちばん
+     見分けやすいためです（ボタンの 10px だと差が小さすぎました）。 */
+  var SKINS = [
+    { id:'maru', name:'まる', note:'いまの形',   r:'999px' },
+    { id:'flat', name:'板',   note:'角ひかえめ', r:'8px'   }
+  ];
+  var SKKEY = 'ire_owner_skin';
+
+  function skPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].id === v) return v; }
+    return SKINS[0].id;
+  }
+  function skName(id){
+    for(var i = 0; i < SKINS.length; i++){ if(SKINS[i].id === id) return SKINS[i].name; }
+    return '';
+  }
+  function skSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(SKKEY) || ''; }catch(e){}
+    return skPick(v);
+  }
+  function skApply(id){
+    var v = skPick(id);
+    var h = document.documentElement;
+    /* 「まる」のときは印を外します（css の既定が、そのまま効きます） */
+    if(v === 'maru') h.removeAttribute('data-skin');
+    else h.setAttribute('data-skin', v);
+    try{ localStorage.setItem(SKKEY, v); }catch(e){}
+    skPaint();
+  }
+  function skPaint(){
+    var host = $('my-skins');
+    if(!host) return;
+    var now = skSaved();
+    host.innerHTML = SKINS.map(function(k){
+      /* 見本は、角の丸みそのものです。字で説明するより早く伝わります */
+      return '<button type="button" class="th-i" data-sk="' + k.id + '"' +
+             ' aria-pressed="' + (k.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-sh" aria-hidden="true" style="border-radius:' +
+               k.r + '"></span>' +
+             '<span class="th-n">' + esc(k.name) +
+               '<span class="th-px"> ' + esc(k.note) + '</span></span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
+  }
+
+  /* ══════════════════════════════════════════════
+   *  字（2026/10/5 追加）
+   *
+   *  改良前： 見出しもゴシック。1とおりだけでした（クラス名は
+   *          .h-mincho なのに、中身は明朝ではありませんでした）。
+   *  改良後： 見出しだけ、明朝とゴシックからお選びいただけます。
+   *          明朝（既定）… 見本（案B）と同じ品の出かた
+   *          ゴシック　  … いままでと同じ。フォントは1バイトも読みません
+   *  ★本文と金額は変わりません。金額は、明朝に数字の幅をそろえる
+   *    機能が無いため、桁がそろわなくなるからです（css に数値）。
+   * ══════════════════════════════════════════════ */
+  var FONTS = [
+    { id:'mincho', name:'明朝',     note:'見出しだけ' },
+    { id:'gothic', name:'ゴシック', note:'いまの形'   }
+  ];
+  var FTKEY = 'ire_owner_font';
+
+  function ftPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < FONTS.length; i++){ if(FONTS[i].id === v) return v; }
+    return FONTS[0].id;
+  }
+  function ftName(id){
+    for(var i = 0; i < FONTS.length; i++){ if(FONTS[i].id === id) return FONTS[i].name; }
+    return '';
+  }
+  function ftSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(FTKEY) || ''; }catch(e){}
+    return ftPick(v);
+  }
+  function ftApply(id){
+    var v = ftPick(id);
+    var h = document.documentElement;
+    /* 明朝のときは印を外します（css の既定が、そのまま効きます） */
+    if(v === 'mincho') h.removeAttribute('data-font');
+    else h.setAttribute('data-font', v);
+    try{ localStorage.setItem(FTKEY, v); }catch(e){}
+    ftPaint();
+  }
+  function ftPaint(){
+    var host = $('my-fonts');
+    if(!host) return;
+    var now = ftSaved();
+    host.innerHTML = FONTS.map(function(f){
+      /* 見本は「永」。書体の違いが、いちばんよく出る字です */
+      var fam = (f.id === 'mincho') ? 'var(--mincho-sample)' : 'var(--font)';
+      return '<button type="button" class="th-i" data-ft="' + f.id + '"' +
+             ' aria-pressed="' + (f.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-ft" aria-hidden="true" style="font-family:' + fam + '">永</span>' +
+             '<span class="th-n">' + esc(f.name) +
+               '<span class="th-px"> ' + esc(f.note) + '</span></span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
+  }
+
   /* 全角の数字・記号を半角に直し、空白を取ります */
   function myNum(v){
     var s = String(v == null ? '' : v);
@@ -2864,8 +3130,19 @@
     say($('my-pw-msg'), '');
     say($('my-info-msg'), '');
     thPaint();
+    skPaint();
+    ftPaint();
     szPaint();
   }
+
+  /* 前月比の「内訳」。押すと開き、もう一度押すと閉じます。 */
+  $('hm-diff-b').addEventListener('click', function(){
+    var b = this;
+    if(b.getAttribute('aria-disabled') === 'true') return;
+    var open = b.getAttribute('aria-expanded') === 'true';
+    b.setAttribute('aria-expanded', open ? 'false' : 'true');
+    $('hm-diff-why').hidden = open;
+  });
 
   $('my-themes').addEventListener('click', function(ev){
     var b = ev.target.closest('[data-th]');
@@ -2874,6 +3151,24 @@
     if(id === thSaved()) return;
     thApply(id, true);
     toast('配色を「' + thName(id) + '」に変更しました');
+  });
+
+  $('my-skins').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-sk]');
+    if(!b) return;
+    var id = skPick(b.getAttribute('data-sk'));
+    if(id === skSaved()) return;
+    skApply(id);
+    toast('雰囲気を「' + skName(id) + '」に変更しました');
+  });
+
+  $('my-fonts').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-ft]');
+    if(!b) return;
+    var id = ftPick(b.getAttribute('data-ft'));
+    if(id === ftSaved()) return;
+    ftApply(id);
+    toast('字を「' + ftName(id) + '」に変更しました');
   });
 
   $('my-sizes').addEventListener('click', function(ev){
