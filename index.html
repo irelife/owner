@@ -39,9 +39,13 @@ try{
        あとから当てると、まる型のボタンが一瞬見えてから四角くなります。 */
   var _k = localStorage.getItem('ire_owner_skin');
   if(_k === 'flat') document.documentElement.setAttribute('data-skin', _k);
+  /* ★字も、絵を描く前に当てます。あとから当てると、見出しが
+       いちどゴシックで出てから明朝に変わります。 */
+  var _f = localStorage.getItem('ire_owner_font');
+  if(_f === 'gothic') document.documentElement.setAttribute('data-font', _f);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=48">
+<link rel="stylesheet" href="css/style.css?v=49">
 </head>
 <body>
 
@@ -677,7 +681,14 @@ try{
         <div class="th-list" id="my-skins" role="group" aria-label="雰囲気をお選びください"></div>
       </section>
 
-      <!-- ③-3 文字の大きさ -->
+      <!-- ③-3 字 -->
+      <section class="mya">
+        <p class="mya-h">字</p>
+        <p class="mya-note">見出しの書体が変わります。本文と金額は変わりません。お使いの端末にのみ保存されます。</p>
+        <div class="th-list" id="my-fonts" role="group" aria-label="字をお選びください"></div>
+      </section>
+
+      <!-- ③-4 文字の大きさ -->
       <section class="mya">
         <p class="mya-h">文字の大きさ</p>
         <p class="mya-note">お選びになると、その場で画面全体が変わります。お使いの端末にのみ保存されます。</p>
@@ -732,6 +743,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=48"></script>
+<script src="js/app.js?v=49"></script>
 </body>
 </html>

@@ -2959,6 +2959,62 @@
     }).join('');
   }
 
+  /* ══════════════════════════════════════════════
+   *  字（2026/10/5 追加）
+   *
+   *  改良前： 見出しもゴシック。1とおりだけでした（クラス名は
+   *          .h-mincho なのに、中身は明朝ではありませんでした）。
+   *  改良後： 見出しだけ、明朝とゴシックからお選びいただけます。
+   *          明朝（既定）… 見本（案B）と同じ品の出かた
+   *          ゴシック　  … いままでと同じ。フォントは1バイトも読みません
+   *  ★本文と金額は変わりません。金額は、明朝に数字の幅をそろえる
+   *    機能が無いため、桁がそろわなくなるからです（css に数値）。
+   * ══════════════════════════════════════════════ */
+  var FONTS = [
+    { id:'mincho', name:'明朝',     note:'見出しだけ' },
+    { id:'gothic', name:'ゴシック', note:'いまの形'   }
+  ];
+  var FTKEY = 'ire_owner_font';
+
+  function ftPick(id){
+    var v = String(id == null ? '' : id).trim();
+    for(var i = 0; i < FONTS.length; i++){ if(FONTS[i].id === v) return v; }
+    return FONTS[0].id;
+  }
+  function ftName(id){
+    for(var i = 0; i < FONTS.length; i++){ if(FONTS[i].id === id) return FONTS[i].name; }
+    return '';
+  }
+  function ftSaved(){
+    var v = '';
+    try{ v = localStorage.getItem(FTKEY) || ''; }catch(e){}
+    return ftPick(v);
+  }
+  function ftApply(id){
+    var v = ftPick(id);
+    var h = document.documentElement;
+    /* 明朝のときは印を外します（css の既定が、そのまま効きます） */
+    if(v === 'mincho') h.removeAttribute('data-font');
+    else h.setAttribute('data-font', v);
+    try{ localStorage.setItem(FTKEY, v); }catch(e){}
+    ftPaint();
+  }
+  function ftPaint(){
+    var host = $('my-fonts');
+    if(!host) return;
+    var now = ftSaved();
+    host.innerHTML = FONTS.map(function(f){
+      /* 見本は「永」。書体の違いが、いちばんよく出る字です */
+      var fam = (f.id === 'mincho') ? 'var(--mincho-sample)' : 'var(--font)';
+      return '<button type="button" class="th-i" data-ft="' + f.id + '"' +
+             ' aria-pressed="' + (f.id === now ? 'true' : 'false') + '">' +
+             '<span class="th-ft" aria-hidden="true" style="font-family:' + fam + '">永</span>' +
+             '<span class="th-n">' + esc(f.name) +
+               '<span class="th-px"> ' + esc(f.note) + '</span></span>' +
+             '<span class="th-on">選択中</span></button>';
+    }).join('');
+  }
+
   /* 全角の数字・記号を半角に直し、空白を取ります */
   function myNum(v){
     var s = String(v == null ? '' : v);
@@ -3075,6 +3131,7 @@
     say($('my-info-msg'), '');
     thPaint();
     skPaint();
+    ftPaint();
     szPaint();
   }
 
@@ -3103,6 +3160,15 @@
     if(id === skSaved()) return;
     skApply(id);
     toast('雰囲気を「' + skName(id) + '」に変更しました');
+  });
+
+  $('my-fonts').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-ft]');
+    if(!b) return;
+    var id = ftPick(b.getAttribute('data-ft'));
+    if(id === ftSaved()) return;
+    ftApply(id);
+    toast('字を「' + ftName(id) + '」に変更しました');
   });
 
   $('my-sizes').addEventListener('click', function(ev){

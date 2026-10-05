@@ -112,7 +112,51 @@
   --ic-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='23 6 13.5 15.5 8.5 10.5 1 18'/%3E%3Cpolyline points='17 6 23 6 23 12'/%3E%3C/svg%3E");
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Hiragino Sans',
           'Yu Gothic', 'Noto Sans JP', sans-serif;
+
+  /* ══════════════════════════════════════════════════════════════
+   *  見出しの明朝（2026/10/5 追加）
+   *
+   *  【なぜ入れたか】
+   *  見本（案B）の見出しは明朝です。本番は、クラス名が .h-mincho なのに
+   *  中身はゴシックのままでした。見出しだけ明朝にすると、画面の品が
+   *  はっきり変わります。
+   *
+   *  【通信量を測りました（2026/10/5 実測）】
+   *      Google Fonts をそのまま読む … 312 KB（1ウェイト）／627 KB（2つ）
+   *      使う文字だけ切り出して置く　 …  33 KB　　← これにしました
+   *  オーナー様はスマートフォンでご覧になります。10分の1は大きい差です。
+   *  切り出しかたは tools/subset-font.py にあります。
+   *  ★見出しの文言を変えたら、走らせ直してください（検査が見ています）。
+   *
+   *  【金額は明朝にしません】
+   *  この書体には tnum（数字の幅をそろえる機能）がありません。
+   *  数字の幅を測ると 543〜614 とばらばらで、縦に並べた金額の桁が
+   *  そろいませんでした。金額は、いままでの書体のままにします。
+   *
+   *  ★font-weight を 500〜700 と幅で書いています。中身は1本（SemiBold）
+   *    ですが、こう書いておくと 700 の見出しでも、ブラウザが勝手に
+   *    太らせる（にじんだ偽の太字にする）ことをしません。
+   *  ★font-display:swap … フォントが届くまでは、いまの書体で出ます。
+   *    字が消えている時間を作りません。
+   *  ★ゴシックをお選びの方には、1バイトも送りません
+   *    （どの部品も明朝を使わなくなるので、ブラウザが取りに行きません）。
+   * ══════════════════════════════════════════════════════════════ */
+  --mincho:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',YuMincho,serif;
+  --mincho-sample:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',YuMincho,serif;
 }
+
+@font-face{
+  font-family:'Shippori Mincho B1';
+  font-style:normal;
+  font-weight:500 700;
+  font-display:swap;
+  src:url('../fonts/shippori-mincho-b1.woff2') format('woff2');
+}
+
+/* 字のえらび … ゴシックのときは、明朝をいまの書体に差し替えます。
+   ★--mincho-sample は差し替えません。えらびの画面の見本（永）は、
+     いまゴシックをお使いでも、明朝のまま見せる必要があるためです。 */
+html[data-font="gothic"]{ --mincho:var(--font); }
 
 /* ══════════════════════════════════════════════════════════════
  *  形のきまり（2026/10/3 新設）
@@ -359,7 +403,7 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
      消えます。対応していないブラウザは、今までどおりの折り返しです。
    ★max-inline-size で読みやすい字数に区切ります。
      日本語は 20〜24字が目安です。 */
-.h-mincho{
+.h-mincho{ font-family:var(--mincho);
   font-size:2.25rem; line-height:1.25; margin:0;
 /* ★2026/10/4 … ch をやめ、em にしました。
      ch は「半角の 0 の幅」です。日本語は全角なので、
@@ -374,14 +418,14 @@ h1, h2, h3{ margin:0; font-weight:700; letter-spacing:-.022em; }
 .sub{ margin:12px 0 0; font-size:1.125rem; line-height:1.75; color:var(--mut-fg);
   text-wrap:pretty; max-inline-size:24em; }
 .card .sub{ font-size:.875rem; margin:6px 0 20px; }
-.sect{
+.sect{ font-family:var(--mincho);
   margin:40px 0 16px; font-size:1.25rem; font-weight:700; letter-spacing:-.02em;
 }
 .lead{
   margin:0; padding-top:24px; font-size:1.25rem; line-height:1.75;
   color:var(--mut-fg);
 }
-.year{ margin:32px 0 12px; font-size:1.25rem; font-weight:700; }
+.year{ font-family:var(--mincho); margin:32px 0 12px; font-size:1.25rem; font-weight:700; }
 .empty{
   padding:32px 20px; text-align:center; font-size:.875rem; color:var(--mut-fg);
 }
@@ -823,7 +867,7 @@ input[type=file]::file-selector-button{
   color:var(--pri); text-transform:uppercase;
 }
 /* 見本（FeatureCard）の text-lg lg:text-xl に合わせています */
-.tile-t{ margin-top:8px; font-size:1.125rem; font-weight:700; letter-spacing:-.02em;
+.tile-t{ font-family:var(--mincho); margin-top:8px; font-size:1.125rem; font-weight:700; letter-spacing:-.02em;
   line-height:1.45;
   /* ★折り返しの指定を3行に分けています。わざとです。
    *
@@ -1040,7 +1084,7 @@ input[type=file]::file-selector-button{
   background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
 }
 .st-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.st-t{ font-size:1.25rem; font-weight:700; }
+.st-t{ font-family:var(--mincho); font-size:1.25rem; font-weight:700; }
 .st-tag{
   flex:0 0 auto; padding:6px 12px; border-radius:var(--r-tag);
   font-size:.875rem; font-weight:500; white-space:nowrap;
@@ -1178,7 +1222,7 @@ input[type=file]::file-selector-button{
 .ins-box.over{ border-color:hsl(var(--destructive) / .75); }
 
 .ins-h{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.ins-n{ font-size:1.25rem; font-weight:700; letter-spacing:-.01em; min-width:0;
+.ins-n{ font-family:var(--mincho); font-size:1.25rem; font-weight:700; letter-spacing:-.01em; min-width:0;
   line-height:1.4; }
 .ins-tag{
   flex:0 0 auto; margin-top:3px; padding:6px 12px; border-radius:var(--r-tag);
@@ -1610,7 +1654,7 @@ html.th-move, html.th-move *{
   margin-top:40px; padding:24px;
   background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-l);
 }
-.mya-h{
+.mya-h{ font-family:var(--mincho);
   margin:0 0 16px; font-size:1.25rem; font-weight:700;
   display:flex; align-items:center; gap:8px;
 }
@@ -1643,6 +1687,12 @@ html.th-move, html.th-move *{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%;
   border:1px solid var(--bd-40);
 }
+/* 字のえらびの見本。「永」は、書体の違いがいちばんよく出る字です。 */
+.th-ft{
+  flex:0 0 auto; min-width:46px; text-align:center;
+  font-size:1.75rem; line-height:1; color:var(--fg);
+}
+
 /* 雰囲気のえらびの見本。字で説明せず、角の丸みそのものをお見せします。
    丸み（border-radius）だけは app.js が直に書きます（まる型 ／ 10px）。 */
 .th-sh{

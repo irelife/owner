@@ -1,0 +1,3 @@
+# もとのフォント（15MB）は置きません。subset-font.py が実行時に取ってきます。
+_src.ttf
+_chars.txt
