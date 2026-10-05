@@ -507,6 +507,10 @@
   }
 
   function paintMoves(r){
+    /* ★2026/10/5 … 入居率も、ここでいっしょに描きます。
+     *   読むのは同じ status なので、通信は増えません。 */
+    paintOcc(r);
+
     var out = '';
     if(r){
       out += mvRows(r.newc,  '新規契約', 'new');
@@ -520,6 +524,58 @@
     Array.prototype.forEach.call($('hm-moves').querySelectorAll('.mv'), function(el){
       el.addEventListener('click', function(){ show('status'); });
     });
+  }
+
+  /* ── 入居率を描きます ─────────────────────── */
+  function paintOcc(r){
+    var wrap = $('hm-occ-wrap');
+    if(!wrap) return;
+    if(!r){ wrap.hidden = true; return; }
+
+    /* ★画面の一覧（入居状況）と同じ数で割ります。
+     *   stGroup を通すことで「解約予定日が過ぎたお部屋は募集中」の
+     *   直しが入った数になります。一覧と率が食いちがわないためです。 */
+    var d = stOcc(stGroup(r), r.units, r.unitsBy);
+    if(!d){ wrap.hidden = true; return; }
+
+    $('hm-occ-k').textContent = r.month ? ('入居率（' + r.month + '分）') : '入居率';
+
+    var v = $('hm-occ-v');
+    v.textContent = d.rate + '％';
+    /* ★率が低くても、赤くはしません。
+     *   前月比の「minus」は、お金が減ったという事実です。
+     *   入居率が 80％ であることは、良し悪しの話で、事実ではありません。
+     *   こちらで良し悪しを決めて色を付けることは、いたしません。 */
+    v.className = 'kpi-v';
+
+    $('hm-occ-p').textContent =
+      (d.empty === 0)
+        ? ('全 ' + d.units + ' 室　満室')
+        : ('全 ' + d.units + ' 室中　' + d.filled + ' 室ご入居');
+
+    var b = $('hm-occ-b'), more = $('hm-occ-more'), why = $('hm-occ-why');
+    var has = d.byProp.length > 1;        /* 1棟だけのときは、内訳を出しません */
+    more.hidden = !has;
+    why.hidden  = true;
+    if(has){
+      b.removeAttribute('aria-disabled');
+      b.setAttribute('aria-expanded', 'false');
+      $('hm-occ-wh').textContent = '物件ごとの入居率です。';
+      $('hm-occ-rows').innerHTML = d.byProp.map(function(x){
+        return '<div class="row">' +
+               '<span>' + esc(x.prop || '物件名未設定') + '</span>' +
+               '<span>' + x.rate + '％' +
+                 '<i>' + x.filled + '／' + x.units + ' 室</i>' +
+               '</span></div>';
+      }).join('') +
+      '<div class="row sum"><span>合計</span><span>' + d.rate + '％' +
+        '<i>' + d.filled + '／' + d.units + ' 室</i></span></div>';
+    }else{
+      b.setAttribute('aria-disabled', 'true');
+      b.removeAttribute('aria-expanded');
+    }
+
+    wrap.hidden = false;
   }
 
   function mvRows(list, label, kind){
@@ -786,6 +842,85 @@
       .map(function(k){ return k + ' ' + c[k] + '室'; });
     return t.join('　／　');
   }
+
+  /* ★2026/10/5 新規 ── 入居率 ───────────────────
+   *
+   *      入居率 ＝（総戸数 − 募集中 − 解約予定）÷ 総戸数
+   *
+   *  【総戸数は、どこから来るのか】
+   *    明細PDFに「総戸数」「室数」という欄は、どこにもありません。
+   *    調べました。ありません。
+   *    ただし「収入明細」の表には、空いているお部屋も1行として出ます。
+   *      101 山田 太郎 26/09 65,000 …    ← 入っている
+   *      102           26/09 0 0 0 募集中 ← 空いている
+   *    そこで PIVOT2 が、その行の数を数えて送ってきます（units）。
+   *    実際の明細6棟で 35室。ご本人にご確認いただいた数と合いました。
+   *
+   *  【解約予定を、空室に数えること】
+   *    2026/10/5 のご指示です。解約予定のお部屋は、まだ家賃が
+   *    入っていますが、先の見通しとしては空くお部屋です。
+   *    ★「入居中」に数えるか「空室」に数えるかで率が変わります。
+   *      ここは推測せず、お決めいただいた形にしてあります。
+   *
+   *  【出さないと決めた場合】 null を返し、画面に出しません。
+   *    ・総戸数が 0、または数でない
+   *      （PIVOT2 が数えられなかったとき 0 を送ってきます）
+   *    ・空室＋解約予定が、総戸数より多い
+   *    0% とは出しません。まちがった率を出すほうが、
+   *    出さないより悪いためです。お金と同じ扱いにしています。
+   *
+   *  ★数えるのは、画面に出ている boxes です（r.boshu / r.yotei では
+   *    ありません）。「解約予定日が過ぎたお部屋は募集中にする」直しを
+   *    通したあとの数で割らないと、一覧と率が食いちがうためです。
+   */
+  function stOcc(boxes, units, unitsBy){
+    var n = Number(units);
+    if(!isFinite(n) || n <= 0) return null;
+    n = Math.floor(n);
+
+    /* 棟ごとに、空いているお部屋を数えます（同じお部屋は1回だけ） */
+    var per = {}, seen = {}, empty = 0;
+    (boxes || []).forEach(function(g){
+      var pn = (g && g.name) ? String(g.name) : '';
+      (g && g.rooms ? g.rooms : []).forEach(function(u){
+        if(!u) return;
+        if(u.kind !== '募集中' && u.kind !== '解約予定') return;   /* 新規契約は入居中 */
+        var k = pn + '\u0000' + (u.room || u.place || '');
+        if(seen[k]) return;
+        seen[k] = 1;
+        empty++;
+        per[pn] = (per[pn] || 0) + 1;
+      });
+    });
+    if(empty > n) return null;                      /* つじつまが合いません */
+
+    /* 棟ごとの内訳。
+     *  ★内訳の空室の合計が、全体の空室とそろわないときは内訳を出しません
+     *    （物件名が食いちがっているときです。前月比と同じ考えかたです）。 */
+    var by = [], psum = 0, un = 0;
+    (Array.isArray(unitsBy) ? unitsBy : []).forEach(function(x){
+      if(!x) return;
+      var pn = String(x.prop == null ? '' : x.prop);
+      var u  = Math.floor(Number(x.units));
+      if(!isFinite(u) || u <= 0) return;
+      var e  = per[pn] || 0;
+      if(e > u) return;
+      psum += e; un += u;
+      by.push({ prop:pn, units:u, empty:e, filled:u - e,
+                rate:Math.round((u - e) / u * 1000) / 10 });
+    });
+    var byOk = (by.length > 0) && (psum === empty) && (un === n);
+
+    return {
+      units  : n,
+      empty  : empty,
+      filled : n - empty,
+      rate   : Math.round((n - empty) / n * 1000) / 10,
+      byProp : byOk ? by : [],
+      byOk   : byOk
+    };
+  }
+
   /* ===== 検査できる道具（入居状況）ここまで ===== */
 
   var ST_CLASS = { '新規契約':'new', '解約予定':'out', '募集中':'rec' };
@@ -799,6 +934,14 @@
     var boxes = stGroup(r);
     var sum   = stSum(boxes);
     var out   = '';
+
+    /* ★2026/10/5 … 入居率も、まとめの一行に足します。
+     *   総戸数が送られてこないときは、何も足しません（0% とは出しません）。 */
+    var occ = stOcc(boxes, r.units, r.unitsBy);
+    if(occ){
+      sum = '入居率 ' + occ.rate + '％（全 ' + occ.units + ' 室中 ' +
+            occ.filled + ' 室ご入居）' + (sum ? ('　／　' + sum) : '');
+    }
 
     if(sum){
       out += '<p class="st-sum" role="status">' + esc(sum) +
@@ -3142,6 +3285,15 @@
     var open = b.getAttribute('aria-expanded') === 'true';
     b.setAttribute('aria-expanded', open ? 'false' : 'true');
     $('hm-diff-why').hidden = open;
+  });
+
+  /* 入居率の「内訳」。押すと開き、もう一度押すと閉じます。 */
+  $('hm-occ-b').addEventListener('click', function(){
+    var b = this;
+    if(b.getAttribute('aria-disabled') === 'true') return;
+    var open = b.getAttribute('aria-expanded') === 'true';
+    b.setAttribute('aria-expanded', open ? 'false' : 'true');
+    $('hm-occ-why').hidden = open;
   });
 
   $('my-themes').addEventListener('click', function(ev){
