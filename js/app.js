@@ -1756,7 +1756,14 @@
    *  ★1年ぶんは、12か月を1つのPDFにまとめられないので false になります。
    *    本文に「PDFを添付しております」と書いてあるのに付けられない、
    *    という食い違いを起こさないためです。 */
+  /* ★2026/10/5 … hasPdf は「件数」も受け取れるようにしました。
+   *    false / 0  … CSVのご案内（これまでどおり）
+   *    true  / 1  … 「明細書（PDF）を添付しております。」（これまでどおり）
+   *    2 以上     … 「明細書（PDF）12件を添付しております。」
+   *  ★本文と、実際に付くものを食い違わせないためです。 */
   function acMail(info, what, company, hasPdf, owner){
+    var nPdf = (hasPdf === true) ? 1 : (Math.floor(Number(hasPdf)) || 0);
+    if(nPdf < 0) nPdf = 0;
     var firm = (info && info.firm) ? String(info.firm).trim() : '';
     var name = (info && info.name) ? String(info.name).trim() : '';
     var co   = company ? String(company) : '当社';
@@ -1801,8 +1808,9 @@
                 *  理由： 当社から送信する道（taxsend）で付くのは、明細書（PDF）
                 *        だけです。CSV は付きません。本文と、実際に付くものが
                 *        食い違わないようにします。 */
-               (hasPdf ? '明細書（PDF）を添付しております。\n\n'
-                       : '明細データ（CSV）を添付しております。\n\n') +
+               (nPdf > 1 ? ('明細書（PDF）' + nPdf + '件を添付しております。\n\n')
+                : nPdf === 1 ? '明細書（PDF）を添付しております。\n\n'
+                : '明細データ（CSV）を添付しております。\n\n') +
                'ご確認のほど、よろしくお願い申し上げます。\n\n' +
                line + '\n' +
                (own ? (own + '\n') : (co + ' オーナーマイページより\n')) +
@@ -1823,6 +1831,32 @@
     return 'mailto:' + e(to).replace(/%40/g, '@') +
            '?subject=' + e(subject) + '&body=' + e(body);
   }
+  /* ★2026/10/5 新設 … 送れる明細のID（原本PDFがあるものだけ）。
+   *
+   *  【なぜ要るか】
+   *    1年分（12か月）を税理士先生へお送りできるようにしました。
+   *    改良前は、年別を選ぶと送信ボタンが押せませんでした。
+   *      「12か月を1つのPDFにまとめたものがございませんため…」
+   *    まとめる必要はありません。**12個そのまま添付すれば済みます。**
+   *    実測：明細PDF 1か月ぶん 132KB ／ 12か月で約1.6MB。
+   *    Gmail の上限は 25MB ですので、余裕があります。
+   *
+   *  ★原本PDFの無い月は、そっと飛ばします。消えた月を
+   *    「送れません」にすると、残り11か月まで送れなくなるためです。
+   *  ★並びは月の順（1月→12月）のまま返します。
+   *    税理士先生の受信箱で、添付が月の順に並ぶようにです。
+   */
+  function acPdfIds(list){
+    var out = [], seen = {};
+    (Array.isArray(list) ? list : []).forEach(function(it){
+      var id = (it && it.id != null) ? String(it.id).trim() : '';
+      if(!id || seen[id]) return;
+      seen[id] = 1;
+      out.push(id);
+    });
+    return out;
+  }
+
   /* ===== 検査できる道具（税理士へ送信）ここまで ===== */
 
   var AC_KEY  = 'ire_owner_tax';     /* 税理士先生の宛先。この端末の中だけ */
@@ -1896,7 +1930,7 @@
       $('ac-csv').disabled = true;
       $('ac-pdf').disabled = true;
       $('ac-pdf').hidden   = false;
-      acSendBtn(null);
+      acSendSet([], '');
       acText();
       return;
     }
@@ -1921,7 +1955,7 @@
       /* 原本PDFがあるときだけ */
       $('ac-pdf').hidden   = false;
       $('ac-pdf').disabled = !it.id;
-      acSendBtn(it);
+      acSendSet(g.list, g.what);
     }else{
       var sum = 0, got = false;
       $('ac-prev').innerHTML = '<div class="rows">' + g.list.map(function(it){
@@ -1931,9 +1965,11 @@
       }).join('') + '</div>' +
         '<div class="row acc-sum"><span>年間合計</span><span>' +
           (got ? ('¥' + yen(sum)) : '—') + '</span></div>';
-      /* ★12か月を1つのPDFにまとめるには、当社側の用意が必要です */
+      /* ★［明細書（PDF）を保存］は、1か月ぶんのときだけ出します。
+           12個を一度に保存すると、どれがどの月か分からなくなるためです。
+           当社からの送信は、年別でもご利用いただけます（2026/10/5）。 */
       $('ac-pdf').hidden = true;
-      acSendBtn(null);
+      acSendSet(g.list, g.what);
     }
     acText();
   }
@@ -1941,8 +1977,9 @@
   /* 件名と本文を入れ直します（ご自身で書き替えられます）。 */
   function acText(){
     var g = acPicked();
-    /* 明細書（PDF）をお付けいただけるのは、1か月ぶんで原本があるときだけです */
-    var hasPdf = (acMode === 'month' && g.list.length > 0 && !!g.list[0].id);
+    /* ★2026/10/5 … 1か月ぶんだけでなく、1年分（12か月）も付けられます。
+         原本PDFのある月の数を、そのまま本文に出します。 */
+    var hasPdf = acPdfIds(g.list).length;
     /* ★署名はオーナー様のお名前です（宛名の「御中」は付けません） */
     var m = acMail(acInfo(), g.what || 'ご送金', CFG.COMPANY || '当社', hasPdf,
                    (me && me.name) ? me.name : '');
@@ -2032,27 +2069,41 @@
    *  ★年別（12か月）は送信できません。12か月を1つの明細書（PDF）に
    *    まとめたものが、そもそも無いためです。無いものは送りません。 */
 
-  var acSendIt = null;          /* いま送れる月。送れないときは null */
+  /* いま送れる明細のID。送れないときは空の配列です。
+   *  ★2026/10/5 … 1件だけ覚える形（acSendIt）から、一覧に変えました。
+   *    1年分（12か月）をまとめてお送りできるようにするためです。 */
+  var acSendIds  = [];
+  var acSendWhat = '';
 
-  function acSendBtn(it){
+  function acSendSet(list, what){
     var b = $('ac-send'), n = $('ac-send-n');
     acCfHide();
     if(!b) return;
-    if(it && it.id){
-      acSendIt = it;
+    acSendIds  = acPdfIds(list);
+    acSendWhat = what || '';
+
+    if(acSendIds.length){
       b.disabled = false;
-      if(n) n.textContent = '当社から、明細書（PDF）を添付してお送りします。' +
-                            'お使いのメールソフトを開く必要はございません。';
+      if(n){
+        n.textContent = (acSendIds.length > 1)
+          ? ('当社から、明細書（PDF）' + acSendIds.length + '件を添付してお送りします。' +
+             'お使いのメールソフトを開く必要はございません。')
+          : ('当社から、明細書（PDF）を添付してお送りします。' +
+             'お使いのメールソフトを開く必要はございません。');
+      }
       return;
     }
-    acSendIt = null;
+
     b.disabled = true;
     if(!n) return;
     if(acMode === 'year'){
-      n.textContent = '年別は、12か月を1つの明細書（PDF）にまとめたものが' +
-                      'ございませんため、当社からの送信はご利用いただけません。' +
+      /* ★改良前は「12か月を1つのPDFにまとめたものがございませんため、
+           当社からの送信はご利用いただけません」でした。
+           まとめる必要はなく、12個そのまま添付すれば済みます（2026/10/5）。
+           ですからここに来るのは「原本PDFが1件も無い年」だけです。 */
+      n.textContent = 'この年の明細書（PDF）は、まだ1件も登録されておりません。' +
                       '下の［ご自身のメールソフトで作成する］をご利用ください。';
-    }else if(it){
+    }else if(list && list.length){
       n.textContent = 'この月の明細書（PDF）は、まだ登録されておりません。' +
                       '下の［ご自身のメールソフトで作成する］をご利用ください。';
     }else{
@@ -2072,9 +2123,18 @@
       acCfHide();
       return;
     }
-    if(!acSendIt || !acSendIt.id){ acCfHide(); return; }
+    if(!acSendIds.length){ acCfHide(); return; }
     say($('ac-msg'), '');
     $('ac-cf-to').textContent = to;
+    /* ★何件お送りするかを、押す前にお見せします。
+         12件は、取り消せない送信です。数が合っているかを
+         ご自身の目で確かめていただくためです。 */
+    $('ac-cf-n').textContent = (acSendIds.length > 1)
+      ? ((acSendWhat ? (acSendWhat + 'の') : '') + '明細書（PDF）' +
+         acSendIds.length + '件をお送りします。明細書には、ご送金額などが' +
+         '記載されております。宛先に誤りがないか、ご確認くださいませ。')
+      : '明細書には、ご送金額などが記載されております。' +
+        '宛先に誤りがないか、ご確認くださいませ。';
     $('ac-cf').hidden = false;
   });
 
@@ -2085,14 +2145,18 @@
 
   $('ac-cf-ok').addEventListener('click', function(){
     var to = ($('ac-mail').value || '').trim();
-    var it = acSendIt;
-    if(!to || !it || !it.id){ acCfHide(); return; }
+    var ids = acSendIds.slice();
+    if(!to || !ids.length){ acCfHide(); return; }
     var g = acPicked();
     var btn = $('ac-cf-ok');
     say($('ac-msg'), '');
     busy(btn, true, '送信しています…');
     auth('taxsend', {
-      id     : it.id,
+      /* ★id は、これまでどおり1件めを入れておきます。
+           Apps Script をまだ入れ替えていない間でも、1か月ぶんは
+           これまでどおり送れます（黙って止まらないように）。 */
+      id     : ids[0],
+      ids    : ids,
       to     : to,
       subject: $('ac-subj').value,
       body   : $('ac-body').value,
@@ -2101,10 +2165,21 @@
            ご本人のアドレスを見て送ります（打ち間違いが混ざらないように）。 */
       copy   : !!$('ac-copy').checked
     })
-      .then(function(){
+      .then(function(r){
         busy(btn, false);
         acCfHide();
-        say($('ac-msg'), to + ' 宛に、明細書（PDF）を添付して送信いたしました。' +
+        /* ★件数は、押した数ではなく **送れた数** を出します。
+             Apps Script が古いままなら 1 が返ります。
+             押した数で書くと、1件しか行っていないのに
+             「12件お送りしました」と嘘になります。 */
+        var n = Math.floor(Number(r && r.sent)) || 1;
+        say($('ac-msg'), to + ' 宛に、明細書（PDF）' +
+            (n > 1 ? (n + '件') : '') + 'を添付して送信いたしました。' +
+            ((n < ids.length)
+              ? ('（お選びの ' + ids.length + '件のうち ' + n + '件です。' +
+                 '残りは、下の［ご自身のメールソフトで作成する］を' +
+                 'ご利用くださいませ。）')
+              : '') +
             ($('ac-copy').checked ? '控えも、ご自身のメールアドレスへお送りしました。' : ''),
             true);
       })
