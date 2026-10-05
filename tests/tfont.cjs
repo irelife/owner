@@ -129,6 +129,45 @@ const eq = (g, w, m) => ok(g === w, m + '（' + JSON.stringify(g) + '）');
   Object.keys(money).forEach(k =>
     ok(money[k] === false, '★ ' + k + ' は明朝にしない（数字の幅がそろわないため）'));
 
+  console.log('\n── ⑦ 明朝が、小さすぎる字に当たっていないか ──');
+  {
+    /* 【なぜ見るか】
+     *  明朝は、横の画がとても細い書体です。小さくすると、その線が
+     *  かすれて読みにくくなります（とくに画面の明るいところ、
+     *  目の弱い方）。本文の目安 16px を、明朝の下限にします。
+     *  ★「品が良い」と「読みやすい」は別です。見本と同じにしただけで
+     *    読みやすさを確かめないのは、作り手の都合です。 */
+    const MIN = 16;
+    const screens = ['home', 'papers', 'status', 'insurance', 'account'];
+    const small = [];
+    for (const s of screens){
+      await p.evaluate(n => {
+        document.querySelectorAll('section.scr').forEach(e => { e.hidden = true; });
+        const t = document.getElementById('s-' + n);
+        if (t) t.hidden = false;
+        document.getElementById('app').hidden = false;
+        document.getElementById('boot').hidden = true;
+      }, s);
+      await p.waitForTimeout(60);
+      const got = await p.evaluate(min => {
+        const out = [];
+        document.querySelectorAll('*').forEach(e => {
+          if (e.getClientRects().length === 0) return;
+          const cs = getComputedStyle(e);
+          if (!/Shippori/.test(cs.fontFamily)) return;
+          if (!(e.textContent || '').trim()) return;
+          const px = parseFloat(cs.fontSize);
+          if (px < min) out.push(e.className + ' ' + px.toFixed(1) + 'px');
+        });
+        return out;
+      }, MIN);
+      got.forEach(x => small.push(s + ': ' + x));
+    }
+    ok(small.length === 0,
+       '★ 明朝は ' + MIN + 'px 未満に使っていない' +
+       (small.length ? '（' + [...new Set(small)].slice(0, 4).join(' ／ ') + '）' : ''));
+  }
+
   console.log('\n── ① 見出しの字が、ぜんぶ入っているか ──');
   {
     /* 画面をひととおり開いて、明朝の部品に出る字を集めます */
