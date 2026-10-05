@@ -31,7 +31,7 @@ if (!pp || !ac) {
 }
 const box = new Function(
   pp + ac +
-  '; return { acYearOf, acYears, acOfYear, acCsv, acMail, acMailto };'
+  '; return { acYearOf, acYears, acOfYear, acCsv, acMail, acMailto, acPdfIds };'
 )();
 
 let pass = 0, fail = 0;
@@ -122,8 +122,10 @@ console.log('\n── 件名と本文（acMail）──');
   const m = box.acMail({}, '2026年分（1月〜12月）', 'IREライフ株式会社', false);
   ok(m.body.indexOf('税理士事務所') === 0, '★事務所名が空でも、宛名が崩れない');
   ok(m.body.indexOf('ご担当者様') > 0, '★お名前が空なら「ご担当者様」');
-  /* ★1年ぶんは12か月を1つのPDFにまとめられないので、
-       本文に「PDFを添付」と書いてはいけません。 */
+  /* ★原本PDFが1件も無いときは、本文に「PDFを添付」と書いてはいけません。
+       （2026/10/5 まで、ここは「1年ぶんはPDFをまとめられないから」でした。
+         まとめる必要はなく、12個そのまま添付できるようになりました。
+         いまここに来るのは「原本PDFが1件も無いとき」だけです。） */
   ok(m.body.indexOf('明細書（PDF）') < 0,
      '★PDFを付けられないときは、本文に「PDF」と書かない');
   ok(m.body.indexOf('明細データ（CSV）を添付') > 0, '★そのときは「表（CSV）」だけ');
@@ -140,6 +142,53 @@ console.log('\n── 件名と本文（acMail）──');
 {
   const m = box.acMail(null, '2026年8月', null);
   ok(m.subject.indexOf('【当社】') === 0, '★会社名が無くても落ちない');
+}
+
+console.log('\n── ★1年分（12か月）を添付する（2026/10/5）──');
+{
+  /* 送れる明細のID（原本PDFがあるものだけ） */
+  const L = [{ ym:'2026年1月', id:'F1' }, { ym:'2026年2月', id:'F2' },
+             { ym:'2026年3月', id:'' },   { ym:'2026年4月' },
+             { ym:'2026年5月', id:'F5' }, { ym:'2026年6月', id:'F2' }];
+  const g = box.acPdfIds(L);
+  eq(g.join(','), 'F1,F2,F5', '★原本PDFのある月だけ／同じIDは1回だけ');
+  eq(box.acPdfIds([]).length, 0, '1件も無ければ空');
+  eq(box.acPdfIds(null).length, 0, 'null でも落ちない');
+  eq(box.acPdfIds([null, undefined, {}]).length, 0, 'こわれた中身でも落ちない');
+  eq(box.acPdfIds([{ id:'  F9  ' }])[0], 'F9', '前後の空白は落とす');
+  /* ★並びは変えません。acOfYear が 1月→12月 の順で渡してきます。
+       税理士先生の受信箱で、添付が月の順に並ぶようにするためです。 */
+  eq(box.acPdfIds([{ id:'A' }, { id:'B' }, { id:'C' }]).join(''), 'ABC',
+     '★渡された順（月の順）のまま返す');
+}
+{
+  /* 件数が本文に出る */
+  const m12 = box.acMail({}, '2026年分（1月〜12月）', 'IREライフ株式会社', 12);
+  ok(m12.body.indexOf('明細書（PDF）12件を添付しております。') > 0,
+     '★12件のときは「12件」と書く');
+  ok(m12.body.indexOf('明細データ（CSV）を添付') < 0,
+     '★そのときは CSV のことを書かない');
+
+  const m1 = box.acMail({}, '2026年8月', 'IREライフ株式会社', 1);
+  ok(m1.body.indexOf('明細書（PDF）を添付しております。') > 0,
+     '★1件のときは件数を書かない（これまでの文のまま）');
+  ok(m1.body.indexOf('1件') < 0, '「1件」とは書かない');
+
+  const m0 = box.acMail({}, '2026年8月', 'IREライフ株式会社', 0);
+  ok(m0.body.indexOf('明細データ（CSV）を添付') > 0,
+     '★0件のときは CSV のご案内（これまでどおり）');
+
+  /* ★true／false も、これまでどおり受け取れます */
+  ok(box.acMail({}, 'x', 'y', true ).body.indexOf('明細書（PDF）を添付しております。') > 0,
+     '★true は 1件として扱う（古い呼びかたを壊さない）');
+  ok(box.acMail({}, 'x', 'y', false).body.indexOf('明細データ（CSV）を添付') > 0,
+     '★false は 0件として扱う');
+  ok(box.acMail({}, 'x', 'y', '12' ).body.indexOf('明細書（PDF）12件') > 0,
+     '文字の 12 でも数として扱う');
+  ok(box.acMail({}, 'x', 'y', -3   ).body.indexOf('明細データ（CSV）を添付') > 0,
+     'マイナスでも落ちない（0件扱い）');
+  ok(box.acMail({}, 'x', 'y', NaN  ).body.indexOf('明細データ（CSV）を添付') > 0,
+     'NaN でも落ちない（0件扱い）');
 }
 
 console.log('\n── ★★署名はオーナー様のお名前（2026/10/2）──');
