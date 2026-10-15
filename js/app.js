@@ -921,6 +921,93 @@
     };
   }
 
+  /* ★2026/10/15 新規 ── 満室の物件を出す ─────────────
+   *
+   *  【改良前】 満室の物件は、画面に1行も出ませんでした。
+   *      status（Apps Script）が返すのは
+   *        新規契約 ・ 解約予定 ・ 募集中
+   *      の3つだけです。満室の物件は、どれにも当てはまりません。
+   *      ですのでオーナー様から見ると
+   *        「うちのマーベラスA棟は、何も書いていない」
+   *      となり、調べているのか忘れられているのか分かりません。
+   *
+   *  【改良後】 「満室です」と出します。
+   *
+   *  【どこから満室だと分かるのか】
+   *      Apps Script は足しません。すでにあるもので分かります。
+   *      2026/10/5 に入れた unitsBy（棟ごとの総戸数）には、
+   *      明細に出てくる**全部の棟**が入っています。
+   *        [{prop:'マーベラスA棟', units:5}, …]
+   *      ですので
+   *        「unitsBy にあるのに、空室（募集中・解約予定）が0の棟」
+   *      ＝ 満室、と言えます。
+   *
+   *  【新規契約だけの棟も満室です】
+   *      契約が決まったお部屋は、募集中から外れて新規契約になります。
+   *      空いていません。入居率（stOcc）でも入居中に数えています。
+   *      数えかたを2か所でそろえないと、率と一覧が食いちがいます。
+   *
+   *  【★出さないと決めた場合】 null を返します。
+   *      ・unitsBy が無い、空
+   *      ・戸数が読めない棟が1つでもある
+   *      ・同じ物件名が2つある
+   *      ・一覧（boxes）に「物件名未設定」がある
+   *      ・一覧の物件名が unitsBy に無い（＝表記がそろっていない）
+   *
+   *      いちばん危ないのは最後です。表記が「マーベラスA棟」と
+   *      「マーベラスＡ棟」で食いちがっていると、
+   *      **空室があるのに「満室です」と言ってしまいます。**
+   *      オーナー様に嘘をつくことになるので、
+   *      1つでも合わないときは1件も出しません。
+   *      入居率（stOcc）の byOk と同じ考えかたです。
+   */
+  function stFull(boxes, unitsBy){
+    var list = Array.isArray(unitsBy) ? unitsBy : [];
+    if(!list.length) return null;
+
+    /* 棟ごとの総戸数を、名前で引けるようにします */
+    var cap = {}, order = [], i, x, pn, u;
+    for(i = 0; i < list.length; i++){
+      x = list[i];
+      if(!x) return null;
+      pn = String(x.prop == null ? '' : x.prop).trim();
+      u  = Math.floor(Number(x.units));
+      if(!pn) return null;                      /* 名前が無い        */
+      if(!isFinite(u) || u <= 0) return null;   /* 戸数が読めない    */
+      if(cap[pn] != null) return null;          /* 同じ名前が2つ     */
+      cap[pn] = u; order.push(pn);
+    }
+
+    /* 一覧側を、棟ごとに数えます */
+    var vac = {}, mov = {}, j, g, gn, v, m;
+    for(j = 0; j < (boxes || []).length; j++){
+      g = boxes[j];
+      if(!g) return null;
+      gn = String(g.name == null ? '' : g.name).trim();
+      if(!gn) return null;                      /* 物件名未設定      */
+      if(cap[gn] == null) return null;          /* 表記がそろわない  */
+      v = 0; m = 0;
+      (g.rooms || []).forEach(function(rm){
+        if(!rm) return;
+        if(rm.kind === '募集中' || rm.kind === '解約予定') v++;
+        else m++;
+      });
+      vac[gn] = (vac[gn] || 0) + v;
+      mov[gn] = (mov[gn] || 0) + m;
+    }
+
+    /* 空室が0の棟が、満室です。
+     *   listed … その棟が一覧にも出ているか
+     *            true  … 新規契約だけがある（名前の横に札を足します）
+     *            false … 1行も出てこない（満室だけの枠を作ります） */
+    var full = [];
+    order.forEach(function(name){
+      if((vac[name] || 0) > 0) return;
+      full.push({ prop:name, units:cap[name], listed:(mov[name] || 0) > 0 });
+    });
+    return full;
+  }
+
   /* ===== 検査できる道具（入居状況）ここまで ===== */
 
   var ST_CLASS = { '新規契約':'new', '解約予定':'out', '募集中':'rec' };
@@ -948,10 +1035,32 @@
              '</p>';
     }
 
+    /* ★2026/10/15 … 満室の物件。
+     *   fullNow … 一覧に出ている棟で、空室が0のもの（名前の横に札）
+     *   fullAdd … 1行も出てこない棟（満室だけの枠を作ります）
+     *   表記がそろっていないときは stFull が null を返すので、
+     *   どちらも空のまま＝これまでどおりの画面になります。 */
+    var fullNow = {}, fullAdd = [];
+    (stFull(boxes, r.unitsBy) || []).forEach(function(f){
+      if(f.listed) fullNow[f.prop] = f.units;
+      else         fullAdd.push(f);
+    });
+
+    /* 入退去の動きが1つも無く、満室の棟だけのとき。
+     *   枠だけ並ぶと「今月は何も無かったのか」が伝わらないため、
+     *   一行だけ添えます。 */
+    if(!boxes.length && fullAdd.length){
+      out += '<p class="st-note">今月、入退去のご予定はございません。</p>';
+    }
+
     out += boxes.map(function(g){
+      var gn = String(g.name == null ? '' : g.name).trim();
       return '<section class="st-prop">' +
         '<h2 class="st-pn">' +
           esc(g.name || '物件名未設定') +
+          (fullNow[gn] != null
+            ? '<span class="st-full">満室　全 ' + fullNow[gn] + ' 室</span>'
+            : '') +
         '</h2>' +
         g.rooms.map(function(u){
           var kind = ST_CLASS[u.kind] || 'rec';
@@ -975,6 +1084,16 @@
                        '）を過ぎたため、募集中としております。</span>' : '') +
           '</div>';
         }).join('') +
+      '</section>';
+    }).join('');
+
+    out += fullAdd.map(function(f){
+      return '<section class="st-prop">' +
+        '<h2 class="st-pn">' + esc(f.prop) +
+          '<span class="st-full">満室</span>' +
+        '</h2>' +
+        '<p class="st-fulln">全 ' + f.units +
+          ' 室、すべてご入居いただいております。</p>' +
       '</section>';
     }).join('');
 

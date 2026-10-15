@@ -1114,6 +1114,29 @@ input[type=file]::file-selector-button{
      ② .st-d  入居者名 ｜ 契約終了日（どちらも無いときは「—」）
      ③ .st-r  賃料／月
      ④ .st-w  募集中に切り替えた理由（そのときだけ） */
+/* ★満室の札と一行（2026-10-15）
+     改良前： 満室の物件は、画面に1行も出ませんでした。
+     ★新しい色は足していません。--bd と --mut-fg だけで作っています。
+       色を1つ増やすと、配色5種（ワイン・ミッドナイト・チャコール・
+       紙・台帳）ぶんの明暗差を測り直すことになるためです。
+     ★「満室」は良い知らせですが、札を目立たせません。
+       募集中（.st-tag.rec）より強く見えると、
+       見てほしいところが埋もれます。 */
+.st-full{
+  display:inline-block; margin-left:10px; padding:4px 10px;
+  border-radius:var(--r-tag); font-size:.8125rem; font-weight:500;
+  white-space:nowrap; vertical-align:middle;
+  background:var(--bg); color:var(--mut-fg); border:1px solid var(--bd-60);
+}
+.st-fulln{
+  margin:0; padding:20px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
+  font-size:.9375rem; line-height:1.7; color:var(--mut-fg);
+}
+.st-note{
+  margin:0 0 24px; font-size:.9375rem; line-height:1.7; color:var(--mut-fg);
+}
+
 .st-d{ display:block; margin-top:6px; font-size:.875rem; color:var(--mut-fg); }
 .st-r{ display:block; margin-top:4px; font-size:1rem; font-weight:500;
   color:var(--fg); font-variant-numeric:tabular-nums; }
