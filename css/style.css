@@ -1151,6 +1151,20 @@ input[type=file]::file-selector-button{
   color:var(--pri); text-transform:uppercase; }
 .letter p{ margin:0; font-size:.9375rem; line-height:1.9; white-space:pre-wrap; }
 .lt-s{ margin-top:16px !important; font-size:.8125rem !important; color:var(--mut-fg); }
+/* ★その月のひとこと（2026-10-15）
+     改良前： 送金明細は数字だけで、金額が動いた理由が書けませんでした。
+     ★入居状況の「当社より」と同じ見た目にそろえています。
+       オーナー様から見て、当社からのひとことが2種類あるように
+       見えないためです。新しい色は足していません。
+     .letter.sm … 月ごとのカードの中に入るぶん。
+       外側のカード（.pp-b）の中なので、地の色を一段変えて
+       内訳の表と見分けがつくようにします。 */
+.letter.sm{
+  margin-top:16px; padding:16px 18px; border-radius:var(--r-l);
+  background:var(--bg); border:1px solid var(--bd-60);
+}
+.letter.sm p{ font-size:.875rem; line-height:1.8; }
+.letter.sm .lt-s{ margin-top:12px !important; }
 
 /* ── お問い合わせ（やりとり） ───────────── */
 /* ★.work .wk-h .wk-p .wk-t（修繕の画面）は 2026/10/1 に消しました。
@@ -1450,6 +1464,12 @@ input[type=file]::file-selector-button{
   .prt-sum{
     margin:0 0 24pt; padding:10pt 8pt; border-top:1pt solid #000;
     border-bottom:2pt double #000; font-size:14pt; font-weight:700; text-align:right;
+  }
+  /* ★その月のひとこと（2026-10-15）。
+       画面に出ていて紙に出ないと、刷ったものを見た方に伝わりません。 */
+  .prt-note{
+    margin:0 0 16pt; padding:8pt 10pt; border:.5pt solid #999;
+    font-size:9.5pt; line-height:1.9; white-space:pre-wrap;
   }
   .prt-f{ margin:0; font-size:8.5pt; color:#555; line-height:1.8; }
   @page{ margin:18mm 16mm; }

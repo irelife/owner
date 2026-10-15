@@ -464,6 +464,40 @@
       .then(after);
   }
 
+  /* ★2026/10/15 新規 ── その月のひとこと（明細の備考）──────
+   *
+   *  【改良前】 送金明細は、数字だけでした。
+   *      先月より8万円少ない月でも、理由がどこにも書いてありません。
+   *      オーナー様は分からないので、お電話をくださいます。
+   *
+   *  【改良後】 明細シートの「備考」に1行書いておくと、
+   *      明細のカードに「当社より」として出ます。
+   *        例）今月は101号室の原状回復の精算がございますため、
+   *            いつもの月よりお振込額が少なくなっております。
+   *
+   *  【書かない月は、何も出ません】
+   *      備考が空の月は、枠ごと出しません。毎月書く必要はありません。
+   *      「書くべき月だけ書く」運びです。
+   *
+   *  ★入居状況の「当社より」（#st-letter）と同じ見た目にそろえます。
+   *    オーナー様から見て、当社からのひとことは1種類に見えるほうが
+   *    迷いません。CSS も .letter を使い回しています。
+   *
+   *  ★出すのは、同じ中身を3か所です。ずれないよう1つにまとめます。
+   *      ① ホームの送金カード
+   *      ② 送金明細の、月ごとのカード
+   *      ③ ［この内容をPDFで保存］で刷る紙
+   */
+  function noteHtml(msg, small){
+    var t = (msg == null) ? '' : String(msg).trim();
+    if(!t) return '';
+    return '<div class="letter' + (small ? ' sm' : '') + '">' +
+      '<p class="lt-h">当社より</p>' +
+      '<p>' + esc(t) + '</p>' +
+      '<p class="lt-s">' + esc(CFG.COMPANY || 'IREライフ株式会社') + '</p>' +
+    '</div>';
+  }
+
   function paintHome(r){
     $('hm-month').textContent = r.month ? (r.month + '分') : '';
     $('hm-date').textContent  = r.sokinDate ? (r.sokinDate + ' お振込予定') : 'お振込予定';
@@ -476,6 +510,10 @@
              '<span>' + esc(x.label) + '</span>' +
              '<span>' + (minus ? '−' : '') + esc(yen(Math.abs(x.amount))) + '</span></div>';
     }).join('');
+
+    /* ★2026/10/15 … その月のひとこと。
+     *   数字（上の内訳）の説明なので、内訳のすぐ下・PDFの前に置きます。 */
+    $('hm-letter').innerHTML = noteHtml(r.message);
 
     $('hm-pdf').hidden = !r.pdfId;
     $('hm-pdf').onclick = function(){ openPdf(r.pdfId, $('hm-pdf')); };
@@ -1356,6 +1394,8 @@
                  '<span>' + (minus ? '−¥' : '¥') +
                  esc(yen(Math.abs(x.amount))) + '</span></div>';
         }).join('') + '</div>' : '') +
+        /* ★2026/10/15 … その月のひとこと（内訳の下・ボタンの上） */
+        noteHtml(it.message, true) +
         /* ══════════════════════════════════════════
          *  3つのボタンに、重さの差をつけます（2026/10/3）
          *
@@ -1468,6 +1508,10 @@
         }).join('') + '</tbody></table>' : '') +
       '<p class="prt-sum">ご送金額　' +
         (it.total == null ? '—' : '¥' + esc(yen(it.total))) + '</p>' +
+      /* ★2026/10/15 … その月のひとこと。
+       *   画面に出ていて紙に出ないと、刷ったものを見た方に伝わりません。 */
+      (String(it.message == null ? '' : it.message).trim()
+        ? '<p class="prt-note">' + esc(String(it.message).trim()) + '</p>' : '') +
       '<p class="prt-f">この紙は、オーナーマイページの画面をそのまま写したものです。' +
         '当社が作成した明細書（PDF）とは別のものです。</p>';
 
