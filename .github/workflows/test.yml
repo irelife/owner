@@ -9,7 +9,7 @@
 #
 #   ★ 2026/10/16 新設
 #     検査そのものは前からありましたが、走らせるのは手でした。
-#     PIVOT2・PIVOT3 には前からこの仕組みがあり、ここだけ無かったので足します。
+#     PIVOT2・PIVOT3 には前からこの仕組みがあり、ここだけ無かったので足しました。
 
 name: 自動検査
 
@@ -24,11 +24,13 @@ jobs:
   test:
     name: 検査
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: リポジトリを取ってくる
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # ★ ?v= の上げ忘れを見るため、main と見くらべます
 
       - name: Node を用意する
         uses: actions/setup-node@v4
@@ -42,6 +44,11 @@ jobs:
       - name: ブラウザを入れる
         working-directory: tests
         run: npx playwright install --with-deps chromium
+
+      - name: ★ ?v= の上げ忘れを見る
+        run: |
+          git fetch origin main --depth=50 || true
+          node tests/tver.cjs . origin/main
 
       - name: 検査を走らせる
         working-directory: tests

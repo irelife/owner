@@ -14,7 +14,7 @@ index.html        画面（ログイン・ホーム・入居状況・明細・�
 css/style.css     見た目
 js/config.js      ★ Apps Script のURLだけ、ここに入れます
 js/app.js         画面の動き
-tests/            検査22件（合計1038件）。run-all.cjs でまとめて走ります。
+tests/            検査23件（合計1038件＋α）。run-all.cjs でまとめて走ります。
                   一覧は、下の「変更するとき」をご覧ください。
 docs/             引き継ぎ書・はじめの設定・PIVOT側の追加・使いかた・やること
 gas/              Apps Script の控え（置きかたは gas/README.md）
@@ -79,7 +79,7 @@ PIVOT → マイページの向きに、そのオーナー様のぶんだけが�
 cd tests && npm install && npx playwright install chromium
 ```
 
-**22件まとめて**（これだけで足ります。1件でも失敗したら赤で止まります）
+**23件まとめて**（これだけで足ります。1件でも失敗したら赤で止まります）
 
 ```
 cd tests && node run-all.cjs ..
@@ -107,12 +107,17 @@ cd tests && node run-all.cjs ..
 | tarea2 | お問い合わせの「物件の所在地」 | 22 |
 | tacc | 税理士へ送信 | 71 |
 | ttax | 税理士先生へ「1年分（12か月）」をお送りできる | 35 |
+| tver | **?v= の上げ忘れを捕まえる** | 3〜（※） |
 | tbg | ログイン画面の背景 | 67 |
 | tfont | 見出しの明朝（Shippori Mincho B1） | 20 |
 | ttile | ホームのタイルが「そろって見える」 | 15 |
 | tsize | 指でふれる的の大きさ・はみ出し・ボタンの重なり | 42 |
 
-合計 **1038件**。
+合計 **1038件**（`tver` を除く）。
 
-プルリクエストを出すと、この22件が GitHub 側でも自動で走ります
+※ `tver` の件数は、直したファイルの数で変わります。`js/` や `css/` を
+直したのに `index.html` の `?v=` を上げていないと、**ここが赤くなります**。
+`origin/main` が手元に無いとき（`--depth=1` の取り込みなど）は飛ばします。
+
+プルリクエストを出すと、この23件が GitHub 側でも自動で走ります
 （`.github/workflows/test.yml`）。赤いままマージしないでください。
