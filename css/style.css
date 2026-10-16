@@ -1114,6 +1114,29 @@ input[type=file]::file-selector-button{
      ② .st-d  入居者名 ｜ 契約終了日（どちらも無いときは「—」）
      ③ .st-r  賃料／月
      ④ .st-w  募集中に切り替えた理由（そのときだけ） */
+/* ★満室の札と一行（2026-10-15）
+     改良前： 満室の物件は、画面に1行も出ませんでした。
+     ★新しい色は足していません。--bd と --mut-fg だけで作っています。
+       色を1つ増やすと、配色5種（ワイン・ミッドナイト・チャコール・
+       紙・台帳）ぶんの明暗差を測り直すことになるためです。
+     ★「満室」は良い知らせですが、札を目立たせません。
+       募集中（.st-tag.rec）より強く見えると、
+       見てほしいところが埋もれます。 */
+.st-full{
+  display:inline-block; margin-left:10px; padding:4px 10px;
+  border-radius:var(--r-tag); font-size:.8125rem; font-weight:500;
+  white-space:nowrap; vertical-align:middle;
+  background:var(--bg); color:var(--mut-fg); border:1px solid var(--bd-60);
+}
+.st-fulln{
+  margin:0; padding:20px;
+  background:var(--card-bg); border:1px solid var(--bd); border-radius:var(--r-x);
+  font-size:.9375rem; line-height:1.7; color:var(--mut-fg);
+}
+.st-note{
+  margin:0 0 24px; font-size:.9375rem; line-height:1.7; color:var(--mut-fg);
+}
+
 .st-d{ display:block; margin-top:6px; font-size:.875rem; color:var(--mut-fg); }
 .st-r{ display:block; margin-top:4px; font-size:1rem; font-weight:500;
   color:var(--fg); font-variant-numeric:tabular-nums; }
@@ -1128,6 +1151,20 @@ input[type=file]::file-selector-button{
   color:var(--pri); text-transform:uppercase; }
 .letter p{ margin:0; font-size:.9375rem; line-height:1.9; white-space:pre-wrap; }
 .lt-s{ margin-top:16px !important; font-size:.8125rem !important; color:var(--mut-fg); }
+/* ★その月のひとこと（2026-10-15）
+     改良前： 送金明細は数字だけで、金額が動いた理由が書けませんでした。
+     ★入居状況の「当社より」と同じ見た目にそろえています。
+       オーナー様から見て、当社からのひとことが2種類あるように
+       見えないためです。新しい色は足していません。
+     .letter.sm … 月ごとのカードの中に入るぶん。
+       外側のカード（.pp-b）の中なので、地の色を一段変えて
+       内訳の表と見分けがつくようにします。 */
+.letter.sm{
+  margin-top:16px; padding:16px 18px; border-radius:var(--r-l);
+  background:var(--bg); border:1px solid var(--bd-60);
+}
+.letter.sm p{ font-size:.875rem; line-height:1.8; }
+.letter.sm .lt-s{ margin-top:12px !important; }
 
 /* ── お問い合わせ（やりとり） ───────────── */
 /* ★.work .wk-h .wk-p .wk-t（修繕の画面）は 2026/10/1 に消しました。
@@ -1427,6 +1464,12 @@ input[type=file]::file-selector-button{
   .prt-sum{
     margin:0 0 24pt; padding:10pt 8pt; border-top:1pt solid #000;
     border-bottom:2pt double #000; font-size:14pt; font-weight:700; text-align:right;
+  }
+  /* ★その月のひとこと（2026-10-15）。
+       画面に出ていて紙に出ないと、刷ったものを見た方に伝わりません。 */
+  .prt-note{
+    margin:0 0 16pt; padding:8pt 10pt; border:.5pt solid #999;
+    font-size:9.5pt; line-height:1.9; white-space:pre-wrap;
   }
   .prt-f{ margin:0; font-size:8.5pt; color:#555; line-height:1.8; }
   @page{ margin:18mm 16mm; }
@@ -1734,4 +1777,130 @@ html.th-move, html.th-move *{
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; animation:none !important; }
   html{ scroll-behavior:auto; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ *  ログイン画面の背景（2026/10/15 新設）
+ *
+ *  【改良前】
+ *    ログイン・再設定の画面は、一色の地にカードが1枚置いてあるだけでした。
+ *    読みやすさに問題はありませんが、奥行きが無く、平たく見えていました。
+ *    オーナー様が最初に目にする画面なので、ここだけ作りを上げます。
+ *
+ *  【改良後】
+ *    ① 上からの光（放射のグラデーション）
+ *    ② 下に街なみの影絵（不動産らしさを、控えめに）
+ *    ③ カードをすりガラスにして、浮かせる
+ *
+ *  【写真を使わなかった理由】
+ *    ・irelife/owner は公開リポジトリです。写真は撮影者の権利の確認が要ります
+ *    ・オーナー様には高齢の方がいらっしゃいます。回線が細いと写真は重荷です
+ *      （この背景は CSS と 1.4KB の図形だけ。読み込みの待ちがありません）
+ *    ・配色が5つ（ワイン・ミッドナイト・チャコール・紙・台帳）あります。
+ *      写真だと、どれかの配色で必ず浮きます。
+ *      色のトークンから作れば、5つとも自動でなじみます
+ *
+ *  【読みやすさを壊さないための決めごと】
+ *    ・カードの不透明度は .90 まで。地の色がにじむのは1割だけなので、
+ *      文字と地の明暗差は、ほぼ変わりません（下の検査で実測します）
+ *    ・枠（--border）の色は触っていません。4.06:1 のままです
+ *    ・backdrop-filter に対応していない端末は、今までどおりの無地です
+ *    ・印刷では、背景を全部消します
+ * ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* 光の色。配色の --primary（ワインなら金色）をそのまま使います */
+  --glow:   var(--primary);
+  --glow-1: .20;            /* 上からの光の濃さ */
+  --glow-2: .10;            /* 右からの光の濃さ */
+  --city:   var(--border);  /* 街なみの色 */
+  --city-a: .16;            /* 街なみの濃さ */
+}
+/* ★明るい配色は、--primary がほぼ黒（紙）・濃紺（台帳）です。
+     そのまま光にすると、上がすすけて見えます。色と濃さを差し替えます。 */
+html[data-theme="kami"]{ --glow: 38 46% 37%;  --glow-1:.07; --glow-2:.04; --city-a:.10; }
+html[data-theme="cho"] { --glow: 217 70% 45%; --glow-1:.10; --glow-2:.06; --city-a:.12; }
+
+/* 背景を敷く台。
+   ★overflow:hidden は使いません。横向きの小さい画面で、カードが
+     画面より高くなったときに、はみ出した分が切れて読めなくなるためです。
+     ::before と ::after は inset で中に収めているので、はみ出しません。 */
+.scr.center{ position:relative; isolation:isolate; }
+
+/* ① 上からの光 */
+.scr.center::before{
+  content:""; position:absolute; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(125% 72% at 50% -12%, hsl(var(--glow) / var(--glow-1)), transparent 62%),
+    radial-gradient(85% 55% at 112% 18%,  hsl(var(--glow) / var(--glow-2)), transparent 66%);
+}
+
+/* ② 下の街なみ（影絵）
+     図形は mask で抜いて、色は --city から取ります。
+     こうすると、配色を変えても街なみの色がついてきます。 */
+.scr.center::after{
+  content:""; position:absolute; inset:auto 0 0 0; z-index:-1; pointer-events:none;
+  height:min(20vh, 150px);
+  background-color:hsl(var(--city) / var(--city-a));
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201200%20200'%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='0'%20y='120'%20width='84'%20height='80'/%3E%3Crect%20x='88'%20y='86'%20width='58'%20height='114'/%3E%3Crect%20x='150'%20y='140'%20width='46'%20height='60'/%3E%3Crect%20x='200'%20y='104'%20width='72'%20height='96'/%3E%3Crect%20x='276'%20y='62'%20width='52'%20height='138'/%3E%3Crect%20x='332'%20y='128'%20width='66'%20height='72'/%3E%3Crect%20x='402'%20y='96'%20width='44'%20height='104'/%3E%3Crect%20x='450'%20y='146'%20width='58'%20height='54'/%3E%3Crect%20x='512'%20y='78'%20width='68'%20height='122'/%3E%3Crect%20x='584'%20y='118'%20width='50'%20height='82'/%3E%3Crect%20x='638'%20y='54'%20width='46'%20height='146'/%3E%3Crect%20x='688'%20y='132'%20width='78'%20height='68'/%3E%3Crect%20x='770'%20y='100'%20width='54'%20height='100'/%3E%3Crect%20x='828'%20y='142'%20width='62'%20height='58'/%3E%3Crect%20x='894'%20y='72'%20width='58'%20height='128'/%3E%3Crect%20x='956'%20y='124'%20width='48'%20height='76'/%3E%3Crect%20x='1008'%20y='96'%20width='70'%20height='104'/%3E%3Crect%20x='1082'%20y='136'%20width='52'%20height='64'/%3E%3Crect%20x='1138'%20y='108'%20width='62'%20height='92'/%3E%3Crect%20x='300'%20y='40'%20width='5'%20height='24'/%3E%3Crect%20x='659'%20y='30'%20width='5'%20height='26'/%3E%3Crect%20x='920'%20y='52'%20width='4'%20height='22'/%3E%3C/g%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201200%20200'%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='0'%20y='120'%20width='84'%20height='80'/%3E%3Crect%20x='88'%20y='86'%20width='58'%20height='114'/%3E%3Crect%20x='150'%20y='140'%20width='46'%20height='60'/%3E%3Crect%20x='200'%20y='104'%20width='72'%20height='96'/%3E%3Crect%20x='276'%20y='62'%20width='52'%20height='138'/%3E%3Crect%20x='332'%20y='128'%20width='66'%20height='72'/%3E%3Crect%20x='402'%20y='96'%20width='44'%20height='104'/%3E%3Crect%20x='450'%20y='146'%20width='58'%20height='54'/%3E%3Crect%20x='512'%20y='78'%20width='68'%20height='122'/%3E%3Crect%20x='584'%20y='118'%20width='50'%20height='82'/%3E%3Crect%20x='638'%20y='54'%20width='46'%20height='146'/%3E%3Crect%20x='688'%20y='132'%20width='78'%20height='68'/%3E%3Crect%20x='770'%20y='100'%20width='54'%20height='100'/%3E%3Crect%20x='828'%20y='142'%20width='62'%20height='58'/%3E%3Crect%20x='894'%20y='72'%20width='58'%20height='128'/%3E%3Crect%20x='956'%20y='124'%20width='48'%20height='76'/%3E%3Crect%20x='1008'%20y='96'%20width='70'%20height='104'/%3E%3Crect%20x='1082'%20y='136'%20width='52'%20height='64'/%3E%3Crect%20x='1138'%20y='108'%20width='62'%20height='92'/%3E%3Crect%20x='300'%20y='40'%20width='5'%20height='24'/%3E%3Crect%20x='659'%20y='30'%20width='5'%20height='26'/%3E%3Crect%20x='920'%20y='52'%20width='4'%20height='22'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-repeat:repeat-x;   mask-repeat:repeat-x;
+  /* ★470px … 1200の図を470に詰めます。ビルの幅が約4割になり、
+       390pxの画面でも「街なみ」に見えます（等倍だと大きな箱でした）。 */
+  -webkit-mask-size:470px 100%;   mask-size:470px 100%;
+  -webkit-mask-position:bottom left; mask-position:bottom left;
+}
+
+/* ③ カードを浮かせる */
+#s-login > .card,
+#s-forgot > .card,
+#s-reset > .card,
+#s-newpass > .card{
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / .10),
+    0 30px 70px -30px hsl(var(--background) / .85);
+}
+
+/* ④ カードの枠を、少しだけ強くします
+ *
+ *  【なぜ】
+ *    すりガラスにすると、カードの地に後ろの色が1割まざり、
+ *    枠と地の明暗差が 0.06〜0.08 下がります。
+ *    測ってみたところ、ワインとミッドナイトは **もともと足りていません**でした。
+ *        ワイン 3.03:1 ／ ミッドナイト 2.95:1 ／ チャコール 3.25:1
+ *        紙 3.51:1 ／ 台帳 3.13:1   （図形の目安は 3:1）
+ *    すりガラスにすると、ワインが 2.97、ミッドナイトが 2.87 になります。
+ *
+ *  【どうしたか】
+ *    この4画面のカードの枠だけ、--border に --foreground を2割まぜます。
+ *    5つの配色すべてで 3:1 を超え、もとより読みやすくなりました。
+ *        ワイン 3.99 ／ ミッドナイト 4.07 ／ チャコール 4.31
+ *        紙 4.76 ／ 台帳 4.26
+ *    ★--border そのものは触っていません。他の画面は今までどおりです。
+ *    ★color-mix に対応していない端末は、今までどおりの枠です（壊れません）。 */
+@supports (border-color: color-mix(in srgb, red 80%, blue)){
+  #s-login > .card,
+  #s-forgot > .card,
+  #s-reset > .card,
+  #s-newpass > .card{
+    border-color: color-mix(in srgb, hsl(var(--border)) 80%, hsl(var(--foreground)));
+  }
+}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  #s-login > .card,
+  #s-forgot > .card,
+  #s-reset > .card,
+  #s-newpass > .card{
+    background:hsl(var(--card) / .90);
+    -webkit-backdrop-filter:blur(18px) saturate(118%);
+            backdrop-filter:blur(18px) saturate(118%);
+  }
+}
+
+@media print{
+  .scr.center::before, .scr.center::after{ display:none !important; }
+  #s-login > .card, #s-forgot > .card, #s-reset > .card, #s-newpass > .card{
+    background:#fff !important; box-shadow:none !important;
+    -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+  }
 }

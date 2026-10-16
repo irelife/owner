@@ -45,7 +45,7 @@ try{
   if(_f === 'gothic') document.documentElement.setAttribute('data-font', _f);
 }catch(e){}
 </script>
-<link rel="stylesheet" href="css/style.css?v=50">
+<link rel="stylesheet" href="css/style.css?v=53">
 </head>
 <body>
 
@@ -305,6 +305,19 @@ try{
 
            ★総戸数が送られてこないとき（PIVOT2 が数えられなかったとき）は、
              この箱ごと出しません。0% とは出しません。 -->
+      <!-- ══════════ その月のひとこと（2026/10/15）══════════
+           明細シートの「備考」に1行書いておくと、ここに出ます。
+
+           ★なぜ、ここに置くのか。
+             すぐ上の前月比が「−¥87,650（−17.5％）」と出たとき、
+             オーナー様が次に思われるのは「なぜ？」です。
+             その答えを、いちばん近いところに置きます。
+
+           ★書かれていない月は、枠ごと出ません。
+             毎月「当社より」の空箱が並ぶと、かえって不安になるためです。
+           ══════════════════════════════════════ -->
+      <div id="hm-letter"></div>
+
       <div id="hm-occ-wrap" hidden>
         <button type="button" class="kpi" id="hm-occ-b"
                 aria-expanded="false" aria-controls="hm-occ-why">
@@ -795,6 +808,6 @@ try{
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/config.js?v=33"></script>
-<script src="js/app.js?v=52"></script>
+<script src="js/app.js?v=54"></script>
 </body>
 </html>
