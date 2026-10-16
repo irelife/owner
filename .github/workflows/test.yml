@@ -1,0 +1,48 @@
+# ★ 自動検査
+#
+#   いつ走るか：
+#     ・main へ何かを入れようとしたとき（プルリクエスト）
+#     ・main が直接変わったとき
+#     ・手で「実行」を押したとき
+#
+#   1件でも失敗したら赤くなり、マージのボタンが警告を出します。
+#
+#   ★ 2026/10/16 新設
+#     検査そのものは前からありましたが、走らせるのは手でした。
+#     PIVOT2・PIVOT3 には前からこの仕組みがあり、ここだけ無かったので足します。
+
+name: 自動検査
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 検査
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: リポジトリを取ってくる
+        uses: actions/checkout@v4
+
+      - name: Node を用意する
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 検査の道具を入れる
+        working-directory: tests
+        run: npm install --no-audit --no-fund
+
+      - name: ブラウザを入れる
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      - name: 検査を走らせる
+        working-directory: tests
+        run: node run-all.cjs ..
