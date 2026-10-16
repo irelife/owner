@@ -88,6 +88,17 @@ const eq = (g, w, m) => ok(g === w, m + '（' + JSON.stringify(g) + '）');
     await p.evaluate(() => { try{ localStorage.clear(); }catch(e){} });
     /* ★ここで数え直します。1回目の読み込みぶんは、
          入館証を消すためのもので、数には入れません。 */
+    /* ★ 2026/10/16 数え直す前に、直前の読み込みを終わらせます。
+     *
+     *  これまでは、ここですぐ fonts を 0 に戻していました。
+     *  ところが直前の読み込みが、まだフォントを取りに行っている最中の
+     *  ことがあります。その応答が 0 に戻したあとで届くと、回数が1つずれます。
+     *
+     *  22件まとめて走らせたときに、実際に1回だけ起きました
+     *  （単独で走らせると通る、いちばん困る形です）。
+     *  時間で待つのではなく、ブラウザに「終わったか」を聞きます。          */
+    try{ await p.evaluate(() => document.fonts.ready); }catch(e){}
+    await p.waitForTimeout(300);
     fonts.length = 0;
     await p.goto(URL);
     await p.waitForTimeout(400);
@@ -246,6 +257,17 @@ const eq = (g, w, m) => ok(g === w, m + '（' + JSON.stringify(g) + '）');
     await p.evaluate(() => {
       try{ localStorage.clear(); localStorage.setItem('ire_owner_font', 'gothic'); }catch(e){}
     });
+    /* ★ 2026/10/16 数え直す前に、直前の読み込みを終わらせます。
+     *
+     *  これまでは、ここですぐ fonts を 0 に戻していました。
+     *  ところが直前の読み込みが、まだフォントを取りに行っている最中の
+     *  ことがあります。その応答が 0 に戻したあとで届くと、回数が1つずれます。
+     *
+     *  22件まとめて走らせたときに、実際に1回だけ起きました
+     *  （単独で走らせると通る、いちばん困る形です）。
+     *  時間で待つのではなく、ブラウザに「終わったか」を聞きます。          */
+    try{ await p.evaluate(() => document.fonts.ready); }catch(e){}
+    await p.waitForTimeout(300);
     fonts.length = 0;
     await p.goto(URL);
     await p.waitForTimeout(400);
