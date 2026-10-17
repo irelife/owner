@@ -27,13 +27,22 @@ jobs:
     timeout-minutes: 45
 
     steps:
+      # ★ 2026/10/17 @v4 → @v5
+      #   @v4 は Node.js 20 で動く作りですが、GitHub 側が 20 をやめたため、
+      #   いまは 24 で無理に動かされています（毎回この警告が出ていました）。
+      #       ##[warning]Node.js 20 is deprecated. … being forced to run on Node.js 24
+      #   無理に動かすのをやめた日に、検査が3リポジトリ同時に止まります。
+      #   @v5 は、はじめから 24 で動く作りです。
+      #   ※ いちばん新しいのは @v7 ですが、@v5 ですでに 24 なので、
+      #     この警告に対しては同じ効き目です。@v7 には別の変更
+      #     （ESM 化・fork からの PR の扱い）が入るので、上げません。
       - name: リポジトリを取ってくる
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0          # ★ ?v= の上げ忘れを見るため、main と見くらべます
 
       - name: Node を用意する
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
 
