@@ -23,7 +23,23 @@ on:
 jobs:
   test:
     name: 検査
-    runs-on: ubuntu-latest
+    # ★ 2026/10/17 ubuntu-latest → ubuntu-24.04（版を決め打ちにしました）
+    #
+    #   CI のログに、こういう知らせが出ていました。
+    #     The ubuntu-latest label will migrate to Ubuntu 26
+    #     beginning October 19, 2026
+    #
+    #   ubuntu-latest は「そのときいちばん新しいもの」という意味なので、
+    #   10月19日から、検査を動かす機械の中身が勝手に入れ替わります。
+    #   こちらが何も直していなくても、3リポジトリ同時に赤くなり得ます。
+    #
+    #   とくに  npx playwright install --with-deps  は OS 側の部品を入れる
+    #   命令なので、OS が変わると部品の名前や有無が変わることがあります。
+    #
+    #   そこで版を決め打ちにします。向こうの都合で土台が動かなくなります。
+    #   ubuntu-24.04 は 2027年まで使えます。26 へは、こちらが決めたときに
+    #   この1行を変えて上げます（そのとき検査が通ることを確かめてから）。
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
 
     steps:
